@@ -7,6 +7,8 @@
 felismeri, a célnyelv a beállításokban bármelyik DeepL-nyelv lehet. A teljes átirat
 (eredeti + fordítás) folyamatosan mentődik, és a végén `.txt` fájlba exportálható.
 
+A felület nyelve a böngésző nyelvét követi: **magyar** és **angol** van beépítve.
+
 Manifest V3, tiszta JavaScript — **nincs build lépés, nincs npm**.
 
 ---
@@ -165,10 +167,12 @@ naplója), illetve az oldalon F12 → Console (a content script üzenetei `[LFT]
 
 ```
 manifest.json
+_locales/hu, _locales/en       a felület szövegei (a böngésző nyelve dönt)
 background/service-worker.js   DeepL hívások, felvételek, üzenettovábbítás, regisztráció
 content/capture.js             felirat kiolvasása, célzó, minden frame-ben fut
 content/overlay.js             a lebegő ablak (csak a legfelső frame-ben)
 content/overlay-css.js         az ablak stílusa (Shadow DOM-ba, CSP-biztosan)
+lib/i18n.js                    nyelvi réteg (chrome.i18n + DOM feliratozás)
 lib/store.js                   chrome.storage réteg
 lib/deepl.js                   DeepL kliens (endpoint, hibakezelés)
 lib/segmenter.js               felirat -> lezárt mondatok, ismétlésszűrés
@@ -202,4 +206,5 @@ A bővítmény nem áll kapcsolatban a DeepL SE-vel, és semmilyen videószolgá
 - Saját szótár / glosszárium a szakkifejezésekhez
 - `.srt` export időkódokkal
 - OCR (ráégetett felirat) és beszédfelismerés
-- Több célnyelv, illetve DeepL-en kívüli fordítómotor
+- DeepL-en kívüli fordítómotor
+- További felületi nyelvek a magyaron és angolon túl

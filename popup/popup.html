@@ -2,7 +2,7 @@
 <html lang="hu">
 <head>
 <meta charset="utf-8">
-<title>Élő feliratfordító</title>
+<title data-i18n-doc="appName">Élő feliratfordító</title>
 <style>
   :root { color-scheme: dark; }
   body {
@@ -74,22 +74,23 @@
 </style>
 </head>
 <body>
-  <h1>Élő feliratfordító</h1>
-  <div class="host" id="host">…</div>
+  <h1 data-i18n="pop_title"></h1>
+  <div class="host" id="host"></div>
 
   <div class="note hidden" id="note"></div>
 
-  <div class="state"><span class="dot" id="dot"></span><span id="stateText">Állapot betöltése…</span></div>
+  <div class="state"><span class="dot" id="dot"></span><span id="stateText" data-i18n="pop_state_loading"></span></div>
 
-  <button class="primary" id="enable" hidden>Engedélyezés ezen az oldalon</button>
-  <button class="primary" id="rec" disabled>Rögzítés indítása</button>
-  <button id="show" disabled>Ablak mutatása</button>
-  <button id="pick" disabled>Célzó — felirat kijelölése</button>
-  <button id="save" disabled>Átirat mentése</button>
-  <button id="diag" disabled>Diagnosztika — mit lát az oldalon?</button>
+  <button class="primary" id="enable" hidden data-i18n="pop_enable"></button>
+  <button class="primary" id="rec" disabled data-i18n="pop_rec_start"></button>
+  <button id="show" disabled data-i18n="pop_show"></button>
+  <button id="pick" disabled data-i18n="pop_pick"></button>
+  <button id="save" disabled data-i18n="pop_save"></button>
+  <button id="diag" disabled data-i18n="pop_diag"></button>
   <div id="report"></div>
-  <span class="link" id="opts">Beállítások és előzmények</span>
+  <span class="link" id="opts" data-i18n="pop_opts"></span>
 
+  <script src="../lib/i18n.js"></script>
   <script src="../lib/store.js"></script>
   <script src="popup.js"></script>
 </body>

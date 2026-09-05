@@ -32,7 +32,7 @@ async function refresh() {
 
   if (!injected) {
     $('dot').className = 'dot off';
-    $('stateText').textContent = 'Nem fut ezen az oldalon';
+    $('stateText').textContent = LFT.t('pop_state_notrunning');
     $('enable').hidden = !host;
     setControls(false);
     return;
@@ -42,23 +42,24 @@ async function refresh() {
   setControls(true);
   $('dot').className = 'dot ' + (state.recording ? 'on' : '');
   $('stateText').textContent = state.recording
-    ? 'Rögzít — ' + state.lines + ' sor'
-    : (state.lines ? 'Áll — ' + state.lines + ' sor' : 'Készenlétben');
-  $('rec').textContent = state.recording ? 'Rögzítés leállítása' : 'Rögzítés indítása';
+    ? LFT.tn('pop_state_recording', state.lines, [String(state.lines)])
+    : (state.lines ? LFT.tn('pop_state_stopped', state.lines, [String(state.lines)]) : LFT.t('pop_state_ready'));
+  $('rec').textContent = LFT.t(state.recording ? 'pop_rec_stop' : 'pop_rec_start');
   $('rec').className = state.recording ? 'danger' : 'primary';
   $('save').disabled = !state.lines;
 }
 
 async function init() {
+  LFT.i18n.applyDom();
   [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab && tab.url && /^https?:/i.test(tab.url)) {
     try { host = new URL(tab.url).hostname; } catch (e) { host = ''; }
   }
-  $('host').textContent = host || 'Ezen az oldaltípuson nem futhat bővítmény.';
+  $('host').textContent = host || LFT.t('pop_bad_page');
 
   const settings = await LFT.store.getSettings();
   if (!settings.deeplKey) {
-    note('Még nincs DeepL API kulcs. A rögzítés működik, de fordítás nélkül. Állítsd be lent.');
+    note(LFT.t('pop_note_nokey'));
   }
 
   await refresh();
@@ -70,10 +71,10 @@ $('enable').addEventListener('click', async () => {
   try {
     granted = await chrome.permissions.request({ origins: [patternFor(host)] });
   } catch (e) {
-    note('Nem sikerült engedélyt kérni erre a címre: ' + host);
+    note(LFT.t('pop_perm_failed', [host]));
     return;
   }
-  if (!granted) { note('Az engedélyt elutasítottad, így itt nem tud futni.'); return; }
+  if (!granted) { note(LFT.t('pop_perm_denied')); return; }
 
   const s = await LFT.store.getSettings();
   if (!s.domains.includes(host)) {
@@ -83,7 +84,7 @@ $('enable').addEventListener('click', async () => {
   await chrome.runtime.sendMessage({ type: 'domains:sync' });
   await new Promise(r => setTimeout(r, 300));
   await refresh();
-  if (!injected) note('Engedélyezve. Töltsd újra az oldalt (F5), és megjelenik az ablak.');
+  if (!injected) note(LFT.t('pop_enabled_reload'));
 });
 
 $('rec').addEventListener('click', async () => {
@@ -100,12 +101,12 @@ function frameCard(f) {
   div.className = 'frame';
 
   const h = document.createElement('h3');
-  h.textContent = f.frame;
+  h.textContent = f.frame || LFT.t('pop_frame_main');
   div.appendChild(h);
 
   const stats = document.createElement('div');
   stats.className = 'k';
-  stats.textContent = 'videó: ' + f.videos + ' · feliratsáv: ' + f.tracks + ' (aktív: ' + f.activeTracks + ')';
+  stats.textContent = LFT.t('pop_frame_stats', [String(f.videos), String(f.tracks), String(f.activeTracks)]);
   div.appendChild(stats);
 
   const line = (cls, text) => {
@@ -123,40 +124,40 @@ function frameCard(f) {
   };
 
   if (f.trackText) {
-    line('good', '✓ A videó saját feliratsávjából olvasható a szöveg:');
+    line('good', LFT.t('pop_track_ok'));
     sample(f.trackText);
   }
 
   if (f.hasTarget) {
     if (f.targetFound && f.targetText) {
-      line('good', '✓ A kijelölt elem megvan és van benne szöveg:');
+      line('good', LFT.t('pop_target_ok'));
       sample(f.targetText);
     } else if (f.targetFound) {
-      line('bad', 'A kijelölt elem megvan, de most üres — be van kapcsolva a felirat?');
+      line('bad', LFT.t('pop_target_empty'));
     } else {
-      line('bad', 'A kijelölt elem nem található. Célozz újra.');
+      line('bad', LFT.t('pop_target_missing'));
     }
-    line('k', 'Mentett szabály: ' + f.targetSelector);
+    line('k', LFT.t('pop_target_rule', [f.targetSelector]));
     const del = document.createElement('button');
     del.className = 'danger';
-    del.textContent = 'Szabály törlése (vissza a feliratsávra)';
+    del.textContent = LFT.t('pop_rule_delete');
     del.addEventListener('click', async () => {
       await LFT.store.removeTarget(f.origin);
-      del.textContent = 'Törölve — töltsd újra az oldalt';
+      del.textContent = LFT.t('pop_rule_deleted');
       del.disabled = true;
     });
     div.appendChild(del);
   }
 
   if (f.guess) {
-    line('good', 'Találtam egy valószínű feliratelemet:');
+    line('good', LFT.t('pop_guess_found'));
     sample(f.guess.sample);
     const b = document.createElement('button');
     b.className = 'primary';
-    b.textContent = 'Beállítom ezt feliratforrásnak';
+    b.textContent = LFT.t('pop_guess_set');
     b.addEventListener('click', async () => {
       await LFT.store.setTarget(f.origin, f.guess.selector, 'diagnosztika');
-      b.textContent = 'Beállítva — nyomd meg a Start-ot';
+      b.textContent = LFT.t('pop_guess_done');
       b.disabled = true;
     });
     div.appendChild(b);
@@ -164,25 +165,25 @@ function frameCard(f) {
 
   if (!f.trackText && !f.guess && !f.hasTarget) {
     if (!f.videos) {
-      line('bad', 'Ebben a keretben nincs videó és feliratra utaló elem sem — a lejátszó valószínűleg beágyazott keretben van.');
+      line('bad', LFT.t('pop_no_video'));
     } else {
-      line('bad', 'Van videó, de feliratszöveget nem találok. Kapcsold be a feliratot, majd futtasd újra — ha így sem, a felirat a videóképre lehet égetve.');
+      line('bad', LFT.t('pop_no_text'));
     }
   }
 
   const ifr = f.iframes || { list: [], unknown: 0 };
   if (ifr.list.length) {
-    line('bad', 'Beágyazott keretek ezen az oldalon — a lejátszó szinte biztosan az elsőben van. Engedélyezd, hogy belelássak:');
+    line('bad', LFT.t('pop_iframes_intro'));
     ifr.list.forEach(it => {
       const b = document.createElement('button');
       b.className = 'primary';
-      b.textContent = 'Engedélyezem: ' + it.host;
+      b.textContent = LFT.t('pop_iframe_allow', [it.host]);
       b.addEventListener('click', () => enableDomain(it.host, b));
       div.appendChild(b);
     });
   }
   if (ifr.unknown) {
-    line('k', 'Van még ' + ifr.unknown + ' keret ismeretlen forrással — ezeket nem tudom azonosítani.');
+    line('k', LFT.t('pop_iframes_unknown', [String(ifr.unknown)]));
   }
 
   return div;
@@ -196,12 +197,12 @@ async function enableDomain(h, btn) {
   try {
     granted = await chrome.permissions.request({ origins: [patternFor(h)] });
   } catch (e) {
-    btn.textContent = 'Nem sikerült: ' + e.message;
+    btn.textContent = LFT.t('pop_iframe_failed', [e.message]);
     return;
   }
   if (!granted) {
     btn.disabled = false;
-    btn.textContent = 'Elutasítottad — Engedélyezem: ' + h;
+    btn.textContent = LFT.t('pop_iframe_denied', [h]);
     return;
   }
   const s = await LFT.store.getSettings();
@@ -210,20 +211,20 @@ async function enableDomain(h, btn) {
     await LFT.store.saveSettings({ domains: s.domains });
   }
   await chrome.runtime.sendMessage({ type: 'domains:sync' });
-  btn.textContent = '✓ ' + h + ' engedélyezve — töltsd újra az oldalt (F5)';
+  btn.textContent = LFT.t('pop_iframe_allowed', [h]);
 }
 
 $('diag').addEventListener('click', async () => {
   const box = $('report');
-  box.textContent = 'Vizsgálat…';
+  box.textContent = LFT.t('pop_diag_running');
   const res = await chrome.runtime.sendMessage({ type: 'diagnose', tabId: tab.id });
   box.textContent = '';
   if (!res || !res.ok) {
-    note((res && res.error) || 'A vizsgálat nem futott le.');
+    note((res && res.error) || LFT.t('pop_diag_failed'));
     return;
   }
   if (!res.frames.length) {
-    note('Egyetlen keretből sem jött válasz. Töltsd újra az oldalt (F5).');
+    note(LFT.t('pop_diag_noframes'));
     return;
   }
   res.frames.forEach(f => box.appendChild(frameCard(f)));

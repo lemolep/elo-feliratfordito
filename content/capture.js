@@ -149,7 +149,7 @@ globalThis.LFT = globalThis.LFT || {};
         missingSince = Date.now();
       } else if (Date.now() - missingSince > 10000) {
         missingSince = Date.now();
-        status('Elveszett a kijelölt feliratelem. Kapcsold be a feliratot, vagy célozz újra.', 'warn');
+        status(LFT.t('cap_target_lost'), 'warn');
       }
     }, 500);
   }
@@ -161,11 +161,10 @@ globalThis.LFT = globalThis.LFT || {};
     if (!document.querySelector('video')) {
       const ifr = listIframes();
       if (ifr.list.length) {
-        return 'A lejátszó külön keretben van (' + ifr.list[0].host + '), ezért nem látok bele — a célzó sem éri el. ' +
-               'Bővítmény ikon → Diagnosztika → „Engedélyezem: ' + ifr.list[0].host + '", majd töltsd újra az oldalt.';
+        return LFT.t('cap_no_source_iframe', [ifr.list[0].host]);
       }
     }
-    return 'Nem találtam feliratszöveget. Kapcsold be a feliratot a lejátszóban, vagy célozd ki a feliratot a ◎ gombbal.';
+    return LFT.t('cap_no_source');
   }
 
   /* ---------------- indítás / leállítás ---------------- */
@@ -205,7 +204,7 @@ globalThis.LFT = globalThis.LFT || {};
         detachObserver();
         clearInterval(rescanTimer);
         rescanTimer = setInterval(() => { if (running && mode === 'texttrack') scanTextTracks(); }, 1000);
-        status('A kijelölt elemből nem jött szöveg, ezért átváltottam a videó saját feliratsávjára.', 'warn');
+        status(LFT.t('cap_switched_to_track'), 'warn');
         return;
       }
 
@@ -273,7 +272,7 @@ globalThis.LFT = globalThis.LFT || {};
     ].join('');
     const tip = document.createElement('div');
     tip.className = 'tip';
-    tip.textContent = 'Kattints a feliratra — ESC = mégse';
+    tip.textContent = LFT.t('cap_pick_tip');
     hlTip = tip;
     hlBox = document.createElement('div');
     hlBox.className = 'box';
@@ -306,19 +305,19 @@ globalThis.LFT = globalThis.LFT || {};
 
     if (pointOverOverlay(e.clientX, e.clientY)) {
       disablePicker();
-      status('A fordítóablakra kattintottál. Húzd el az ablakot a felirat elől, aztán nyomd meg újra a célzót.', 'warn');
+      status(LFT.t('cap_pick_on_overlay'), 'warn');
       return;
     }
 
     const hit = document.elementFromPoint(e.clientX, e.clientY);
     disablePicker();
     if (!hit) {
-      status('Ott nem találtam elemet. Célozz újra, közvetlenül a feliratszövegre.', 'warn');
+      status(LFT.t('cap_pick_nothing'), 'warn');
       return;
     }
 
     if (looksLikeUiChrome(hit)) {
-      status('Ez egy link vagy gomb, nem felirat — nem mentettem el. Célozz újra, közvetlenül a feliratszövegre.', 'warn');
+      status(LFT.t('cap_pick_uichrome'), 'warn');
       return;
     }
 
@@ -327,7 +326,7 @@ globalThis.LFT = globalThis.LFT || {};
 
     const sel = LFT.selector.build(el);
     if (!sel) {
-      status('Nem sikerült azonosítani ezt az elemet — próbálj a szöveg köré, egy szinttel feljebb kattintani.', 'warn');
+      status(LFT.t('cap_pick_noselector'), 'warn');
       return;
     }
 
@@ -336,9 +335,9 @@ globalThis.LFT = globalThis.LFT || {};
     targetSelector = sel;
 
     if (!sample) {
-      status('A kijelölt elemben most nincs szöveg. Ha ki van kapcsolva a felirat, kapcsold be (CC) és célozz újra. Ha látszik a felirat, de ide mégsem jön szöveg, akkor a videóképre van égetve — azt DOM-ból nem lehet kiolvasni.', 'warn');
+      status(LFT.t('cap_pick_notext'), 'warn');
     } else {
-      status('Felirat kijelölve: "' + sample.slice(0, 40) + '"', 'ok');
+      status(LFT.t('cap_picked', [sample.slice(0, 40)]), 'ok');
     }
     send({ type: 'relay:picked', origin: ORIGIN, sample: sample });
 
@@ -353,7 +352,7 @@ globalThis.LFT = globalThis.LFT || {};
     if (e.key === 'Escape') {
       e.preventDefault();
       disablePicker();
-      status('Célzás megszakítva.', '');
+      status(LFT.t('cap_pick_cancelled'), '');
     }
   }
 
@@ -368,8 +367,7 @@ globalThis.LFT = globalThis.LFT || {};
     if (IS_TOP && hlTip && !document.querySelector('video')) {
       const ifr = listIframes();
       if (ifr.list.length) {
-        hlTip.textContent = 'Figyelem: a lejátszó külön keretben van (' + ifr.list[0].host +
-          ') — a videó fölött a célzó nem működik. Előbb engedélyezd a Diagnosztikában.';
+        hlTip.textContent = LFT.t('cap_pick_tip_iframe', [ifr.list[0].host]);
       }
     }
     window.addEventListener('mousemove', onPickMove, true);
@@ -462,7 +460,7 @@ globalThis.LFT = globalThis.LFT || {};
       if (el) targetText = LFT.normalizeText(el.innerText || '').slice(0, 60);
     }
     return {
-      frame: IS_TOP ? 'fő oldal' : (location.host || 'iframe'),
+      frame: IS_TOP ? '' : (location.host || 'iframe'),
       origin: ORIGIN,
       videos: videos,
       tracks: tracks,

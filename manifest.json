@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Élő feliratfordító (auto → magyar)",
-  "version": "0.2.0",
-  "description": "Élő felirat kiolvasása bármely oldalról, azonnali fordítás DeepL-lel a választott nyelvre, mozgatható lebegő ablakban, menthető átirattal.",
+  "name": "__MSG_appName__",
+  "version": "0.3.0",
+  "description": "__MSG_appDesc__",
   "permissions": [
     "storage",
     "unlimitedStorage",
@@ -21,7 +21,7 @@
   },
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "Élő feliratfordító",
+    "default_title": "__MSG_appName__",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -39,13 +39,14 @@
       "suggested_key": {
         "default": "Alt+Shift+T"
       },
-      "description": "Fordítóablak mutatása / elrejtése"
+      "description": "__MSG_cmdToggleWindow__"
     },
     "toggle-capture": {
       "suggested_key": {
         "default": "Alt+Shift+S"
       },
-      "description": "Rögzítés indítása / leállítása"
+      "description": "__MSG_cmdToggleCapture__"
     }
-  }
+  },
+  "default_locale": "hu"
 }

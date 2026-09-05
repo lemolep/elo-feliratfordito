@@ -1,0 +1,521 @@
+{
+  "appName": {
+    "message": "Élő feliratfordító"
+  },
+  "appDesc": {
+    "message": "Élő felirat kiolvasása bármely oldalról, azonnali fordítás DeepL-lel a választott nyelvre, mozgatható lebegő ablakban, menthető átirattal."
+  },
+  "cmdToggleWindow": {
+    "message": "Fordítóablak mutatása / elrejtése"
+  },
+  "cmdToggleCapture": {
+    "message": "Rögzítés indítása / leállítása"
+  },
+  "ov_tip_title": {
+    "message": "Élő feliratfordító"
+  },
+  "ov_start": {
+    "message": "Start"
+  },
+  "ov_stop": {
+    "message": "Stop"
+  },
+  "ov_bilingual": {
+    "message": "2 nyelv"
+  },
+  "ov_mono": {
+    "message": "1 nyelv"
+  },
+  "ov_tip_lang": {
+    "message": "Kétnyelvű nézet / csak a fordítás"
+  },
+  "ov_tip_fsdown": {
+    "message": "Kisebb betű"
+  },
+  "ov_tip_fsup": {
+    "message": "Nagyobb betű"
+  },
+  "ov_tip_opacity": {
+    "message": "Háttér átlátszatlansága"
+  },
+  "ov_tip_pick": {
+    "message": "Célzó: kattints a feliratra"
+  },
+  "ov_save": {
+    "message": "Mentés"
+  },
+  "ov_tip_save": {
+    "message": "Átirat mentése .txt fájlba"
+  },
+  "ov_tip_opts": {
+    "message": "Beállítások"
+  },
+  "ov_tip_close": {
+    "message": "Ablak elrejtése (Alt+Shift+T)"
+  },
+  "ov_jump": {
+    "message": "▼ Ugrás a végére"
+  },
+  "ov_dlg_title": {
+    "message": "Átirat mentése"
+  },
+  "ov_dlg_hint": {
+    "message": "A fájl az eredeti és a lefordított sorokat is tartalmazza, időbélyeggel."
+  },
+  "ov_cancel": {
+    "message": "Mégse"
+  },
+  "ov_translating": {
+    "message": "fordítás…"
+  },
+  "ov_no_translation": {
+    "message": "(nincs fordítás)"
+  },
+  "ov_lines": {
+    "message": "$1 sor"
+  },
+  "ov_lines_one": {
+    "message": "$1 sor"
+  },
+  "ov_default_filename": {
+    "message": "atirat"
+  },
+  "ov_hint_nokey": {
+    "message": "Először add meg a DeepL API kulcsot a ⚙ gombnál, utána nyomd meg a Start-ot."
+  },
+  "ov_hint_ready": {
+    "message": "Kész. Kapcsold be a feliratot a lejátszóban, majd nyomd meg a Start gombot."
+  },
+  "ov_hint_start": {
+    "message": "Nyomd meg a Start-ot. Ha nem jön felirat, kattints a ◎ célzóra, majd magára a feliratra az oldalon."
+  },
+  "ov_starting": {
+    "message": "Rögzítés indul…"
+  },
+  "ov_warn_nokey": {
+    "message": "Nincs DeepL kulcs — a rögzítés megy, de fordítás nélkül. Állítsd be a ⚙ gombbal."
+  },
+  "ov_stopped_lines": {
+    "message": "Rögzítés leállítva — $1 sor."
+  },
+  "ov_stopped_lines_one": {
+    "message": "Rögzítés leállítva — $1 sor."
+  },
+  "ov_stopped": {
+    "message": "Rögzítés leállítva."
+  },
+  "ov_nothing_to_save": {
+    "message": "Még nincs mit menteni."
+  },
+  "ov_saved": {
+    "message": "Mentve: $1"
+  },
+  "ov_pick_active": {
+    "message": "Kattints a feliratra az oldalon — ESC = mégse"
+  },
+  "ov_err_unknown": {
+    "message": "Ismeretlen fordítási hiba."
+  },
+  "ov_stale": {
+    "message": "A bővítmény frissült — töltsd újra az oldalt (F5), hogy újra működjön."
+  },
+  "ov_file_header": {
+    "message": "# Élő feliratfordítás ($1) — $2"
+  },
+  "ov_file_source": {
+    "message": "# Forrás: $1"
+  },
+  "ov_file_recorded": {
+    "message": "# Rögzítve: $1"
+  },
+  "ov_file_lines": {
+    "message": "# Sorok: $1"
+  },
+  "ov_file_original": {
+    "message": "EREDETI"
+  },
+  "cap_pick_tip": {
+    "message": "Kattints a feliratra — ESC = mégse"
+  },
+  "cap_pick_tip_iframe": {
+    "message": "Figyelem: a lejátszó külön keretben van ($1) — a videó fölött a célzó nem működik. Előbb engedélyezd a Diagnosztikában."
+  },
+  "cap_pick_cancelled": {
+    "message": "Célzás megszakítva."
+  },
+  "cap_pick_on_overlay": {
+    "message": "A fordítóablakra kattintottál. Húzd el az ablakot a felirat elől, aztán nyomd meg újra a célzót."
+  },
+  "cap_pick_uichrome": {
+    "message": "Ez egy link vagy gomb, nem felirat — nem mentettem el. Célozz újra, közvetlenül a feliratszövegre."
+  },
+  "cap_pick_nothing": {
+    "message": "Ott nem találtam elemet. Célozz újra, közvetlenül a feliratszövegre."
+  },
+  "cap_pick_noselector": {
+    "message": "Nem sikerült azonosítani ezt az elemet — próbálj a szöveg köré, egy szinttel feljebb kattintani."
+  },
+  "cap_pick_notext": {
+    "message": "A kijelölt elemben most nincs szöveg. Ha ki van kapcsolva a felirat, kapcsold be (CC) és célozz újra. Ha látszik a felirat, de ide mégsem jön szöveg, akkor a videóképre van égetve — azt DOM-ból nem lehet kiolvasni."
+  },
+  "cap_picked": {
+    "message": "Felirat kijelölve: „$1”"
+  },
+  "cap_target_lost": {
+    "message": "Elveszett a kijelölt feliratelem. Kapcsold be a feliratot, vagy célozz újra."
+  },
+  "cap_switched_to_track": {
+    "message": "A kijelölt elemből nem jött szöveg, ezért átváltottam a videó saját feliratsávjára."
+  },
+  "cap_no_source_iframe": {
+    "message": "A lejátszó külön keretben van ($1), ezért nem látok bele — a célzó sem éri el. Bővítmény ikon → Diagnosztika → „Engedélyezem: $1”, majd töltsd újra az oldalt."
+  },
+  "cap_no_source": {
+    "message": "Nem találtam feliratszöveget. Kapcsold be a feliratot a lejátszóban, vagy célozd ki a feliratot a ◎ gombbal."
+  },
+  "pop_title": {
+    "message": "Élő feliratfordító"
+  },
+  "pop_state_loading": {
+    "message": "Állapot betöltése…"
+  },
+  "pop_state_notrunning": {
+    "message": "Nem fut ezen az oldalon"
+  },
+  "pop_state_ready": {
+    "message": "Készenlétben"
+  },
+  "pop_state_recording": {
+    "message": "Rögzít — $1 sor"
+  },
+  "pop_state_recording_one": {
+    "message": "Rögzít — $1 sor"
+  },
+  "pop_state_stopped": {
+    "message": "Áll — $1 sor"
+  },
+  "pop_state_stopped_one": {
+    "message": "Áll — $1 sor"
+  },
+  "pop_enable": {
+    "message": "Engedélyezés ezen az oldalon"
+  },
+  "pop_rec_start": {
+    "message": "Rögzítés indítása"
+  },
+  "pop_rec_stop": {
+    "message": "Rögzítés leállítása"
+  },
+  "pop_show": {
+    "message": "Ablak mutatása"
+  },
+  "pop_pick": {
+    "message": "Célzó — felirat kijelölése"
+  },
+  "pop_save": {
+    "message": "Átirat mentése"
+  },
+  "pop_diag": {
+    "message": "Diagnosztika — mit lát az oldalon?"
+  },
+  "pop_opts": {
+    "message": "Beállítások és előzmények"
+  },
+  "pop_bad_page": {
+    "message": "Ezen az oldaltípuson nem futhat bővítmény."
+  },
+  "pop_note_nokey": {
+    "message": "Még nincs DeepL API kulcs. A rögzítés működik, de fordítás nélkül. Állítsd be lent."
+  },
+  "pop_perm_failed": {
+    "message": "Nem sikerült engedélyt kérni erre a címre: $1"
+  },
+  "pop_perm_denied": {
+    "message": "Az engedélyt elutasítottad, így itt nem tud futni."
+  },
+  "pop_enabled_reload": {
+    "message": "Engedélyezve. Töltsd újra az oldalt (F5), és megjelenik az ablak."
+  },
+  "pop_diag_running": {
+    "message": "Vizsgálat…"
+  },
+  "pop_diag_failed": {
+    "message": "A vizsgálat nem futott le."
+  },
+  "pop_diag_noframes": {
+    "message": "Egyetlen keretből sem jött válasz. Töltsd újra az oldalt (F5)."
+  },
+  "pop_frame_main": {
+    "message": "fő oldal"
+  },
+  "pop_frame_stats": {
+    "message": "videó: $1 · feliratsáv: $2 (aktív: $3)"
+  },
+  "pop_track_ok": {
+    "message": "✓ A videó saját feliratsávjából olvasható a szöveg:"
+  },
+  "pop_target_ok": {
+    "message": "✓ A kijelölt elem megvan és van benne szöveg:"
+  },
+  "pop_target_empty": {
+    "message": "A kijelölt elem megvan, de most üres — be van kapcsolva a felirat?"
+  },
+  "pop_target_missing": {
+    "message": "A kijelölt elem nem található. Célozz újra."
+  },
+  "pop_target_rule": {
+    "message": "Mentett szabály: $1"
+  },
+  "pop_rule_delete": {
+    "message": "Szabály törlése (vissza a feliratsávra)"
+  },
+  "pop_rule_deleted": {
+    "message": "Törölve — töltsd újra az oldalt"
+  },
+  "pop_guess_found": {
+    "message": "Találtam egy valószínű feliratelemet:"
+  },
+  "pop_guess_set": {
+    "message": "Beállítom ezt feliratforrásnak"
+  },
+  "pop_guess_done": {
+    "message": "Beállítva — nyomd meg a Start-ot"
+  },
+  "pop_no_video": {
+    "message": "Ebben a keretben nincs videó és feliratra utaló elem sem — a lejátszó valószínűleg beágyazott keretben van."
+  },
+  "pop_no_text": {
+    "message": "Van videó, de feliratszöveget nem találok. Kapcsold be a feliratot, majd futtasd újra — ha így sem, a felirat a videóképre lehet égetve."
+  },
+  "pop_iframes_intro": {
+    "message": "Beágyazott keretek ezen az oldalon — a lejátszó szinte biztosan az elsőben van. Engedélyezd, hogy belelássak:"
+  },
+  "pop_iframe_allow": {
+    "message": "Engedélyezem: $1"
+  },
+  "pop_iframe_allowed": {
+    "message": "✓ $1 engedélyezve — töltsd újra az oldalt (F5)"
+  },
+  "pop_iframe_denied": {
+    "message": "Elutasítottad — Engedélyezem: $1"
+  },
+  "pop_iframe_failed": {
+    "message": "Nem sikerült: $1"
+  },
+  "pop_iframes_unknown": {
+    "message": "Van még $1 keret ismeretlen forrással — ezeket nem tudom azonosítani."
+  },
+  "opt_doc_title": {
+    "message": "Élő feliratfordító — beállítások"
+  },
+  "opt_sub": {
+    "message": "Élő felirat kiolvasása, azonnali fordítás a választott nyelvre, menthető átirat."
+  },
+  "opt_s1_title": {
+    "message": "1. DeepL API kulcs"
+  },
+  "opt_s1_hint": {
+    "message": "A Free kulcs <code>:fx</code>-re végződik — a bővítmény ebből ismeri fel, hogy melyik DeepL végpontot kell hívnia, tehát Pro kulcsot is beírhatsz később."
+  },
+  "opt_show": {
+    "message": "Mutat"
+  },
+  "opt_hide": {
+    "message": "Rejt"
+  },
+  "opt_test": {
+    "message": "Teszt"
+  },
+  "opt_key_warn": {
+    "message": "A kulcs titkosítatlanul, a böngésző saját tárolójában marad ezen a gépen. Közös géppel ne használd."
+  },
+  "opt_key_saved": {
+    "message": "Elmentve. A „Teszt\" gombbal ellenőrizheted."
+  },
+  "opt_key_empty": {
+    "message": "Előbb írd be a kulcsot."
+  },
+  "opt_key_checking": {
+    "message": "Ellenőrzés…"
+  },
+  "opt_key_ok": {
+    "message": "Működik. Végpont: $1 — elhasználva $2 / $3 karakter ($4%)."
+  },
+  "opt_key_failed": {
+    "message": "Nem sikerült elérni a DeepL-t."
+  },
+  "opt_lang_label": {
+    "message": "Célnyelv — erre fordítja a feliratot"
+  },
+  "opt_lang_refresh": {
+    "message": "Lista frissítése"
+  },
+  "opt_lang_hint": {
+    "message": "A forrásnyelvet a DeepL magától felismeri, tehát angol, német, spanyol és a többi forrás is működik — csak azt kell megadnod, mire fordítson."
+  },
+  "opt_lang_needkey": {
+    "message": "A friss listához előbb add meg a DeepL kulcsot."
+  },
+  "opt_lang_loading": {
+    "message": "Lista lekérése…"
+  },
+  "opt_lang_count": {
+    "message": "$1 célnyelv elérhető."
+  },
+  "opt_lang_failed": {
+    "message": "Nem sikerült lekérni a nyelvek listáját."
+  },
+  "opt_lang_changed": {
+    "message": "Mostantól ide fordít: $1"
+  },
+  "opt_s2_title": {
+    "message": "2. Engedélyezett oldalak"
+  },
+  "opt_s2_hint": {
+    "message": "A bővítmény csak az itt felsorolt oldalakon fut. Írd be a stream oldal címét (pl. <code>pelda-stream.hu</code>) — az aloldalak és az aldomainek automatikusan beleértendők."
+  },
+  "opt_domain_add": {
+    "message": "Hozzáadás"
+  },
+  "opt_domain_ph": {
+    "message": "pelda-stream.hu"
+  },
+  "opt_domain_none": {
+    "message": "Még nincs engedélyezett oldal."
+  },
+  "opt_domain_nogrant": {
+    "message": "nincs engedély — töröld és add hozzá újra"
+  },
+  "opt_delete": {
+    "message": "Törlés"
+  },
+  "opt_domain_invalid": {
+    "message": "Ez nem érvényes domain. Például: pelda-stream.hu"
+  },
+  "opt_domain_exists": {
+    "message": "Ez már a listán van."
+  },
+  "opt_domain_removed": {
+    "message": "$1 eltávolítva."
+  },
+  "opt_domain_added": {
+    "message": "$1 hozzáadva."
+  },
+  "opt_domain_injected": {
+    "message": "$1 megnyitott fülön azonnal aktív."
+  },
+  "opt_domain_reload": {
+    "message": "A már megnyitott fülekhez töltsd újra az oldalt."
+  },
+  "opt_perm_failed": {
+    "message": "Nem sikerült engedélyt kérni: $1"
+  },
+  "opt_s3_title": {
+    "message": "3. Fordítás és megjelenés"
+  },
+  "opt_delay_label": {
+    "message": "Mondat lezárása ennyi szünet után"
+  },
+  "opt_delay_hint": {
+    "message": "Rövidebb érték = gyorsabb felirat, több DeepL hívás és több félbevágott mondat. Hosszabb érték = jobb fordítás, 1–3 másodperc csúszás."
+  },
+  "opt_fs_label": {
+    "message": "Alap betűméret"
+  },
+  "opt_op_label": {
+    "message": "Alap háttér-átlátszatlanság"
+  },
+  "opt_bilingual_label": {
+    "message": "Alapból kétnyelvű nézet (eredeti + fordítás egymás alatt)"
+  },
+  "opt_s3_hint": {
+    "message": "A betűméretet, átlátszóságot és a nézetet oldalanként az ablakban is állíthatod — ott megjegyzi. Ezek itt csak az alapértékek."
+  },
+  "opt_s4_title": {
+    "message": "4. Kijelölt feliratelemek"
+  },
+  "opt_s4_hint": {
+    "message": "A célzóval kijelölt elemek oldalanként. Ha egy oldalon elromlik a felirat felismerése, töröld itt a szabályt, és célozz újra."
+  },
+  "opt_target_none": {
+    "message": "Még nincs kijelölt feliratelem. A bővítmény a videó saját feliratsávját próbálja olvasni."
+  },
+  "opt_rule_delete": {
+    "message": "Szabály törlése"
+  },
+  "opt_s5_title": {
+    "message": "5. Korábbi felvételek"
+  },
+  "opt_clear_all": {
+    "message": "Összes törlése"
+  },
+  "opt_th_when": {
+    "message": "Mikor"
+  },
+  "opt_th_site": {
+    "message": "Oldal"
+  },
+  "opt_th_len": {
+    "message": "Hossz"
+  },
+  "opt_th_lines": {
+    "message": "Sorok"
+  },
+  "opt_download": {
+    "message": "Letöltés"
+  },
+  "opt_sessions_none": {
+    "message": "Még nincs felvétel."
+  },
+  "opt_sessions_empty_row": {
+    "message": "Itt jelennek meg a rögzített átiratok."
+  },
+  "opt_sessions_count": {
+    "message": "$1 felvétel · $2 MB tárhely"
+  },
+  "opt_sessions_count_one": {
+    "message": "$1 felvétel · $2 MB tárhely"
+  },
+  "opt_ongoing": {
+    "message": "folyamatban"
+  },
+  "opt_minutes": {
+    "message": "$1 perc"
+  },
+  "opt_hours": {
+    "message": "$1 ó $2 p"
+  },
+  "opt_confirm_clear": {
+    "message": "Biztosan törlöd az összes rögzített átiratot? Ez nem vonható vissza."
+  },
+  "opt_footer": {
+    "message": "Gyorsbillentyűk: <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> ablak mutatása/elrejtése · <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> rögzítés indítása/leállítása. Átírhatók a <code>chrome://extensions/shortcuts</code> oldalon."
+  },
+  "dl_err_key": {
+    "message": "Hibás vagy lejárt DeepL kulcs — ellenőrizd a beállításokban."
+  },
+  "dl_err_toolong": {
+    "message": "Túl hosszú szöveg egy kérésben."
+  },
+  "dl_err_rate": {
+    "message": "Túl sok kérés — a DeepL átmenetileg lassít."
+  },
+  "dl_err_quota": {
+    "message": "Elfogyott a havi DeepL keret. A rögzítés megy tovább, csak fordítás nélkül."
+  },
+  "dl_err_offline": {
+    "message": "Nincs hálózati kapcsolat a DeepL felé."
+  },
+  "dl_err_server": {
+    "message": "A DeepL szolgáltatás átmenetileg nem elérhető."
+  },
+  "dl_err_other": {
+    "message": "DeepL hiba ($1)."
+  },
+  "dl_err_nokey": {
+    "message": "Nincs DeepL kulcs beállítva."
+  },
+  "dl_err_empty": {
+    "message": "A DeepL üres fordítást adott vissza."
+  }
+}

@@ -46,18 +46,18 @@ function clockOf(ms) {
 }
 
 function safeFileName(s) {
-  return String(s || 'atirat')
+  return String(s || LFT.t('ov_default_filename'))
     .replace(/[\\/:*?"<>|]/g, '-')
     .replace(/\s+/g, '_')
     .trim()
-    .slice(0, 80) || 'atirat';
+    .slice(0, 80) || LFT.t('ov_default_filename');
 }
 
 function duration(ms) {
   if (!ms || ms < 0) return '—';
   const m = Math.round(ms / 60000);
-  if (m < 60) return m + ' perc';
-  return Math.floor(m / 60) + ' ó ' + (m % 60) + ' p';
+  if (m < 60) return LFT.t('opt_minutes', [String(m)]);
+  return LFT.t('opt_hours', [String(Math.floor(m / 60)), String(m % 60)]);
 }
 
 /* ---------------- DeepL kulcs ---------------- */
@@ -66,31 +66,31 @@ $('keyShow').addEventListener('click', () => {
   const f = $('key');
   const shown = f.type === 'text';
   f.type = shown ? 'password' : 'text';
-  $('keyShow').textContent = shown ? 'Mutat' : 'Rejt';
+  $('keyShow').textContent = LFT.t(shown ? 'opt_show' : 'opt_hide');
 });
 
 $('key').addEventListener('input', () => {
   queueSave({ deeplKey: $('key').value.trim() });
-  result('keyResult', 'Elmentve. A "Teszt" gombbal ellenőrizheted.', 'info');
+  result('keyResult', LFT.t('opt_key_saved'), 'info');
 });
 
 $('keyTest').addEventListener('click', async () => {
   const key = $('key').value.trim();
-  if (!key) { result('keyResult', 'Előbb írd be a kulcsot.', 'err'); return; }
+  if (!key) { result('keyResult', LFT.t('opt_key_empty'), 'err'); return; }
   await LFT.store.saveSettings({ deeplKey: key });
-  result('keyResult', 'Ellenőrzés…', 'info');
+  result('keyResult', LFT.t('opt_key_checking'), 'info');
   const res = await chrome.runtime.sendMessage({ type: 'deepl:usage', key: key });
   if (res && res.ok) {
     const u = res.usage || {};
     const used = u.character_count || 0;
     const limit = u.character_limit || 0;
     const pct = limit ? Math.round(used / limit * 100) : 0;
-    result('keyResult',
-      'Működik. Végpont: ' + res.endpoint + ' — elhasználva ' +
-      used.toLocaleString('hu-HU') + ' / ' + limit.toLocaleString('hu-HU') +
-      ' karakter (' + pct + '%).', 'ok');
+    const loc = LFT.i18n.uiLang();
+    result('keyResult', LFT.t('opt_key_ok', [
+      res.endpoint, used.toLocaleString(loc), limit.toLocaleString(loc), String(pct)
+    ]), 'ok');
   } else {
-    result('keyResult', (res && res.error) || 'Nem sikerült elérni a DeepL-t.', 'err');
+    result('keyResult', (res && res.error) || LFT.t('opt_key_failed'), 'err');
   }
 });
 
@@ -101,7 +101,7 @@ function fillLangs(list, selected) {
   sel.innerHTML = '';
   list.slice()
     .map(l => ({ code: l.language, label: LFT.deepl.labelFor(l.language, l.name) }))
-    .sort((a, b) => a.label.localeCompare(b.label, 'hu'))
+    .sort((a, b) => a.label.localeCompare(b.label, LFT.i18n.uiLang()))
     .forEach(l => {
       const o = document.createElement('option');
       o.value = l.code;
@@ -122,23 +122,23 @@ function fillLangs(list, selected) {
 async function refreshLangs(quiet) {
   const key = $('key').value.trim();
   if (!key) {
-    if (!quiet) result('langResult', 'A friss listához előbb add meg a DeepL kulcsot.', 'err');
+    if (!quiet) result('langResult', LFT.t('opt_lang_needkey'), 'err');
     return;
   }
-  if (!quiet) result('langResult', 'Lista lekérése…', 'info');
+  if (!quiet) result('langResult', LFT.t('opt_lang_loading'), 'info');
   const res = await chrome.runtime.sendMessage({ type: 'deepl:languages', key: key });
   if (res && res.ok && res.langs && res.langs.length) {
     fillLangs(res.langs, settings.targetLang);
-    if (!quiet) result('langResult', res.langs.length + ' célnyelv elérhető.', 'ok');
+    if (!quiet) result('langResult', LFT.t('opt_lang_count', [String(res.langs.length)]), 'ok');
   } else if (!quiet) {
-    result('langResult', (res && res.error) || 'Nem sikerült lekérni a nyelvek listáját.', 'err');
+    result('langResult', (res && res.error) || LFT.t('opt_lang_failed'), 'err');
   }
 }
 
 $('target').addEventListener('change', () => {
   queueSave({ targetLang: $('target').value });
   const label = $('target').options[$('target').selectedIndex].textContent;
-  result('langResult', 'Mostantól ide fordít: ' + label, 'ok');
+  result('langResult', LFT.t('opt_lang_changed', [label]), 'ok');
 });
 
 $('langRefresh').addEventListener('click', () => refreshLangs(false));
@@ -149,7 +149,8 @@ async function renderDomains() {
   const ul = $('domainList');
   ul.innerHTML = '';
   if (!settings.domains.length) {
-    ul.innerHTML = '<li class="empty">Még nincs engedélyezett oldal.</li>';
+    ul.innerHTML = '<li class="empty"></li>';
+    ul.firstChild.textContent = LFT.t('opt_domain_none');
     return;
   }
   for (const d of settings.domains) {
@@ -160,12 +161,10 @@ async function renderDomains() {
     box.className = 'grow';
     box.innerHTML = '<b></b><span class="mono"></span>';
     box.querySelector('b').textContent = d;
-    box.querySelector('.mono').textContent = granted
-      ? patternFor(d)
-      : 'nincs engedély — töröld és add hozzá újra';
+    box.querySelector('.mono').textContent = granted ? patternFor(d) : LFT.t('opt_domain_nogrant');
     const btn = document.createElement('button');
     btn.className = 'small danger';
-    btn.textContent = 'Törlés';
+    btn.textContent = LFT.t('opt_delete');
     btn.addEventListener('click', () => removeDomain(d));
     li.appendChild(box);
     li.appendChild(btn);
@@ -178,26 +177,27 @@ async function removeDomain(d) {
   await LFT.store.saveSettings({ domains: settings.domains });
   try { await chrome.permissions.remove({ origins: [patternFor(d)] }); } catch (e) {}
   await chrome.runtime.sendMessage({ type: 'domains:sync' });
-  result('domainResult', d + ' eltávolítva.', 'info');
+  result('domainResult', LFT.t('opt_domain_removed', [d]), 'info');
   renderDomains();
 }
 
 $('domainAdd').addEventListener('click', async () => {
   const d = cleanDomain($('domainInput').value);
-  if (!d) { result('domainResult', 'Ez nem érvényes domain. Például: pelda-stream.hu', 'err'); return; }
-  if (settings.domains.includes(d)) { result('domainResult', 'Ez már a listán van.', 'info'); return; }
+  if (!d) { result('domainResult', LFT.t('opt_domain_invalid'), 'err'); return; }
+  if (settings.domains.includes(d)) { result('domainResult', LFT.t('opt_domain_exists'), 'info'); return; }
 
   let granted = false;
   try { granted = await chrome.permissions.request({ origins: [patternFor(d)] }); }
-  catch (e) { result('domainResult', 'Nem sikerült engedélyt kérni: ' + e.message, 'err'); return; }
-  if (!granted) { result('domainResult', 'Az engedélyt elutasítottad, így itt nem tud futni.', 'err'); return; }
+  catch (e) { result('domainResult', LFT.t('opt_perm_failed', [e.message]), 'err'); return; }
+  if (!granted) { result('domainResult', LFT.t('pop_perm_denied'), 'err'); return; }
 
   settings.domains.push(d);
   await LFT.store.saveSettings({ domains: settings.domains });
   const r = await chrome.runtime.sendMessage({ type: 'domains:sync' });
   $('domainInput').value = '';
   result('domainResult',
-    d + ' hozzáadva.' + (r && r.injected ? ' ' + r.injected + ' megnyitott fülön azonnal aktív.' : ' A már megnyitott fülekhez töltsd újra az oldalt.'),
+    LFT.t('opt_domain_added', [d]) + ' ' +
+    (r && r.injected ? LFT.t('opt_domain_injected', [String(r.injected)]) : LFT.t('opt_domain_reload')),
     'ok');
   renderDomains();
 });
@@ -232,7 +232,8 @@ async function renderTargets() {
   const keys = Object.keys(targets);
   ul.innerHTML = '';
   if (!keys.length) {
-    ul.innerHTML = '<li class="empty">Még nincs kijelölt feliratelem. A bővítmény a videó saját feliratsávját próbálja olvasni.</li>';
+    ul.innerHTML = '<li class="empty"></li>';
+    ul.firstChild.textContent = LFT.t('opt_target_none');
     return;
   }
   for (const origin of keys) {
@@ -245,7 +246,7 @@ async function renderTargets() {
     box.querySelector('.mono').textContent = t.selector;
     const btn = document.createElement('button');
     btn.className = 'small danger';
-    btn.textContent = 'Szabály törlése';
+    btn.textContent = LFT.t('opt_rule_delete');
     btn.addEventListener('click', async () => {
       await LFT.store.removeTarget(origin);
       renderTargets();
@@ -262,16 +263,17 @@ function buildTxt(s) {
   const lines = s.lines || [];
   const first = lines.length ? lines[0].t : s.startedAt;
   const out = [];
-  out.push('# Élő fordítás — ' + (s.title || s.origin));
-  out.push('# Forrás: ' + s.url);
-  out.push('# Rögzítve: ' + clockOf(s.startedAt) + (s.endedAt ? ' – ' + clockOf(s.endedAt) : ''));
-  out.push('# Sorok: ' + lines.length);
+  const lang = s.targetLang || 'HU';
+  out.push(LFT.t('ov_file_header', [lang, s.title || s.origin]));
+  out.push(LFT.t('ov_file_source', [s.url]));
+  out.push(LFT.t('ov_file_recorded', [clockOf(s.startedAt) + (s.endedAt ? ' – ' + clockOf(s.endedAt) : '')]));
+  out.push(LFT.t('ov_file_lines', [String(lines.length)]));
   out.push('');
   for (const l of lines) {
     const time = (l.videoTime != null) ? hhmmss(l.videoTime) : hhmmss((l.t - first) / 1000);
     out.push('[' + time + ']');
-    out.push('EN: ' + l.src);
-    out.push('HU: ' + (l.hu || '(nincs fordítás)'));
+    out.push(LFT.t('ov_file_original') + ': ' + l.src);
+    out.push(lang + ': ' + (l.hu || LFT.t('ov_no_translation')));
     out.push('');
   }
   return out.join('\r\n');
@@ -302,11 +304,12 @@ async function renderSessions() {
 
   const bytes = await LFT.store.storageBytes();
   $('storageInfo').textContent = rows.length
-    ? rows.length + ' felvétel · ' + (bytes >= 0 ? (bytes / 1024 / 1024).toFixed(2) + ' MB tárhely' : '')
-    : 'Még nincs felvétel.';
+    ? LFT.tn('opt_sessions_count', rows.length, [String(rows.length), bytes >= 0 ? (bytes / 1024 / 1024).toFixed(2) : '?'])
+    : LFT.t('opt_sessions_none');
 
   if (!rows.length) {
-    tbody.innerHTML = '<tr class="none"><td colspan="5">Itt jelennek meg a rögzített átiratok.</td></tr>';
+    tbody.innerHTML = '<tr class="none"><td colspan="5"></td></tr>';
+    tbody.querySelector('td').textContent = LFT.t('opt_sessions_empty_row');
     return;
   }
 
@@ -323,7 +326,7 @@ async function renderSessions() {
     td2.title = r.url || '';
 
     const td3 = document.createElement('td');
-    td3.textContent = r.endedAt ? duration(r.endedAt - r.startedAt) : 'folyamatban';
+    td3.textContent = r.endedAt ? duration(r.endedAt - r.startedAt) : LFT.t('opt_ongoing');
 
     const td4 = document.createElement('td');
     td4.textContent = r.lineCount || 0;
@@ -332,11 +335,11 @@ async function renderSessions() {
     td5.className = 'actions';
     const dl = document.createElement('button');
     dl.className = 'small primary';
-    dl.textContent = 'Letöltés';
+    dl.textContent = LFT.t('opt_download');
     dl.addEventListener('click', () => downloadSession(r.id, r.title, r.startedAt));
     const del = document.createElement('button');
     del.className = 'small danger';
-    del.textContent = 'Törlés';
+    del.textContent = LFT.t('opt_delete');
     del.addEventListener('click', async () => {
       await chrome.runtime.sendMessage({ type: 'session:delete', id: r.id });
       renderSessions();
@@ -350,7 +353,7 @@ async function renderSessions() {
 }
 
 $('clearAll').addEventListener('click', async () => {
-  if (!confirm('Biztosan törlöd az összes rögzített átiratot? Ez nem vonható vissza.')) return;
+  if (!confirm(LFT.t('opt_confirm_clear'))) return;
   await chrome.runtime.sendMessage({ type: 'session:clear' });
   renderSessions();
 });
@@ -358,6 +361,7 @@ $('clearAll').addEventListener('click', async () => {
 /* ---------------- indulás ---------------- */
 
 async function init() {
+  LFT.i18n.applyDom();
   settings = await LFT.store.getSettings();
 
   $('key').value = settings.deeplKey || '';

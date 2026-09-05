@@ -57,11 +57,11 @@ globalThis.LFT = globalThis.LFT || {};
   }
 
   function safeFileName(s) {
-    return String(s || 'atirat')
+    return String(s || LFT.t('ov_default_filename'))
       .replace(/[\\/:*?"<>|]/g, '-')
       .replace(/\s+/g, '_')
       .trim()
-      .slice(0, 80) || 'atirat';
+      .slice(0, 80) || LFT.t('ov_default_filename');
   }
 
   function targetLang() {
@@ -89,35 +89,36 @@ globalThis.LFT = globalThis.LFT || {};
     panel.innerHTML = [
       '<div class="hdr" data-drag>',
         '<span class="dot"></span>',
-        '<span class="ttl" title="Élő feliratfordító">→ …</span>',
+        '<span class="ttl" data-i18n-title="ov_tip_title">→ …</span>',
         '<span class="spacer"></span>',
-        '<button class="primary" data-a="rec">Start</button>',
-        '<button data-a="lang" title="Kétnyelvű nézet / csak a fordítás">2 nyelv</button>',
-        '<button class="icon" data-a="fsdown" title="Kisebb betű">A−</button>',
-        '<button class="icon" data-a="fsup" title="Nagyobb betű">A+</button>',
-        '<input type="range" data-a="op" min="30" max="100" step="5" title="Háttér átlátszatlansága">',
-        '<button class="icon" data-a="pick" title="Célzó: kattints a feliratra">◎</button>',
-        '<button data-a="save" title="Átirat mentése .txt fájlba">Mentés</button>',
-        '<button class="icon" data-a="opts" title="Beállítások">⚙</button>',
-        '<button class="icon" data-a="close" title="Ablak elrejtése (Alt+Shift+T)">✕</button>',
+        '<button class="primary" data-a="rec"></button>',
+        '<button data-a="lang" data-i18n-title="ov_tip_lang"></button>',
+        '<button class="icon" data-a="fsdown" data-i18n-title="ov_tip_fsdown">A−</button>',
+        '<button class="icon" data-a="fsup" data-i18n-title="ov_tip_fsup">A+</button>',
+        '<input type="range" data-a="op" min="30" max="100" step="5" data-i18n-title="ov_tip_opacity">',
+        '<button class="icon" data-a="pick" data-i18n-title="ov_tip_pick">◎</button>',
+        '<button data-a="save" data-i18n="ov_save" data-i18n-title="ov_tip_save"></button>',
+        '<button class="icon" data-a="opts" data-i18n-title="ov_tip_opts">⚙</button>',
+        '<button class="icon" data-a="close" data-i18n-title="ov_tip_close">✕</button>',
       '</div>',
       '<div class="body"><div class="lines"></div></div>',
-      '<button class="jump" data-a="jump">▼ Ugrás a végére</button>',
+      '<button class="jump" data-a="jump" data-i18n="ov_jump"></button>',
       '<div class="bar"><span class="msg"></span><span class="cnt"></span></div>',
       '<div class="grip" data-resize></div>',
       '<div class="dlg" hidden>',
-        '<h3>Átirat mentése</h3>',
-        '<p>A fájl az eredeti és a lefordított sorokat is tartalmazza, időbélyeggel.</p>',
+        '<h3 data-i18n="ov_dlg_title"></h3>',
+        '<p data-i18n="ov_dlg_hint"></p>',
         '<input type="text" data-a="fname">',
         '<div class="row">',
-          '<button data-a="dlgcancel">Mégse</button>',
-          '<button class="primary" data-a="dlgsave">Mentés</button>',
+          '<button data-a="dlgcancel" data-i18n="ov_cancel"></button>',
+          '<button class="primary" data-a="dlgsave" data-i18n="ov_save"></button>',
         '</div>',
       '</div>'
     ].join('');
 
     shadow.appendChild(style);
     shadow.appendChild(panel);
+    LFT.i18n.applyDom(panel);
     document.documentElement.appendChild(host);
 
     el.dot = panel.querySelector('.dot');
@@ -185,7 +186,7 @@ globalThis.LFT = globalThis.LFT || {};
   function setBilingual(on, persist) {
     ui.bilingual = !!on;
     panel.classList.toggle('huonly', !on);
-    el.lang.textContent = on ? '2 nyelv' : '1 nyelv';
+    el.lang.textContent = LFT.t(on ? 'ov_bilingual' : 'ov_mono');
     if (persist) queueUiSave();
   }
 
@@ -220,12 +221,12 @@ globalThis.LFT = globalThis.LFT || {};
   function setRecUi(on) {
     recording = on;
     el.dot.className = 'dot' + (on ? ' rec' : '');
-    el.rec.textContent = on ? 'Stop' : 'Start';
+    el.rec.textContent = LFT.t(on ? 'ov_stop' : 'ov_start');
     el.rec.className = on ? 'danger' : 'primary';
   }
 
   function updateCount() {
-    el.cnt.textContent = lines.length ? lines.length + ' sor' : '';
+    el.cnt.textContent = lines.length ? LFT.tn('ov_lines', lines.length, [String(lines.length)]) : '';
   }
 
   /* ---------------- sorok ---------------- */
@@ -250,7 +251,7 @@ globalThis.LFT = globalThis.LFT || {};
     src.textContent = line.src;
     const hu = document.createElement('div');
     hu.className = 'hu waiting';
-    hu.textContent = 'fordítás…';
+    hu.textContent = LFT.t('ov_translating');
     root.appendChild(src);
     root.appendChild(hu);
     el.lines.appendChild(root);
@@ -266,7 +267,7 @@ globalThis.LFT = globalThis.LFT || {};
       n.hu.textContent = line.hu;
     } else if (line.err) {
       n.hu.className = 'hu failed';
-      n.hu.textContent = '(nincs fordítás)';
+      n.hu.textContent = LFT.t('ov_no_translation');
     }
     scrollIfStuck();
   }
@@ -313,7 +314,7 @@ globalThis.LFT = globalThis.LFT || {};
       line.hu = res.hu;
       if (el.msg.classList.contains('err')) setStatus('', '');
     } else {
-      line.err = (res && res.error) || 'Ismeretlen fordítási hiba.';
+      line.err = (res && res.error) || LFT.t('ov_err_unknown');
       setStatus(line.err, 'err');
     }
     updateLine(line);
@@ -345,9 +346,9 @@ globalThis.LFT = globalThis.LFT || {};
     settings = await LFT.store.getSettings();
     applyTargetLang();
     if (!settings.deeplKey) {
-      setStatus('Nincs DeepL kulcs — a rögzítés megy, de fordítás nélkül. Állítsd be a ⚙ gombbal.', 'warn');
+      setStatus(LFT.t('ov_warn_nokey'), 'warn');
     } else {
-      setStatus('Rögzítés indul…', '');
+      setStatus(LFT.t('ov_starting'), '');
     }
 
     lines = [];
@@ -361,7 +362,8 @@ globalThis.LFT = globalThis.LFT || {};
       type: 'session:start',
       origin: ORIGIN,
       url: location.href,
-      title: document.title
+      title: document.title,
+      targetLang: targetLang()
     });
     sessionId = res && res.id ? res.id : null;
 
@@ -373,7 +375,7 @@ globalThis.LFT = globalThis.LFT || {};
     setRecUi(false);
     await bg({ type: 'relay:frames', payload: { type: 'capture:stop' } });
     await flushSave(Date.now());
-    setStatus(lines.length ? 'Rögzítés leállítva — ' + lines.length + ' sor.' : 'Rögzítés leállítva.', 'ok');
+    setStatus(lines.length ? LFT.tn('ov_stopped_lines', lines.length, [String(lines.length)]) : LFT.t('ov_stopped'), 'ok');
     if (openDialog !== false && lines.length) openSaveDialog();
   }
 
@@ -382,23 +384,23 @@ globalThis.LFT = globalThis.LFT || {};
   function buildTxt() {
     const first = lines.length ? lines[0].t : Date.now();
     const out = [];
-    out.push('# Élő feliratfordítás (' + targetLang() + ') — ' + (document.title || location.host));
-    out.push('# Forrás: ' + location.href);
-    out.push('# Rögzítve: ' + clockOf(first) + (lines.length ? ' – ' + clockOf(lines[lines.length - 1].t) : ''));
-    out.push('# Sorok: ' + lines.length);
+    out.push(LFT.t('ov_file_header', [targetLang(), document.title || location.host]));
+    out.push(LFT.t('ov_file_source', [location.href]));
+    out.push(LFT.t('ov_file_recorded', [clockOf(first) + (lines.length ? ' – ' + clockOf(lines[lines.length - 1].t) : '')]));
+    out.push(LFT.t('ov_file_lines', [String(lines.length)]));
     out.push('');
     for (const l of lines) {
       const time = (l.videoTime != null) ? hhmmss(l.videoTime) : hhmmss((l.t - first) / 1000);
       out.push('[' + time + ']');
-      out.push('EREDETI: ' + l.src);
-      out.push(targetLang() + ': ' + (l.hu || '(nincs fordítás)'));
+      out.push(LFT.t('ov_file_original') + ': ' + l.src);
+      out.push(targetLang() + ': ' + (l.hu || LFT.t('ov_no_translation')));
       out.push('');
     }
     return out.join('\r\n');
   }
 
   function openSaveDialog() {
-    if (!lines.length) { setStatus('Még nincs mit menteni.', 'warn'); return; }
+    if (!lines.length) { setStatus(LFT.t('ov_nothing_to_save'), 'warn'); return; }
     el.fname.value = safeFileName(document.title || location.host) + '_' + stamp() + '.txt';
     el.dlg.hidden = false;
     el.fname.focus();
@@ -420,7 +422,7 @@ globalThis.LFT = globalThis.LFT || {};
     a.click();
     setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 4000);
     closeDialog();
-    setStatus('Mentve: ' + name, 'ok');
+    setStatus(LFT.t('ov_saved', [name]), 'ok');
   }
 
   /* ---------------- célzó ---------------- */
@@ -429,7 +431,7 @@ globalThis.LFT = globalThis.LFT || {};
     picking = true;
     panel.classList.add('picking');
     host.style.pointerEvents = 'none';
-    el.msg.textContent = 'Kattints a feliratra az oldalon — ESC = mégse';
+    el.msg.textContent = LFT.t('ov_pick_active');
     el.msg.className = 'msg warn';
     await bg({ type: 'relay:frames', payload: { type: 'picker:enable' } });
   }
@@ -546,7 +548,7 @@ globalThis.LFT = globalThis.LFT || {};
       recording = false;
       setRecUi(false);
       panel.classList.add('stale');
-      el.msg.textContent = 'A bővítmény frissült — töltsd újra az oldalt (F5), hogy újra működjön.';
+      el.msg.textContent = LFT.t('ov_stale');
       el.msg.className = 'msg warn';
     }, 2000);
   }
@@ -583,11 +585,11 @@ globalThis.LFT = globalThis.LFT || {};
 
     const target = await LFT.store.getTarget(ORIGIN);
     if (!settings.deeplKey) {
-      showEmptyHint('Először add meg a DeepL API kulcsot a ⚙ gombnál, utána nyomd meg a Start-ot.');
+      showEmptyHint(LFT.t('ov_hint_nokey'));
     } else if (target) {
-      showEmptyHint('Kész. Kapcsold be a feliratot a lejátszóban, majd nyomd meg a Start gombot.');
+      showEmptyHint(LFT.t('ov_hint_ready'));
     } else {
-      showEmptyHint('Nyomd meg a Start-ot. Ha nem jön felirat, kattints a ◎ célzóra, majd magára a feliratra az oldalon.');
+      showEmptyHint(LFT.t('ov_hint_start'));
     }
 
     startAliveWatch();

@@ -1,0 +1,521 @@
+{
+  "appName": {
+    "message": "Live Subtitle Translator"
+  },
+  "appDesc": {
+    "message": "Reads live subtitles from any page, translates them instantly with DeepL into the language of your choice, in a movable floating window, with a saveable transcript."
+  },
+  "cmdToggleWindow": {
+    "message": "Show / hide the translator window"
+  },
+  "cmdToggleCapture": {
+    "message": "Start / stop capturing"
+  },
+  "ov_tip_title": {
+    "message": "Live Subtitle Translator"
+  },
+  "ov_start": {
+    "message": "Start"
+  },
+  "ov_stop": {
+    "message": "Stop"
+  },
+  "ov_bilingual": {
+    "message": "2 languages"
+  },
+  "ov_mono": {
+    "message": "1 language"
+  },
+  "ov_tip_lang": {
+    "message": "Bilingual view / translation only"
+  },
+  "ov_tip_fsdown": {
+    "message": "Smaller text"
+  },
+  "ov_tip_fsup": {
+    "message": "Larger text"
+  },
+  "ov_tip_opacity": {
+    "message": "Background opacity"
+  },
+  "ov_tip_pick": {
+    "message": "Picker: click the subtitle"
+  },
+  "ov_save": {
+    "message": "Save"
+  },
+  "ov_tip_save": {
+    "message": "Save the transcript to a .txt file"
+  },
+  "ov_tip_opts": {
+    "message": "Settings"
+  },
+  "ov_tip_close": {
+    "message": "Hide the window (Alt+Shift+T)"
+  },
+  "ov_jump": {
+    "message": "▼ Jump to end"
+  },
+  "ov_dlg_title": {
+    "message": "Save transcript"
+  },
+  "ov_dlg_hint": {
+    "message": "The file contains both the original and the translated lines, with timestamps."
+  },
+  "ov_cancel": {
+    "message": "Cancel"
+  },
+  "ov_translating": {
+    "message": "translating…"
+  },
+  "ov_no_translation": {
+    "message": "(not translated)"
+  },
+  "ov_lines": {
+    "message": "$1 lines"
+  },
+  "ov_lines_one": {
+    "message": "$1 line"
+  },
+  "ov_default_filename": {
+    "message": "transcript"
+  },
+  "ov_hint_nokey": {
+    "message": "First add your DeepL API key under ⚙, then press Start."
+  },
+  "ov_hint_ready": {
+    "message": "Ready. Turn on subtitles in the player, then press Start."
+  },
+  "ov_hint_start": {
+    "message": "Press Start. If no subtitles arrive, click the ◎ picker and then the subtitle itself on the page."
+  },
+  "ov_starting": {
+    "message": "Starting…"
+  },
+  "ov_warn_nokey": {
+    "message": "No DeepL key — recording works, but without translation. Set it up under ⚙."
+  },
+  "ov_stopped_lines": {
+    "message": "Stopped — $1 lines."
+  },
+  "ov_stopped_lines_one": {
+    "message": "Stopped — $1 line."
+  },
+  "ov_stopped": {
+    "message": "Stopped."
+  },
+  "ov_nothing_to_save": {
+    "message": "Nothing to save yet."
+  },
+  "ov_saved": {
+    "message": "Saved: $1"
+  },
+  "ov_pick_active": {
+    "message": "Click the subtitle on the page — ESC to cancel"
+  },
+  "ov_err_unknown": {
+    "message": "Unknown translation error."
+  },
+  "ov_stale": {
+    "message": "The extension was reloaded — refresh the page (F5) to make it work again."
+  },
+  "ov_file_header": {
+    "message": "# Live subtitle translation ($1) — $2"
+  },
+  "ov_file_source": {
+    "message": "# Source: $1"
+  },
+  "ov_file_recorded": {
+    "message": "# Recorded: $1"
+  },
+  "ov_file_lines": {
+    "message": "# Lines: $1"
+  },
+  "ov_file_original": {
+    "message": "ORIGINAL"
+  },
+  "cap_pick_tip": {
+    "message": "Click the subtitle — ESC to cancel"
+  },
+  "cap_pick_tip_iframe": {
+    "message": "Note: the player is in a separate frame ($1) — the picker does not work over the video. Allow it in Diagnostics first."
+  },
+  "cap_pick_cancelled": {
+    "message": "Picking cancelled."
+  },
+  "cap_pick_on_overlay": {
+    "message": "You clicked the translator window. Drag it away from the subtitle, then press the picker again."
+  },
+  "cap_pick_uichrome": {
+    "message": "That is a link or a button, not a subtitle — nothing was saved. Pick again, directly on the subtitle text."
+  },
+  "cap_pick_nothing": {
+    "message": "No element found there. Pick again, directly on the subtitle text."
+  },
+  "cap_pick_noselector": {
+    "message": "Could not identify that element — try clicking one level up, around the text."
+  },
+  "cap_pick_notext": {
+    "message": "The selected element has no text right now. If subtitles are off, turn them on (CC) and pick again. If subtitles are visible but no text arrives here, they are burned into the video image and cannot be read from the DOM."
+  },
+  "cap_picked": {
+    "message": "Subtitle selected: “$1”"
+  },
+  "cap_target_lost": {
+    "message": "The selected subtitle element was lost. Turn subtitles on, or pick again."
+  },
+  "cap_switched_to_track": {
+    "message": "No text arrived from the selected element, so I switched to the video’s own subtitle track."
+  },
+  "cap_no_source_iframe": {
+    "message": "The player is in a separate frame ($1), so I cannot see inside it — the picker cannot reach it either. Extension icon → Diagnostics → “Allow: $1”, then reload the page."
+  },
+  "cap_no_source": {
+    "message": "No subtitle text found. Turn on subtitles in the player, or select them with the ◎ picker."
+  },
+  "pop_title": {
+    "message": "Live Subtitle Translator"
+  },
+  "pop_state_loading": {
+    "message": "Loading state…"
+  },
+  "pop_state_notrunning": {
+    "message": "Not running on this page"
+  },
+  "pop_state_ready": {
+    "message": "Ready"
+  },
+  "pop_state_recording": {
+    "message": "Recording — $1 lines"
+  },
+  "pop_state_recording_one": {
+    "message": "Recording — $1 line"
+  },
+  "pop_state_stopped": {
+    "message": "Stopped — $1 lines"
+  },
+  "pop_state_stopped_one": {
+    "message": "Stopped — $1 line"
+  },
+  "pop_enable": {
+    "message": "Allow on this site"
+  },
+  "pop_rec_start": {
+    "message": "Start recording"
+  },
+  "pop_rec_stop": {
+    "message": "Stop recording"
+  },
+  "pop_show": {
+    "message": "Show window"
+  },
+  "pop_pick": {
+    "message": "Picker — select the subtitle"
+  },
+  "pop_save": {
+    "message": "Save transcript"
+  },
+  "pop_diag": {
+    "message": "Diagnostics — what does it see?"
+  },
+  "pop_opts": {
+    "message": "Settings and history"
+  },
+  "pop_bad_page": {
+    "message": "Extensions cannot run on this kind of page."
+  },
+  "pop_note_nokey": {
+    "message": "No DeepL API key yet. Recording works, but without translation. Set it up below."
+  },
+  "pop_perm_failed": {
+    "message": "Could not request permission for: $1"
+  },
+  "pop_perm_denied": {
+    "message": "Permission denied, so it cannot run here."
+  },
+  "pop_enabled_reload": {
+    "message": "Allowed. Reload the page (F5) and the window will appear."
+  },
+  "pop_diag_running": {
+    "message": "Checking…"
+  },
+  "pop_diag_failed": {
+    "message": "The check did not run."
+  },
+  "pop_diag_noframes": {
+    "message": "No frame responded. Reload the page (F5)."
+  },
+  "pop_frame_main": {
+    "message": "main page"
+  },
+  "pop_frame_stats": {
+    "message": "videos: $1 · subtitle tracks: $2 (active: $3)"
+  },
+  "pop_track_ok": {
+    "message": "✓ Text is readable from the video’s own subtitle track:"
+  },
+  "pop_target_ok": {
+    "message": "✓ The selected element exists and has text:"
+  },
+  "pop_target_empty": {
+    "message": "The selected element exists but is empty — are subtitles turned on?"
+  },
+  "pop_target_missing": {
+    "message": "The selected element was not found. Pick again."
+  },
+  "pop_target_rule": {
+    "message": "Saved rule: $1"
+  },
+  "pop_rule_delete": {
+    "message": "Delete rule (back to the subtitle track)"
+  },
+  "pop_rule_deleted": {
+    "message": "Deleted — reload the page"
+  },
+  "pop_guess_found": {
+    "message": "Found a likely subtitle element:"
+  },
+  "pop_guess_set": {
+    "message": "Use this as the subtitle source"
+  },
+  "pop_guess_done": {
+    "message": "Set — press Start"
+  },
+  "pop_no_video": {
+    "message": "No video and no subtitle-like element in this frame — the player is probably in an embedded frame."
+  },
+  "pop_no_text": {
+    "message": "There is a video but no subtitle text. Turn on subtitles and run this again — if it still fails, they may be burned into the video image."
+  },
+  "pop_iframes_intro": {
+    "message": "Embedded frames on this page — the player is almost certainly the first one. Allow it so I can see inside:"
+  },
+  "pop_iframe_allow": {
+    "message": "Allow: $1"
+  },
+  "pop_iframe_allowed": {
+    "message": "✓ $1 allowed — reload the page (F5)"
+  },
+  "pop_iframe_denied": {
+    "message": "Denied — Allow: $1"
+  },
+  "pop_iframe_failed": {
+    "message": "Failed: $1"
+  },
+  "pop_iframes_unknown": {
+    "message": "$1 more frame(s) with an unknown source — those cannot be identified."
+  },
+  "opt_doc_title": {
+    "message": "Live Subtitle Translator — settings"
+  },
+  "opt_sub": {
+    "message": "Reads live subtitles, translates them instantly into the language of your choice, saveable transcript."
+  },
+  "opt_s1_title": {
+    "message": "1. DeepL API key"
+  },
+  "opt_s1_hint": {
+    "message": "Free keys end in <code>:fx</code> — the extension uses that to pick the right DeepL endpoint, so you can enter a Pro key later just as well."
+  },
+  "opt_show": {
+    "message": "Show"
+  },
+  "opt_hide": {
+    "message": "Hide"
+  },
+  "opt_test": {
+    "message": "Test"
+  },
+  "opt_key_warn": {
+    "message": "The key is stored unencrypted in the browser’s own storage on this machine. Do not use it on a shared computer."
+  },
+  "opt_key_saved": {
+    "message": "Saved. Use the “Test” button to verify it."
+  },
+  "opt_key_empty": {
+    "message": "Enter the key first."
+  },
+  "opt_key_checking": {
+    "message": "Checking…"
+  },
+  "opt_key_ok": {
+    "message": "Works. Endpoint: $1 — used $2 / $3 characters ($4%)."
+  },
+  "opt_key_failed": {
+    "message": "Could not reach DeepL."
+  },
+  "opt_lang_label": {
+    "message": "Target language — subtitles are translated into this"
+  },
+  "opt_lang_refresh": {
+    "message": "Refresh list"
+  },
+  "opt_lang_hint": {
+    "message": "DeepL detects the source language automatically, so English, German, Spanish and the rest all work — you only choose what to translate into."
+  },
+  "opt_lang_needkey": {
+    "message": "Add your DeepL key first to fetch the current list."
+  },
+  "opt_lang_loading": {
+    "message": "Fetching list…"
+  },
+  "opt_lang_count": {
+    "message": "$1 target languages available."
+  },
+  "opt_lang_failed": {
+    "message": "Could not fetch the language list."
+  },
+  "opt_lang_changed": {
+    "message": "Now translating into: $1"
+  },
+  "opt_s2_title": {
+    "message": "2. Allowed sites"
+  },
+  "opt_s2_hint": {
+    "message": "The extension only runs on the sites listed here. Enter the site’s domain (e.g. <code>example.com</code>) — subpages and subdomains are included automatically."
+  },
+  "opt_domain_add": {
+    "message": "Add"
+  },
+  "opt_domain_ph": {
+    "message": "example.com"
+  },
+  "opt_domain_none": {
+    "message": "No allowed sites yet."
+  },
+  "opt_domain_nogrant": {
+    "message": "no permission — remove it and add it again"
+  },
+  "opt_delete": {
+    "message": "Delete"
+  },
+  "opt_domain_invalid": {
+    "message": "That is not a valid domain. For example: example.com"
+  },
+  "opt_domain_exists": {
+    "message": "It is already on the list."
+  },
+  "opt_domain_removed": {
+    "message": "$1 removed."
+  },
+  "opt_domain_added": {
+    "message": "$1 added."
+  },
+  "opt_domain_injected": {
+    "message": "Active immediately in $1 open tab(s)."
+  },
+  "opt_domain_reload": {
+    "message": "Reload any already open tabs."
+  },
+  "opt_perm_failed": {
+    "message": "Could not request permission: $1"
+  },
+  "opt_s3_title": {
+    "message": "3. Translation and appearance"
+  },
+  "opt_delay_label": {
+    "message": "Close a sentence after this pause"
+  },
+  "opt_delay_hint": {
+    "message": "Shorter = faster subtitles, more DeepL calls and more cut-off sentences. Longer = better translation, 1–3 seconds of lag."
+  },
+  "opt_fs_label": {
+    "message": "Default font size"
+  },
+  "opt_op_label": {
+    "message": "Default background opacity"
+  },
+  "opt_bilingual_label": {
+    "message": "Bilingual view by default (original + translation, one above the other)"
+  },
+  "opt_s3_hint": {
+    "message": "Font size, opacity and view mode can also be set per site in the window, where they are remembered. These are only the defaults."
+  },
+  "opt_s4_title": {
+    "message": "4. Selected subtitle elements"
+  },
+  "opt_s4_hint": {
+    "message": "Elements selected with the picker, per site. If subtitle detection breaks on a site, delete the rule here and pick again."
+  },
+  "opt_target_none": {
+    "message": "No subtitle element selected yet. The extension tries to read the video’s own subtitle track."
+  },
+  "opt_rule_delete": {
+    "message": "Delete rule"
+  },
+  "opt_s5_title": {
+    "message": "5. Previous recordings"
+  },
+  "opt_clear_all": {
+    "message": "Delete all"
+  },
+  "opt_th_when": {
+    "message": "When"
+  },
+  "opt_th_site": {
+    "message": "Site"
+  },
+  "opt_th_len": {
+    "message": "Length"
+  },
+  "opt_th_lines": {
+    "message": "Lines"
+  },
+  "opt_download": {
+    "message": "Download"
+  },
+  "opt_sessions_none": {
+    "message": "No recordings yet."
+  },
+  "opt_sessions_empty_row": {
+    "message": "Recorded transcripts appear here."
+  },
+  "opt_sessions_count": {
+    "message": "$1 recordings · $2 MB storage"
+  },
+  "opt_sessions_count_one": {
+    "message": "$1 recording · $2 MB storage"
+  },
+  "opt_ongoing": {
+    "message": "in progress"
+  },
+  "opt_minutes": {
+    "message": "$1 min"
+  },
+  "opt_hours": {
+    "message": "$1 h $2 m"
+  },
+  "opt_confirm_clear": {
+    "message": "Delete every recorded transcript? This cannot be undone."
+  },
+  "opt_footer": {
+    "message": "Shortcuts: <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> show/hide the window · <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> start/stop capturing. They can be rebound at <code>chrome://extensions/shortcuts</code>."
+  },
+  "dl_err_key": {
+    "message": "Invalid or expired DeepL key — check it in the settings."
+  },
+  "dl_err_toolong": {
+    "message": "The request text is too long."
+  },
+  "dl_err_rate": {
+    "message": "Too many requests — DeepL is throttling temporarily."
+  },
+  "dl_err_quota": {
+    "message": "The monthly DeepL quota is used up. Recording continues, just without translation."
+  },
+  "dl_err_offline": {
+    "message": "No network connection to DeepL."
+  },
+  "dl_err_server": {
+    "message": "The DeepL service is temporarily unavailable."
+  },
+  "dl_err_other": {
+    "message": "DeepL error ($1)."
+  },
+  "dl_err_nokey": {
+    "message": "No DeepL key configured."
+  },
+  "dl_err_empty": {
+    "message": "DeepL returned an empty translation."
+  }
+}
