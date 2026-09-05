@@ -1,5 +1,7 @@
 # Élő feliratfordító — Chrome bővítmény
 
+*[English description](README.en.md)*
+
 Élő feliratot olvas ki a weboldalról, azonnal lefordítja DeepL-lel a **választott nyelvre**,
 és egy mozgatható, átméretezhető lebegő ablakban mutatja. A forrásnyelvet a DeepL magától
 felismeri, a célnyelv a beállításokban bármelyik DeepL-nyelv lehet. A teljes átirat

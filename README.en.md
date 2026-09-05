@@ -1,0 +1,210 @@
+# Live Subtitle Translator — Chrome extension
+
+*[Magyar leírás](README.md)*
+
+Reads live subtitles from any web page, translates them instantly with DeepL into the
+**language of your choice**, and shows them in a draggable, resizable floating window.
+DeepL detects the source language on its own, so the same setup works for English, German,
+Spanish and the rest. The full transcript (original + translation) is saved continuously and
+can be exported to a `.txt` file.
+
+Manifest V3, plain JavaScript — **no build step, no npm**.
+
+> The user interface is currently in Hungarian.
+
+---
+
+## 1. Install
+
+1. Open `chrome://extensions`
+2. Turn on **Developer mode** (top right)
+3. Click **Load unpacked** and select this folder
+4. Pin the extension from the puzzle icon in the toolbar
+
+Keep the folder somewhere permanent — Chrome reads the extension from that location rather
+than copying it. If you delete or rename the folder, the extension stops working.
+
+## 2. DeepL API key
+
+1. Get a key at <https://www.deepl.com/pro-api> (the Free tier gives 500,000 characters per
+   month; signup requires a card but it is not charged)
+2. Extension icon → **Beállítások és előzmények** (Settings and history) → *1. DeepL API kulcs*
+3. Paste the key, then press **Teszt** (Test)
+
+Free keys end in `:fx` — the extension uses that to pick the right DeepL endpoint, so you can
+switch to a Pro key later without touching any code.
+
+The key is stored **unencrypted** in the browser's own storage on this machine.
+
+### Target language
+
+Settings → *3. Fordítás és megjelenés* → **Célnyelv** (Target language). The dropdown lists
+every DeepL target language.
+
+You do not need to specify a source language — DeepL detects it automatically.
+
+The list is bundled with the extension, but as soon as you enter a key it is refreshed from
+the DeepL API, so newly supported languages show up too. The *Lista frissítése* button
+refreshes it manually. The floating window header always shows the current target (e.g. `→ EN-GB`).
+
+## 3. Allow a site
+
+The extension only runs on sites you explicitly allow. It requests **no host access at
+install time**.
+
+- **Quick way:** open the site, click the extension icon → *Engedélyezés ezen az oldalon*
+  (Allow on this site)
+- **Or:** Settings → *2. Engedélyezett oldalak* → type the domain (e.g. `example.com`) →
+  **Hozzáadás** (Add)
+
+Subdomains are included automatically.
+
+> **If the player sits in an iframe from another domain** (e.g. `player.somecdn.com`), that
+> domain has to be allowed as well, otherwise the extension cannot see inside it. You don't
+> have to hunt for it: **Diagnosztika** (Diagnostics) lists the embedded frames on the page,
+> each with an *Engedélyezem* (Allow) button. This is a browser security boundary — content
+> of a cross-origin frame cannot be read without permission, by any means.
+
+## 4. Usage
+
+1. Open the page, start the video and **turn on subtitles (CC)** in the player
+2. Press **Start** in the floating window
+3. If no subtitles arrive, click the **◎ picker** and then click the subtitle text itself.
+   The extension remembers that element for the domain and reads from it afterwards.
+   If the translator window covers the subtitle, drag it out of the way first: during picking
+   the window becomes click-through, but a click landing on it is not accepted as a selection.
+   Clicking a link or a button saves nothing either — that is certainly a mis-click.
+4. When done press **Stop** → choose a filename → the `.txt` is downloaded
+
+### Not sure whether the subtitles are readable?
+
+Click the extension icon → **Diagnosztika — mit lát az oldalon?** For each frame it reports
+how many videos and subtitle tracks it finds, shows the text it is currently reading, and if
+it spots a likely subtitle element, one button sets it as the source — no picking needed.
+
+This is the fastest way to tell whether the subtitle is real text in the DOM or burned into
+the video image.
+
+### Window controls
+
+| Button | What it does |
+|---|---|
+| **Start / Stop** | start and stop capturing |
+| **2 nyelv / 1 nyelv** | original + translation, or translation only |
+| **A− / A+** | font size between 12 and 48 px |
+| slider | background opacity (30–100%) |
+| **◎** | picker — select the subtitle element on the page |
+| **Mentés** | download the transcript as `.txt` |
+| **⚙** | settings and history |
+| **✕** | hide the window |
+
+Drag it by the header, resize it from the bottom-right corner. Position, size, font size,
+opacity and view mode are remembered **per site**.
+
+### Keyboard shortcuts
+
+- `Alt` + `Shift` + `T` — show / hide the window
+- `Alt` + `Shift` + `S` — start / stop capturing
+
+Both can be rebound at `chrome://extensions/shortcuts`.
+
+## 5. Saving and history
+
+- **Live backup:** every line reaches storage within 3 seconds, so nothing is lost if the tab
+  crashes or you close it by accident
+- **History:** Settings → *5. Korábbi felvételek* — date, site, duration, line count; any of
+  them can be downloaded or deleted later
+- The `.txt` always contains **both languages**, regardless of the current view:
+
+```
+# Élő feliratfordítás (EN-GB) — Video title
+# Forrás: https://example.com/video/123
+# Rögzítve: 2026-09-04 19:12 – 20:03
+# Sorok: 412
+
+[00:01:23]
+EREDETI: Hallo zusammen, willkommen zurück.
+EN-GB: Hello everyone, welcome back.
+```
+
+## 6. How it finds the subtitles
+
+Two sources, in this order:
+
+1. **A picked DOM element** — if you selected one for this site, it is watched with a
+   `MutationObserver`. If the player re-renders it, the element is looked up again twice a
+   second. The picker does not take exactly what you clicked: starting from the clicked text
+   node it **walks up** while the parent still holds essentially the same text. That lands on
+   the stable subtitle container (on YouTube, `#ytp-caption-window-container`) instead of the
+   span the player throws away after every sentence.
+2. **The video's own text track** (`TextTrack` / `cuechange`) — used when no element is picked.
+   This is the more reliable source when the player uses standard HTML5 subtitles.
+
+Raw subtitle updates are not sent to DeepL one by one. The extension waits for a sentence
+boundary (`.` `!` `?`) or for the text to stay unchanged for a configurable delay (1200 ms by
+default). That cuts API calls to roughly a third and produces noticeably better translations.
+The delay is adjustable between 300 and 3000 ms.
+
+**Rolling subtitles** are handled too — the pattern where the top line scrolls out while a new
+one arrives at the bottom, exactly how YouTube's automatic captions behave. The extension
+detects the overlap between the old and new state, so text is neither duplicated nor lost.
+
+## 7. Troubleshooting
+
+| Symptom | What to do |
+|---|---|
+| The window does not appear | Did you allow the domain? Reload the page afterwards (F5). |
+| `Extension context invalidated` in the console | Happens when you reload the extension at `chrome://extensions` while the page is open: the old instance is orphaned. The window dims and tells you to reload — **F5** fixes it. Normal during development. |
+| "No subtitle track found" | Turn on CC in the player, then use the ◎ picker and click the subtitle. |
+| The picked element has no text | First check that subtitles are on. If they are visible but **Diagnostics** still finds no text, the subtitle is **burned into the video image** and cannot be read from the DOM. This extension cannot handle that — it would need OCR or speech recognition. |
+| Diagnostics reports `videó: 0` while a video is playing | The player is in a cross-origin iframe. Diagnostics lists the embedded frames (largest first) — press *Engedélyezem* next to it, then F5. In this case the picker does not work over the video either: the click stays inside the iframe. |
+| "(nincs fordítás)" next to the lines | Check the message in the window's status bar: bad key (403) or exhausted quota (456). The original text is still recorded. |
+| Subtitles are lost mid-session | The player replaced the element. Pick again, or delete the rule: Settings → *4. Kijelölt feliratelemek*, or the *Szabály törlése* button on the Diagnostics card. |
+| Wrong element picked (it translates a menu label) | Diagnostics → *Szabály törlése*. If you don't delete it, after 6 seconds the extension falls back to the video's own text track when one exists — but the bad rule stays until removed. |
+
+For debugging: `chrome://extensions` → the **service worker** link under the extension (background
+log), and F12 → Console on the page itself.
+
+## 8. Project layout
+
+```
+manifest.json
+background/service-worker.js   DeepL calls, recordings, message relay, script registration
+content/capture.js             subtitle capture and picker, runs in every frame
+content/overlay.js             the floating window (top frame only)
+content/overlay-css.js         window styling (injected into Shadow DOM, CSP-safe)
+lib/store.js                   chrome.storage layer
+lib/deepl.js                   DeepL client (endpoint, languages, error handling)
+lib/segmenter.js               raw subtitles -> finished sentences, dedup, rolling captions
+lib/selector.js                stable CSS selector for the picked element
+popup/                         quick controls and diagnostics
+options/                       settings and history
+```
+
+## 9. Privacy
+
+- **There is no server behind this extension.** No telemetry, nothing is sent to the author.
+- **Exactly one outbound connection exists:** finished subtitle sentences go to the DeepL API
+  using *your own* key, to be translated. That is governed by DeepL's privacy policy —
+  <https://www.deepl.com/privacy>. If that is not acceptable for a given piece of content,
+  do not use the extension there.
+- **Everything else stays local:** the DeepL key, allowed domains, picked subtitle elements,
+  window settings and recorded transcripts live in the browser's own storage
+  (`chrome.storage.local`) on that machine. Removing the extension removes them too.
+- **It only runs on sites you allow.** No host access is requested at install time; you grant
+  each domain explicitly and can revoke it at any time (Settings → *2. Engedélyezett oldalak*).
+- The DeepL key is stored unencrypted. Do not use it on a shared machine.
+
+## 10. License
+
+MIT — see [LICENSE](LICENSE). Use it, modify it, redistribute it freely.
+
+Not affiliated with DeepL SE or with any video provider.
+
+## 11. Deliberately not supported (yet)
+
+- Custom glossary for domain-specific terminology
+- `.srt` export with timecodes
+- OCR (burned-in subtitles) and speech recognition
+- Translation engines other than DeepL
+- English user interface (the UI is Hungarian for now)
