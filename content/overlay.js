@@ -1,0 +1,608 @@
+/* A lebegő fordítóablak. Csak a legfelső frame-ben fut.
+   Shadow DOM-ban él, így az oldal CSS-e nem tudja elrontani (és fordítva sem). */
+globalThis.LFT = globalThis.LFT || {};
+
+(() => {
+  'use strict';
+  if (window.top !== window) return;
+  if (window.__lftOverlayLoaded) return;
+  window.__lftOverlayLoaded = true;
+
+  const ORIGIN = location.origin;
+
+  let settings = null;
+  let ui = null;
+  let host = null, shadow = null, panel = null;
+  const el = {};
+
+  let lines = [];
+  const nodes = new Map();
+  let seq = 0;
+
+  let recording = false;
+  let sessionId = null;
+  let dirty = false;
+  let saveTimer = null;
+  let uiTimer = null;
+  let stuckToBottom = true;
+  let picking = false;
+
+  /* ---------------- segédek ---------------- */
+
+  async function bg(msg) {
+    for (let i = 0; i < 3; i++) {
+      try { return await chrome.runtime.sendMessage(msg); }
+      catch (e) { await new Promise(r => setTimeout(r, 150)); }
+    }
+    return null;
+  }
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  function hhmmss(sec) {
+    sec = Math.max(0, Math.floor(sec || 0));
+    return pad2(Math.floor(sec / 3600)) + ':' + pad2(Math.floor(sec / 60) % 60) + ':' + pad2(sec % 60);
+  }
+
+  function stamp(d) {
+    d = d || new Date();
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) +
+      '_' + pad2(d.getHours()) + '-' + pad2(d.getMinutes());
+  }
+
+  function clockOf(ms) {
+    const d = new Date(ms);
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) +
+      ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  }
+
+  function safeFileName(s) {
+    return String(s || 'atirat')
+      .replace(/[\\/:*?"<>|]/g, '-')
+      .replace(/\s+/g, '_')
+      .trim()
+      .slice(0, 80) || 'atirat';
+  }
+
+  function targetLang() {
+    return (settings && settings.targetLang) || 'HU';
+  }
+
+  /* A fejlécben mindig látszik, mire fordít éppen. */
+  function applyTargetLang() {
+    const ttl = panel && panel.querySelector('.ttl');
+    if (ttl) ttl.textContent = '→ ' + targetLang();
+  }
+
+  /* ---------------- felépítés ---------------- */
+
+  function build() {
+    host = document.createElement('div');
+    host.id = 'lft-overlay-host';
+    shadow = host.attachShadow({ mode: 'open' });
+
+    const style = document.createElement('style');
+    style.textContent = LFT.overlayCSS;
+
+    panel = document.createElement('div');
+    panel.className = 'panel';
+    panel.innerHTML = [
+      '<div class="hdr" data-drag>',
+        '<span class="dot"></span>',
+        '<span class="ttl" title="Élő feliratfordító">→ …</span>',
+        '<span class="spacer"></span>',
+        '<button class="primary" data-a="rec">Start</button>',
+        '<button data-a="lang" title="Kétnyelvű nézet / csak a fordítás">2 nyelv</button>',
+        '<button class="icon" data-a="fsdown" title="Kisebb betű">A−</button>',
+        '<button class="icon" data-a="fsup" title="Nagyobb betű">A+</button>',
+        '<input type="range" data-a="op" min="30" max="100" step="5" title="Háttér átlátszatlansága">',
+        '<button class="icon" data-a="pick" title="Célzó: kattints a feliratra">◎</button>',
+        '<button data-a="save" title="Átirat mentése .txt fájlba">Mentés</button>',
+        '<button class="icon" data-a="opts" title="Beállítások">⚙</button>',
+        '<button class="icon" data-a="close" title="Ablak elrejtése (Alt+Shift+T)">✕</button>',
+      '</div>',
+      '<div class="body"><div class="lines"></div></div>',
+      '<button class="jump" data-a="jump">▼ Ugrás a végére</button>',
+      '<div class="bar"><span class="msg"></span><span class="cnt"></span></div>',
+      '<div class="grip" data-resize></div>',
+      '<div class="dlg" hidden>',
+        '<h3>Átirat mentése</h3>',
+        '<p>A fájl az eredeti és a lefordított sorokat is tartalmazza, időbélyeggel.</p>',
+        '<input type="text" data-a="fname">',
+        '<div class="row">',
+          '<button data-a="dlgcancel">Mégse</button>',
+          '<button class="primary" data-a="dlgsave">Mentés</button>',
+        '</div>',
+      '</div>'
+    ].join('');
+
+    shadow.appendChild(style);
+    shadow.appendChild(panel);
+    document.documentElement.appendChild(host);
+
+    el.dot = panel.querySelector('.dot');
+    el.body = panel.querySelector('.body');
+    el.lines = panel.querySelector('.lines');
+    el.msg = panel.querySelector('.msg');
+    el.cnt = panel.querySelector('.cnt');
+    el.rec = panel.querySelector('[data-a=rec]');
+    el.lang = panel.querySelector('[data-a=lang]');
+    el.op = panel.querySelector('[data-a=op]');
+    el.dlg = panel.querySelector('.dlg');
+    el.fname = panel.querySelector('[data-a=fname]');
+
+    panel.addEventListener('click', onClick);
+    el.op.addEventListener('input', () => setOpacity(+el.op.value, true));
+    el.body.addEventListener('scroll', onScroll);
+    panel.querySelector('[data-drag]').addEventListener('pointerdown', onDragStart);
+    panel.querySelector('[data-resize]').addEventListener('pointerdown', onResizeStart);
+    el.fname.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); doDownload(); }
+      if (e.key === 'Escape') { e.preventDefault(); closeDialog(); }
+    });
+    window.addEventListener('resize', clampToViewport);
+  }
+
+  /* ---------------- megjelenés ---------------- */
+
+  function applyGeometry() {
+    const w = Math.max(220, ui.width || 480);
+    const h = Math.max(120, ui.height || 300);
+    let left = ui.left, top = ui.top;
+    if (left == null) left = Math.max(12, window.innerWidth - w - 24);
+    if (top == null) top = Math.max(12, window.innerHeight - h - 110);
+    host.style.width = w + 'px';
+    host.style.height = h + 'px';
+    host.style.left = left + 'px';
+    host.style.top = top + 'px';
+  }
+
+  function clampToViewport() {
+    const w = host.offsetWidth, h = host.offsetHeight;
+    const left = Math.min(Math.max(0, parseInt(host.style.left, 10) || 0), Math.max(0, window.innerWidth - 80));
+    const top = Math.min(Math.max(0, parseInt(host.style.top, 10) || 0), Math.max(0, window.innerHeight - 40));
+    host.style.left = left + 'px';
+    host.style.top = top + 'px';
+    if (w > window.innerWidth) host.style.width = window.innerWidth - 24 + 'px';
+    if (h > window.innerHeight) host.style.height = window.innerHeight - 24 + 'px';
+  }
+
+  function setFontSize(px, persist) {
+    px = Math.max(12, Math.min(48, px));
+    ui.fontSize = px;
+    panel.style.setProperty('--fs', px + 'px');
+    if (persist) queueUiSave();
+  }
+
+  function setOpacity(pct, persist) {
+    pct = Math.max(30, Math.min(100, pct));
+    ui.opacity = pct;
+    el.op.value = pct;
+    panel.style.setProperty('--bgA', (pct / 100).toFixed(2));
+    if (persist) queueUiSave();
+  }
+
+  function setBilingual(on, persist) {
+    ui.bilingual = !!on;
+    panel.classList.toggle('huonly', !on);
+    el.lang.textContent = on ? '2 nyelv' : '1 nyelv';
+    if (persist) queueUiSave();
+  }
+
+  function setVisible(on, persist) {
+    ui.visible = !!on;
+    host.style.display = on ? '' : 'none';
+    if (persist) queueUiSave();
+  }
+
+  function queueUiSave() {
+    clearTimeout(uiTimer);
+    uiTimer = setTimeout(() => {
+      LFT.store.setUi(ORIGIN, {
+        left: parseInt(host.style.left, 10),
+        top: parseInt(host.style.top, 10),
+        width: host.offsetWidth,
+        height: host.offsetHeight,
+        fontSize: ui.fontSize,
+        opacity: ui.opacity,
+        bilingual: ui.bilingual,
+        visible: ui.visible
+      });
+    }, 300);
+  }
+
+  function setStatus(text, kind) {
+    if (picking) endPicking();
+    el.msg.textContent = text || '';
+    el.msg.className = 'msg' + (kind ? ' ' + kind : '');
+  }
+
+  function setRecUi(on) {
+    recording = on;
+    el.dot.className = 'dot' + (on ? ' rec' : '');
+    el.rec.textContent = on ? 'Stop' : 'Start';
+    el.rec.className = on ? 'danger' : 'primary';
+  }
+
+  function updateCount() {
+    el.cnt.textContent = lines.length ? lines.length + ' sor' : '';
+  }
+
+  /* ---------------- sorok ---------------- */
+
+  function showEmptyHint(text) {
+    el.lines.innerHTML = '';
+    nodes.clear();
+    const d = document.createElement('div');
+    d.className = 'empty';
+    d.textContent = text;
+    el.lines.appendChild(d);
+  }
+
+  function renderLine(line) {
+    const hint = el.lines.querySelector('.empty');
+    if (hint) hint.remove();
+
+    const root = document.createElement('div');
+    root.className = 'ln';
+    const src = document.createElement('div');
+    src.className = 'src';
+    src.textContent = line.src;
+    const hu = document.createElement('div');
+    hu.className = 'hu waiting';
+    hu.textContent = 'fordítás…';
+    root.appendChild(src);
+    root.appendChild(hu);
+    el.lines.appendChild(root);
+    nodes.set(line.id, { root: root, src: src, hu: hu });
+    scrollIfStuck();
+  }
+
+  function updateLine(line) {
+    const n = nodes.get(line.id);
+    if (!n) return;
+    if (line.hu) {
+      n.hu.className = 'hu';
+      n.hu.textContent = line.hu;
+    } else if (line.err) {
+      n.hu.className = 'hu failed';
+      n.hu.textContent = '(nincs fordítás)';
+    }
+    scrollIfStuck();
+  }
+
+  function onScroll() {
+    const d = el.body;
+    stuckToBottom = (d.scrollHeight - d.scrollTop - d.clientHeight) < 48;
+    panel.classList.toggle('unstuck', !stuckToBottom);
+  }
+
+  function scrollIfStuck() {
+    if (!stuckToBottom) return;
+    el.body.scrollTop = el.body.scrollHeight;
+  }
+
+  function jumpToEnd() {
+    stuckToBottom = true;
+    panel.classList.remove('unstuck');
+    el.body.scrollTop = el.body.scrollHeight;
+  }
+
+  /* ---------------- felirat érkezik ---------------- */
+
+  async function onSegment(payload) {
+    if (!recording) return;
+    const line = {
+      id: ++seq,
+      t: payload.t || Date.now(),
+      videoTime: payload.videoTime,
+      src: payload.text,
+      hu: null,
+      err: null
+    };
+    lines.push(line);
+    renderLine(line);
+    updateCount();
+    markDirty();
+
+    el.dot.classList.add('busy');
+    const res = await bg({ type: 'translate', text: line.src });
+    el.dot.classList.remove('busy');
+
+    if (res && res.hu) {
+      line.hu = res.hu;
+      if (el.msg.classList.contains('err')) setStatus('', '');
+    } else {
+      line.err = (res && res.error) || 'Ismeretlen fordítási hiba.';
+      setStatus(line.err, 'err');
+    }
+    updateLine(line);
+    markDirty();
+  }
+
+  function markDirty() {
+    dirty = true;
+    if (saveTimer) return;
+    saveTimer = setTimeout(flushSave, 3000);
+  }
+
+  async function flushSave(endedAt) {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    if (!sessionId || (!dirty && !endedAt)) return;
+    dirty = false;
+    await bg({
+      type: 'session:save',
+      id: sessionId,
+      endedAt: endedAt || null,
+      lines: lines.map(l => ({ t: l.t, videoTime: l.videoTime, src: l.src, hu: l.hu || '' }))
+    });
+  }
+
+  /* ---------------- rögzítés ---------------- */
+
+  async function startRec() {
+    settings = await LFT.store.getSettings();
+    applyTargetLang();
+    if (!settings.deeplKey) {
+      setStatus('Nincs DeepL kulcs — a rögzítés megy, de fordítás nélkül. Állítsd be a ⚙ gombbal.', 'warn');
+    } else {
+      setStatus('Rögzítés indul…', '');
+    }
+
+    lines = [];
+    nodes.clear();
+    seq = 0;
+    el.lines.innerHTML = '';
+    updateCount();
+    jumpToEnd();
+
+    const res = await bg({
+      type: 'session:start',
+      origin: ORIGIN,
+      url: location.href,
+      title: document.title
+    });
+    sessionId = res && res.id ? res.id : null;
+
+    setRecUi(true);
+    await bg({ type: 'relay:frames', payload: { type: 'capture:start', flushDelay: settings.flushDelay } });
+  }
+
+  async function stopRec(openDialog) {
+    setRecUi(false);
+    await bg({ type: 'relay:frames', payload: { type: 'capture:stop' } });
+    await flushSave(Date.now());
+    setStatus(lines.length ? 'Rögzítés leállítva — ' + lines.length + ' sor.' : 'Rögzítés leállítva.', 'ok');
+    if (openDialog !== false && lines.length) openSaveDialog();
+  }
+
+  /* ---------------- mentés fájlba ---------------- */
+
+  function buildTxt() {
+    const first = lines.length ? lines[0].t : Date.now();
+    const out = [];
+    out.push('# Élő feliratfordítás (' + targetLang() + ') — ' + (document.title || location.host));
+    out.push('# Forrás: ' + location.href);
+    out.push('# Rögzítve: ' + clockOf(first) + (lines.length ? ' – ' + clockOf(lines[lines.length - 1].t) : ''));
+    out.push('# Sorok: ' + lines.length);
+    out.push('');
+    for (const l of lines) {
+      const time = (l.videoTime != null) ? hhmmss(l.videoTime) : hhmmss((l.t - first) / 1000);
+      out.push('[' + time + ']');
+      out.push('EREDETI: ' + l.src);
+      out.push(targetLang() + ': ' + (l.hu || '(nincs fordítás)'));
+      out.push('');
+    }
+    return out.join('\r\n');
+  }
+
+  function openSaveDialog() {
+    if (!lines.length) { setStatus('Még nincs mit menteni.', 'warn'); return; }
+    el.fname.value = safeFileName(document.title || location.host) + '_' + stamp() + '.txt';
+    el.dlg.hidden = false;
+    el.fname.focus();
+    el.fname.select();
+  }
+
+  function closeDialog() { el.dlg.hidden = true; }
+
+  function doDownload() {
+    let name = safeFileName(el.fname.value.replace(/\.txt$/i, ''));
+    name = name + '.txt';
+    const blob = new Blob(['﻿' + buildTxt()], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    a.style.display = 'none';
+    document.documentElement.appendChild(a);
+    a.click();
+    setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 4000);
+    closeDialog();
+    setStatus('Mentve: ' + name, 'ok');
+  }
+
+  /* ---------------- célzó ---------------- */
+
+  async function startPicking() {
+    picking = true;
+    panel.classList.add('picking');
+    host.style.pointerEvents = 'none';
+    el.msg.textContent = 'Kattints a feliratra az oldalon — ESC = mégse';
+    el.msg.className = 'msg warn';
+    await bg({ type: 'relay:frames', payload: { type: 'picker:enable' } });
+  }
+
+  function endPicking() {
+    picking = false;
+    panel.classList.remove('picking');
+    host.style.pointerEvents = '';
+  }
+
+  /* ---------------- egér: húzás és átméretezés ---------------- */
+
+  function onDragStart(e) {
+    if (e.target.closest('button, input')) return;
+    e.preventDefault();
+    const sx = e.clientX, sy = e.clientY;
+    const ox = parseInt(host.style.left, 10) || 0;
+    const oy = parseInt(host.style.top, 10) || 0;
+    const move = ev => {
+      host.style.left = Math.max(0, Math.min(window.innerWidth - 60, ox + ev.clientX - sx)) + 'px';
+      host.style.top = Math.max(0, Math.min(window.innerHeight - 30, oy + ev.clientY - sy)) + 'px';
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move, true);
+      window.removeEventListener('pointerup', up, true);
+      queueUiSave();
+    };
+    window.addEventListener('pointermove', move, true);
+    window.addEventListener('pointerup', up, true);
+  }
+
+  function onResizeStart(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const sx = e.clientX, sy = e.clientY;
+    const ow = host.offsetWidth, oh = host.offsetHeight;
+    const move = ev => {
+      host.style.width = Math.max(220, ow + ev.clientX - sx) + 'px';
+      host.style.height = Math.max(120, oh + ev.clientY - sy) + 'px';
+      scrollIfStuck();
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move, true);
+      window.removeEventListener('pointerup', up, true);
+      queueUiSave();
+    };
+    window.addEventListener('pointermove', move, true);
+    window.addEventListener('pointerup', up, true);
+  }
+
+  /* ---------------- gombok ---------------- */
+
+  function onClick(e) {
+    const b = e.target.closest('[data-a]');
+    if (!b) return;
+    switch (b.dataset.a) {
+      case 'rec': recording ? stopRec() : startRec(); break;
+      case 'lang': setBilingual(!ui.bilingual, true); break;
+      case 'fsup': setFontSize((ui.fontSize || 20) + 2, true); break;
+      case 'fsdown': setFontSize((ui.fontSize || 20) - 2, true); break;
+      case 'pick': startPicking(); break;
+      case 'save': openSaveDialog(); break;
+      case 'opts': bg({ type: 'openOptions' }); break;
+      case 'close': setVisible(false, true); break;
+      case 'jump': jumpToEnd(); break;
+      case 'dlgsave': doDownload(); break;
+      case 'dlgcancel': closeDialog(); break;
+    }
+  }
+
+  /* ---------------- üzenetek ---------------- */
+
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (!msg || !msg.type) return;
+    switch (msg.type) {
+      case 'segment': onSegment(msg.seg); return;
+      case 'status': setStatus(msg.text, msg.kind); return;
+      case 'picked': endPicking(); return;
+      case 'overlay:toggle': setVisible(!ui.visible, true); return;
+      case 'overlay:show': setVisible(true, true); return;
+      case 'overlay:toggleCapture':
+        setVisible(true, true);
+        recording ? stopRec() : startRec();
+        return;
+      case 'overlay:pick': setVisible(true, true); startPicking(); return;
+      case 'overlay:save': openSaveDialog(); return;
+      case 'overlay:state':
+        sendResponse({ ok: true, recording: recording, visible: !!ui.visible, lines: lines.length });
+        return true;
+    }
+  });
+
+  window.addEventListener('beforeunload', () => {
+    if (dirty && sessionId) {
+      // utolsó mentési kísérlet — nem várunk a válaszra
+      chrome.runtime.sendMessage({
+        type: 'session:save',
+        id: sessionId,
+        endedAt: Date.now(),
+        lines: lines.map(l => ({ t: l.t, videoTime: l.videoTime, src: l.src, hu: l.hu || '' }))
+      }).catch(() => {});
+    }
+  });
+
+  /* Ha a bővítményt újratöltötték vagy kikapcsolták, ez az ablak árván marad:
+     a gombjai már nem érnek el semmit. Szólunk róla, és leállítunk mindent,
+     hogy ne járjanak tovább az időzítők és ne szemeteljen a konzol. */
+  function startAliveWatch() {
+    const t = setInterval(() => {
+      if (LFT.alive()) return;
+      clearInterval(t);
+      clearTimeout(saveTimer); saveTimer = null;
+      clearTimeout(uiTimer); uiTimer = null;
+      recording = false;
+      setRecUi(false);
+      panel.classList.add('stale');
+      el.msg.textContent = 'A bővítmény frissült — töltsd újra az oldalt (F5), hogy újra működjön.';
+      el.msg.className = 'msg warn';
+    }, 2000);
+  }
+
+  /* Ha a beállítások oldalon célnyelvet váltanak, az ablak azonnal kövesse. */
+  function watchSettings() {
+    try {
+      chrome.storage.onChanged.addListener((changes, area) => {
+        if (area !== 'local' || !changes.settings) return;
+        settings = Object.assign({}, settings, changes.settings.newValue || {});
+        applyTargetLang();
+      });
+    } catch (e) { /* érvénytelen kontextus */ }
+  }
+
+  /* ---------------- indulás ---------------- */
+
+  async function init() {
+    settings = await LFT.store.getSettings();
+    ui = await LFT.store.getUi(ORIGIN);
+    if (ui.fontSize == null) ui.fontSize = settings.fontSize;
+    if (ui.opacity == null) ui.opacity = settings.opacity;
+    if (ui.bilingual == null) ui.bilingual = settings.bilingual;
+
+    build();
+    applyGeometry();
+    setFontSize(ui.fontSize, false);
+    setOpacity(ui.opacity, false);
+    setBilingual(ui.bilingual, false);
+    setVisible(ui.visible !== false, false);
+    setRecUi(false);
+    applyTargetLang();
+    updateCount();
+
+    const target = await LFT.store.getTarget(ORIGIN);
+    if (!settings.deeplKey) {
+      showEmptyHint('Először add meg a DeepL API kulcsot a ⚙ gombnál, utána nyomd meg a Start-ot.');
+    } else if (target) {
+      showEmptyHint('Kész. Kapcsold be a feliratot a lejátszóban, majd nyomd meg a Start gombot.');
+    } else {
+      showEmptyHint('Nyomd meg a Start-ot. Ha nem jön felirat, kattints a ◎ célzóra, majd magára a feliratra az oldalon.');
+    }
+
+    startAliveWatch();
+    watchSettings();
+
+    LFT.overlay = {
+      onSegment: onSegment,
+      setStatus: setStatus,
+      show: () => setVisible(true, true)
+    };
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init, { once: true });
+  } else {
+    init();
+  }
+})();

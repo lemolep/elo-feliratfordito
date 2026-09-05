@@ -1,0 +1,21 @@
+# Fejlesztői / helyi fájlok — soha ne kerüljenek a nyilvános tárolóba
+.claude/
+*.zip
+node_modules/
+
+# Operációs rendszer és szerkesztő
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+
+# Biztonsági háló: kulcsot tartalmazó fájlok soha ne kerüljenek be.
+# (A bővítmény a DeepL kulcsot a böngésző tárolójában tartja, nem fájlban —
+#  ez csak azért van itt, hogy egy elgépelt mentés se okozzon bajt.)
+*.key
+*.pem
+.env
+.env.*
+secrets.json

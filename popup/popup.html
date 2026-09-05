@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<title>Élő feliratfordító</title>
+<style>
+  :root { color-scheme: dark; }
+  body {
+    width: 280px;
+    margin: 0;
+    padding: 14px;
+    background: #14171c;
+    color: #eef1f5;
+    font: 13px/1.45 system-ui, "Segoe UI", Roboto, sans-serif;
+  }
+  h1 { font-size: 13px; margin: 0 0 10px; letter-spacing: .01em; }
+  .host { font-size: 11px; color: #8b95a3; word-break: break-all; margin-bottom: 12px; }
+  .state {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 12px; margin-bottom: 12px;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #6b7480; }
+  .dot.on { background: #3ddc97; box-shadow: 0 0 6px #3ddc97; }
+  .dot.off { background: #e05252; }
+  button {
+    display: block; width: 100%;
+    font: 600 12px/1 system-ui, sans-serif;
+    color: #e8ecf1;
+    background: rgba(255,255,255,.08);
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 7px;
+    padding: 9px 10px;
+    margin-bottom: 7px;
+    cursor: pointer;
+    text-align: left;
+  }
+  button[hidden] { display: none; }   /* a display:block felülírná a [hidden]-t */
+  button:hover:not(:disabled) { background: rgba(255,255,255,.16); }
+  button:disabled { opacity: .4; cursor: default; }
+  button.primary { background: #2f6feb; border-color: #4b84f0; }
+  button.primary:hover:not(:disabled) { background: #3b7bf5; }
+  button.danger { background: #b3382f; border-color: #d1493f; }
+  .note {
+    font-size: 11px; color: #f0c05a; line-height: 1.45;
+    background: rgba(240,192,90,.1); border: 1px solid rgba(240,192,90,.25);
+    border-radius: 7px; padding: 8px 9px; margin-bottom: 10px;
+  }
+  .note.hidden { display: none; }
+  .link {
+    display: inline-block; margin-top: 4px; font-size: 11px;
+    color: #7fb0ff; cursor: pointer; text-decoration: underline;
+  }
+  #report { margin: 4px 0 8px; }
+  #report:empty { display: none; }
+  .frame {
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 7px;
+    padding: 8px 9px;
+    margin-bottom: 6px;
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .frame h3 { font-size: 11px; margin: 0 0 3px; color: #c3cbd6; }
+  .frame .k { color: #8b95a3; }
+  .frame .good { color: #6fd8a8; }
+  .frame .bad { color: #f0c05a; }
+  .frame .sample {
+    display: block; margin-top: 3px; padding: 4px 6px;
+    background: rgba(0,0,0,.35); border-radius: 5px;
+    color: #dfe5ec; word-break: break-word;
+  }
+  .frame button { margin-top: 6px; font-size: 11px; padding: 6px 8px; }
+</style>
+</head>
+<body>
+  <h1>Élő feliratfordító</h1>
+  <div class="host" id="host">…</div>
+
+  <div class="note hidden" id="note"></div>
+
+  <div class="state"><span class="dot" id="dot"></span><span id="stateText">Állapot betöltése…</span></div>
+
+  <button class="primary" id="enable" hidden>Engedélyezés ezen az oldalon</button>
+  <button class="primary" id="rec" disabled>Rögzítés indítása</button>
+  <button id="show" disabled>Ablak mutatása</button>
+  <button id="pick" disabled>Célzó — felirat kijelölése</button>
+  <button id="save" disabled>Átirat mentése</button>
+  <button id="diag" disabled>Diagnosztika — mit lát az oldalon?</button>
+  <div id="report"></div>
+  <span class="link" id="opts">Beállítások és előzmények</span>
+
+  <script src="../lib/store.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

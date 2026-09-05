@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<title>Élő feliratfordító — beállítások</title>
+<link rel="stylesheet" href="options.css">
+</head>
+<body>
+<main>
+  <header>
+    <h1>Élő feliratfordító</h1>
+    <p class="sub">Élő felirat kiolvasása, azonnali fordítás a választott nyelvre, menthető átirat.</p>
+  </header>
+
+  <!-- 1. DeepL -->
+  <section>
+    <h2>1. DeepL API kulcs</h2>
+    <p class="hint">
+      A Free kulcs <code>:fx</code>-re végződik — a bővítmény ebből ismeri fel, hogy melyik
+      DeepL végpontot kell hívnia, tehát Pro kulcsot is beírhatsz később.
+    </p>
+    <div class="row">
+      <input type="password" id="key" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:fx" spellcheck="false">
+      <button id="keyShow" class="ghost" type="button">Mutat</button>
+      <button id="keyTest" class="primary" type="button">Teszt</button>
+    </div>
+    <div id="keyResult" class="result"></div>
+    <p class="warn">
+      A kulcs titkosítatlanul, a böngésző saját tárolójában marad ezen a gépen. Közös géppel ne használd.
+    </p>
+  </section>
+
+  <!-- 2. Oldalak -->
+  <section>
+    <h2>2. Engedélyezett oldalak</h2>
+    <p class="hint">
+      A bővítmény csak az itt felsorolt oldalakon fut. Írd be a stream oldal címét (pl.
+      <code>pelda-stream.hu</code>) — az aloldalak és az aldomainek automatikusan beleértendők.
+    </p>
+    <div class="row">
+      <input type="text" id="domainInput" placeholder="pelda-stream.hu" spellcheck="false">
+      <button id="domainAdd" class="primary" type="button">Hozzáadás</button>
+    </div>
+    <div id="domainResult" class="result"></div>
+    <ul id="domainList" class="list"></ul>
+  </section>
+
+  <!-- 3. Működés -->
+  <section>
+    <h2>3. Fordítás és megjelenés</h2>
+
+    <label class="field">
+      <span class="lbl">Célnyelv — erre fordítja a feliratot</span>
+      <div class="row">
+        <select id="target"></select>
+        <button id="langRefresh" class="ghost" type="button">Lista frissítése</button>
+      </div>
+      <span class="hint">
+        A forrásnyelvet a DeepL magától felismeri, tehát angol, német, spanyol és a többi
+        forrás is működik — csak azt kell megadnod, mire fordítson.
+      </span>
+      <span id="langResult" class="result"></span>
+    </label>
+
+    <label class="field">
+      <span class="lbl">Mondat lezárása ennyi szünet után <b id="delayVal">1200 ms</b></span>
+      <input type="range" id="delay" min="300" max="3000" step="100">
+      <span class="hint">
+        Rövidebb érték = gyorsabb felirat, több DeepL hívás és több félbevágott mondat.
+        Hosszabb érték = jobb fordítás, 1–3 másodperc csúszás.
+      </span>
+    </label>
+
+    <label class="field">
+      <span class="lbl">Alap betűméret <b id="fsVal">20 px</b></span>
+      <input type="range" id="fs" min="12" max="48" step="1">
+    </label>
+
+    <label class="field">
+      <span class="lbl">Alap háttér-átlátszatlanság <b id="opVal">85%</b></span>
+      <input type="range" id="op" min="30" max="100" step="5">
+    </label>
+
+    <label class="check">
+      <input type="checkbox" id="bilingual">
+      <span>Alapból kétnyelvű nézet (eredeti + fordítás egymás alatt)</span>
+    </label>
+
+    <p class="hint">
+      A betűméretet, átlátszóságot és a nézetet oldalanként az ablakban is állíthatod — ott
+      megjegyzi. Ezek itt csak az alapértékek.
+    </p>
+  </section>
+
+  <!-- 4. Célpontok -->
+  <section>
+    <h2>4. Kijelölt feliratelemek</h2>
+    <p class="hint">
+      A célzóval kijelölt elemek oldalanként. Ha egy oldalon elromlik a felirat felismerése,
+      töröld itt a szabályt, és célozz újra.
+    </p>
+    <ul id="targetList" class="list"></ul>
+  </section>
+
+  <!-- 5. Előzmények -->
+  <section>
+    <h2>5. Korábbi felvételek</h2>
+    <div class="row spread">
+      <span id="storageInfo" class="hint"></span>
+      <button id="clearAll" class="danger" type="button">Összes törlése</button>
+    </div>
+    <div class="tablewrap">
+      <table id="sessions">
+        <thead>
+          <tr><th>Mikor</th><th>Oldal</th><th>Hossz</th><th>Sorok</th><th></th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Gyorsbillentyűk: <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> ablak mutatása/elrejtése ·
+    <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> rögzítés indítása/leállítása.
+    Átírhatók a <code>chrome://extensions/shortcuts</code> oldalon.
+  </footer>
+</main>
+
+<script src="../lib/store.js"></script>
+<script src="../lib/deepl.js"></script>
+<script src="options.js"></script>
+</body>
+</html>
