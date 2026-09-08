@@ -1,6 +1,6 @@
 /* Háttérszolgáltatás: DeepL hívások, felvételek tárolása, üzenettovábbítás
    a frame-ek között, content scriptek futásidejű regisztrációja. */
-importScripts('/lib/i18n.js', '/lib/store.js', '/lib/deepl.js');
+importScripts('/lib/i18n.js', '/lib/store.js', '/lib/deepl.js', '/lib/tts.js');
 
 const CS_FILES = [
   'lib/i18n.js',
@@ -249,6 +249,52 @@ async function handle(msg, sender) {
       const injected = await injectExisting();
       return { ok: true, registered: r.registered, injected: injected };
     }
+    /* felolvasás: egy szövegdarab hanggá alakítása (a kulcs itt marad, nem megy a lapba) */
+    case 'tts': {
+      const s = await LFT.store.getSettings();
+      if (!s.ttsEnabled) return { skip: true };
+      if (!s.googleKey) return { error: LFT.t('tts_err_nokey') };
+      if (!s.ttsVoice) return { error: LFT.t('tts_err_novoice') };
+      try {
+        const audio = await LFT.tts.synthesize(s.googleKey, msg.text, s.ttsVoice, s.ttsRate);
+        return { audio: audio };
+      } catch (e) {
+        return { error: e.message, status: e.status };
+      }
+    }
+
+    /* hangminta a beállítások oldalnak — a megadott kulccsal és hanggal */
+    case 'tts:sample': {
+      const s = await LFT.store.getSettings();
+      /* A mintamondatot előbb a célnyelvre fordítjuk, hogy a hang a saját
+         nyelvén szólaljon meg. Ha nincs DeepL kulcs vagy hibázik, marad az eredeti. */
+      let text = msg.text;
+      if (s.deeplKey) {
+        try {
+          const out = await LFT.deepl.translate(s.deeplKey, [text], s.targetLang || 'HU');
+          if (out && out[0]) text = out[0];
+        } catch (e) { /* marad az eredeti mondat */ }
+      }
+      try {
+        const audio = await LFT.tts.synthesize(
+          msg.key || s.googleKey, text, msg.voice || s.ttsVoice, msg.rate || s.ttsRate);
+        return { ok: true, audio: audio, text: text };
+      } catch (e) {
+        return { ok: false, error: e.message, status: e.status };
+      }
+    }
+
+    /* elérhető hangok egy nyelvhez */
+    case 'tts:voices': {
+      const s = await LFT.store.getSettings();
+      try {
+        const list = await LFT.tts.voices(msg.key || s.googleKey, msg.lang);
+        return { ok: true, voices: list };
+      } catch (e) {
+        return { ok: false, error: e.message, status: e.status };
+      }
+    }
+
     /* diagnosztika: minden elérhető frame-ből visszakérdez */
     case 'diagnose': {
       try {

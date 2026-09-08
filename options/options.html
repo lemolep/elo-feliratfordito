@@ -25,6 +25,40 @@
     <p class="warn" data-i18n="opt_key_warn"></p>
   </section>
 
+  <!-- Felolvasás -->
+  <section>
+    <h2 data-i18n="opt_stts_title"></h2>
+    <p class="hint" data-i18n-html="opt_stts_hint"></p>
+    <div class="row">
+      <input type="password" id="gkey" data-i18n-ph="opt_tts_key_ph" spellcheck="false">
+      <button id="gkeyShow" class="ghost" type="button" data-i18n="opt_show"></button>
+      <button id="gkeyTest" class="primary" type="button" data-i18n="opt_test"></button>
+    </div>
+    <div id="ttsResult" class="result"></div>
+    <p class="warn" data-i18n="opt_tts_key_warn"></p>
+
+    <label class="check">
+      <input type="checkbox" id="ttsEnabled">
+      <span data-i18n="opt_tts_enable"></span>
+    </label>
+    <p class="hint" data-i18n="opt_tts_enable_hint"></p>
+
+    <label class="field">
+      <span class="lbl" data-i18n="opt_tts_voice_label"></span>
+      <div class="row">
+        <select id="ttsVoice"></select>
+        <button id="voiceRefresh" class="ghost" type="button" data-i18n="opt_lang_refresh"></button>
+      </div>
+      <span class="hint" data-i18n="opt_tts_voice_hint"></span>
+    </label>
+
+    <label class="field">
+      <span class="lbl"><span data-i18n="opt_tts_rate_label"></span> <b id="rateVal">1.0×</b></span>
+      <input type="range" id="rate" min="0.25" max="2" step="0.05">
+      <span class="hint" data-i18n="opt_tts_rate_hint"></span>
+    </label>
+  </section>
+
   <!-- 2. Oldalak -->
   <section>
     <h2 data-i18n="opt_s2_title"></h2>
@@ -105,6 +139,7 @@
 <script src="../lib/i18n.js"></script>
 <script src="../lib/store.js"></script>
 <script src="../lib/deepl.js"></script>
+<script src="../lib/tts.js"></script>
 <script src="options.js"></script>
 </body>
 </html>

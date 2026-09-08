@@ -78,6 +78,8 @@ button.primary:hover { background: #3b7bf5; }
 button.danger { background: #b3382f; border-color: #d1493f; }
 button.danger:hover { background: #c74338; }
 button.icon { padding: 5px 6px; font-size: 12px; }
+button.icon.on { background: #1f6f4e; border-color: #2e9c6e; }
+button.icon.on:hover { background: #257f59; }
 
 input[type=range] {
   width: 46px; height: 14px; cursor: pointer; accent-color: #6ea8ff;

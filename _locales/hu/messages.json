@@ -312,7 +312,7 @@
     "message": "Élő felirat kiolvasása, azonnali fordítás a választott nyelvre, menthető átirat."
   },
   "opt_s1_title": {
-    "message": "1. DeepL API kulcs"
+    "message": "DeepL API kulcs"
   },
   "opt_s1_hint": {
     "message": "A Free kulcs <code>:fx</code>-re végződik — a bővítmény ebből ismeri fel, hogy melyik DeepL végpontot kell hívnia, tehát Pro kulcsot is beírhatsz később."
@@ -369,7 +369,7 @@
     "message": "Mostantól ide fordít: $1"
   },
   "opt_s2_title": {
-    "message": "2. Engedélyezett oldalak"
+    "message": "Engedélyezett oldalak"
   },
   "opt_s2_hint": {
     "message": "A bővítmény csak az itt felsorolt oldalakon fut. Írd be a stream oldal címét (pl. <code>pelda-stream.hu</code>) — az aloldalak és az aldomainek automatikusan beleértendők."
@@ -411,7 +411,7 @@
     "message": "Nem sikerült engedélyt kérni: $1"
   },
   "opt_s3_title": {
-    "message": "3. Fordítás és megjelenés"
+    "message": "Fordítás és megjelenés"
   },
   "opt_delay_label": {
     "message": "Mondat lezárása ennyi szünet után"
@@ -432,7 +432,7 @@
     "message": "A betűméretet, átlátszóságot és a nézetet oldalanként az ablakban is állíthatod — ott megjegyzi. Ezek itt csak az alapértékek."
   },
   "opt_s4_title": {
-    "message": "4. Kijelölt feliratelemek"
+    "message": "Kijelölt feliratelemek"
   },
   "opt_s4_hint": {
     "message": "A célzóval kijelölt elemek oldalanként. Ha egy oldalon elromlik a felirat felismerése, töröld itt a szabályt, és célozz újra."
@@ -444,7 +444,7 @@
     "message": "Szabály törlése"
   },
   "opt_s5_title": {
-    "message": "5. Korábbi felvételek"
+    "message": "Korábbi felvételek"
   },
   "opt_clear_all": {
     "message": "Összes törlése"
@@ -490,6 +490,105 @@
   },
   "opt_footer": {
     "message": "Gyorsbillentyűk: <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> ablak mutatása/elrejtése · <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> rögzítés indítása/leállítása. Átírhatók a <code>chrome://extensions/shortcuts</code> oldalon."
+  },
+  "ov_tip_tts_on": {
+    "message": "Felolvasás bekapcsolva — kattints a némításhoz"
+  },
+  "ov_tip_tts_off": {
+    "message": "Felolvasás kikapcsolva — kattints a bekapcsoláshoz"
+  },
+  "ov_tts_blocked": {
+    "message": "A böngésző blokkolta a hanglejátszást. Kattints egyet az oldalon, majd próbáld újra."
+  },
+  "ov_tts_nokey": {
+    "message": "A felolvasáshoz Google TTS kulcs kell — állítsd be a ⚙ gombnál."
+  },
+  "tts_err_key": {
+    "message": "Hibás vagy jogosulatlan Google TTS kulcs — ellenőrizd a beállításokban."
+  },
+  "tts_err_request": {
+    "message": "A Google TTS elutasította a kérést."
+  },
+  "tts_err_rate": {
+    "message": "Túl sok felolvasási kérés — a Google átmenetileg lassít."
+  },
+  "tts_err_offline": {
+    "message": "Nincs hálózati kapcsolat a Google TTS felé."
+  },
+  "tts_err_server": {
+    "message": "A Google TTS átmenetileg nem elérhető."
+  },
+  "tts_err_other": {
+    "message": "Google TTS hiba ($1)."
+  },
+  "tts_err_nokey": {
+    "message": "Nincs Google TTS kulcs beállítva."
+  },
+  "tts_err_novoice": {
+    "message": "Nincs kiválasztott hang."
+  },
+  "tts_err_empty": {
+    "message": "A Google TTS üres hangot adott vissza."
+  },
+  "opt_stts_title": {
+    "message": "Felolvasás (Google Cloud TTS)"
+  },
+  "opt_stts_hint": {
+    "message": "A lefordított sorokat hangosan is felolvassa, ahogy megérkeznek. Kulcs a Google Cloud konzolban készíthető: engedélyezd a <code>Cloud Text-to-Speech API</code>-t, majd hozz létre egy API kulcsot. Ez külön fizetős szolgáltatás, havi ingyenes kerettel."
+  },
+  "opt_tts_key_ph": {
+    "message": "Google API kulcs"
+  },
+  "opt_tts_key_warn": {
+    "message": "A kulcs titkosítatlanul, a böngésző saját tárolójában marad ezen a gépen. A Google konzolban érdemes a kulcsot a Text-to-Speech API-ra korlátozni."
+  },
+  "opt_tts_enable": {
+    "message": "Felolvasás bekapcsolása"
+  },
+  "opt_tts_enable_hint": {
+    "message": "A fordítóablak 🔊 gombjával menet közben is ki-be kapcsolhatod."
+  },
+  "opt_tts_voice_label": {
+    "message": "Hang — a célnyelvhez tartozó hangok"
+  },
+  "opt_tts_voice_hint": {
+    "message": "A lista a célnyelvhez igazodik: ha más nyelvre váltasz, frissítsd. A Chirp3 HD hangok a legtermészetesebbek."
+  },
+  "opt_tts_rate_label": {
+    "message": "Beszédtempó"
+  },
+  "opt_tts_rate_hint": {
+    "message": "Élő felirathoz gyakran jól jön az 1,1–1,3 közötti tempó, hogy a hang ne maradjon le."
+  },
+  "opt_tts_needkey": {
+    "message": "Előbb add meg a Google TTS kulcsot."
+  },
+  "opt_tts_loading": {
+    "message": "Hangok lekérése…"
+  },
+  "opt_tts_voices_count": {
+    "message": "$1 hang érhető el ehhez a nyelvhez ($2)."
+  },
+  "opt_tts_no_voices": {
+    "message": "Ehhez a nyelvhez ($1) nem találtam hangot a Google-nél."
+  },
+  "opt_tts_voices_failed": {
+    "message": "Nem sikerült lekérni a hangok listáját."
+  },
+  "opt_tts_testing": {
+    "message": "Hangminta lejátszása…"
+  },
+  "opt_tts_test_ok": {
+    "message": "Működik — hallanod kell a hangmintát."
+  },
+  "opt_tts_test_failed": {
+    "message": "Nem sikerült a hangminta."
+  },
+  "opt_tts_sample": {
+    "message": "Ez a felolvasás hangmintája."
+  },
+  "opt_tts_voice_changed": {
+    "message": "Kiválasztott hang: $1"
   },
   "dl_err_key": {
     "message": "Hibás vagy lejárt DeepL kulcs — ellenőrizd a beállításokban."

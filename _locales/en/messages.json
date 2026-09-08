@@ -312,7 +312,7 @@
     "message": "Reads live subtitles, translates them instantly into the language of your choice, saveable transcript."
   },
   "opt_s1_title": {
-    "message": "1. DeepL API key"
+    "message": "DeepL API key"
   },
   "opt_s1_hint": {
     "message": "Free keys end in <code>:fx</code> — the extension uses that to pick the right DeepL endpoint, so you can enter a Pro key later just as well."
@@ -369,7 +369,7 @@
     "message": "Now translating into: $1"
   },
   "opt_s2_title": {
-    "message": "2. Allowed sites"
+    "message": "Allowed sites"
   },
   "opt_s2_hint": {
     "message": "The extension only runs on the sites listed here. Enter the site’s domain (e.g. <code>example.com</code>) — subpages and subdomains are included automatically."
@@ -411,7 +411,7 @@
     "message": "Could not request permission: $1"
   },
   "opt_s3_title": {
-    "message": "3. Translation and appearance"
+    "message": "Translation and appearance"
   },
   "opt_delay_label": {
     "message": "Close a sentence after this pause"
@@ -432,7 +432,7 @@
     "message": "Font size, opacity and view mode can also be set per site in the window, where they are remembered. These are only the defaults."
   },
   "opt_s4_title": {
-    "message": "4. Selected subtitle elements"
+    "message": "Selected subtitle elements"
   },
   "opt_s4_hint": {
     "message": "Elements selected with the picker, per site. If subtitle detection breaks on a site, delete the rule here and pick again."
@@ -444,7 +444,7 @@
     "message": "Delete rule"
   },
   "opt_s5_title": {
-    "message": "5. Previous recordings"
+    "message": "Previous recordings"
   },
   "opt_clear_all": {
     "message": "Delete all"
@@ -490,6 +490,105 @@
   },
   "opt_footer": {
     "message": "Shortcuts: <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> show/hide the window · <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> start/stop capturing. They can be rebound at <code>chrome://extensions/shortcuts</code>."
+  },
+  "ov_tip_tts_on": {
+    "message": "Speech on — click to mute"
+  },
+  "ov_tip_tts_off": {
+    "message": "Speech off — click to turn on"
+  },
+  "ov_tts_blocked": {
+    "message": "The browser blocked audio playback. Click once on the page, then try again."
+  },
+  "ov_tts_nokey": {
+    "message": "Speech needs a Google TTS key — set it up under ⚙."
+  },
+  "tts_err_key": {
+    "message": "Invalid or unauthorized Google TTS key — check it in the settings."
+  },
+  "tts_err_request": {
+    "message": "Google TTS rejected the request."
+  },
+  "tts_err_rate": {
+    "message": "Too many speech requests — Google is throttling."
+  },
+  "tts_err_offline": {
+    "message": "No network connection to Google TTS."
+  },
+  "tts_err_server": {
+    "message": "Google TTS is temporarily unavailable."
+  },
+  "tts_err_other": {
+    "message": "Google TTS error ($1)."
+  },
+  "tts_err_nokey": {
+    "message": "No Google TTS key configured."
+  },
+  "tts_err_novoice": {
+    "message": "No voice selected."
+  },
+  "tts_err_empty": {
+    "message": "Google TTS returned empty audio."
+  },
+  "opt_stts_title": {
+    "message": "Speech (Google Cloud TTS)"
+  },
+  "opt_stts_hint": {
+    "message": "Reads the translated lines aloud as they arrive. Create a key in the Google Cloud console: enable the <code>Cloud Text-to-Speech API</code>, then create an API key. This is a separate paid service with a monthly free tier."
+  },
+  "opt_tts_key_ph": {
+    "message": "Google API key"
+  },
+  "opt_tts_key_warn": {
+    "message": "The key is stored unencrypted in the browser’s own storage on this machine. In the Google console, restrict the key to the Text-to-Speech API."
+  },
+  "opt_tts_enable": {
+    "message": "Enable speech"
+  },
+  "opt_tts_enable_hint": {
+    "message": "You can also toggle it on the fly with the 🔊 button in the translator window."
+  },
+  "opt_tts_voice_label": {
+    "message": "Voice — voices for the target language"
+  },
+  "opt_tts_voice_hint": {
+    "message": "The list follows the target language: refresh it after switching. Chirp3 HD voices sound the most natural."
+  },
+  "opt_tts_rate_label": {
+    "message": "Speaking rate"
+  },
+  "opt_tts_rate_hint": {
+    "message": "For live subtitles a rate of 1.1–1.3 often helps the speech keep up."
+  },
+  "opt_tts_needkey": {
+    "message": "Add your Google TTS key first."
+  },
+  "opt_tts_loading": {
+    "message": "Fetching voices…"
+  },
+  "opt_tts_voices_count": {
+    "message": "$1 voices available for this language ($2)."
+  },
+  "opt_tts_no_voices": {
+    "message": "No Google voices found for this language ($1)."
+  },
+  "opt_tts_voices_failed": {
+    "message": "Could not fetch the voice list."
+  },
+  "opt_tts_testing": {
+    "message": "Playing sample…"
+  },
+  "opt_tts_test_ok": {
+    "message": "Works — you should hear the sample."
+  },
+  "opt_tts_test_failed": {
+    "message": "The sample failed."
+  },
+  "opt_tts_sample": {
+    "message": "This is a speech sample."
+  },
+  "opt_tts_voice_changed": {
+    "message": "Selected voice: $1"
   },
   "dl_err_key": {
     "message": "Invalid or expired DeepL key — check it in the settings."

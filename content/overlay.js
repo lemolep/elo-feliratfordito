@@ -27,6 +27,14 @@ globalThis.LFT = globalThis.LFT || {};
   let stuckToBottom = true;
   let picking = false;
 
+  /* felolvasás */
+  let ttsOn = false;
+  let ttsQueue = [];          // { audio: Promise }
+  let ttsPumping = false;
+  let ttsAudio = null;        // épp szóló hang
+  let ttsGate = Promise.resolve();   // a sorba állítás sorrendjét őrzi
+  const TTS_MAX_QUEUE = 10;   // ha nagyon lemarad, a legrégebbit dobjuk
+
   /* ---------------- segédek ---------------- */
 
   async function bg(msg) {
@@ -97,6 +105,7 @@ globalThis.LFT = globalThis.LFT || {};
         '<button class="icon" data-a="fsup" data-i18n-title="ov_tip_fsup">A+</button>',
         '<input type="range" data-a="op" min="30" max="100" step="5" data-i18n-title="ov_tip_opacity">',
         '<button class="icon" data-a="pick" data-i18n-title="ov_tip_pick">◎</button>',
+        '<button class="icon" data-a="tts">🔊</button>',
         '<button data-a="save" data-i18n="ov_save" data-i18n-title="ov_tip_save"></button>',
         '<button class="icon" data-a="opts" data-i18n-title="ov_tip_opts">⚙</button>',
         '<button class="icon" data-a="close" data-i18n-title="ov_tip_close">✕</button>',
@@ -129,6 +138,7 @@ globalThis.LFT = globalThis.LFT || {};
     el.rec = panel.querySelector('[data-a=rec]');
     el.lang = panel.querySelector('[data-a=lang]');
     el.op = panel.querySelector('[data-a=op]');
+    el.tts = panel.querySelector('[data-a=tts]');
     el.dlg = panel.querySelector('.dlg');
     el.fname = panel.querySelector('[data-a=fname]');
 
@@ -188,6 +198,77 @@ globalThis.LFT = globalThis.LFT || {};
     panel.classList.toggle('huonly', !on);
     el.lang.textContent = LFT.t(on ? 'ov_bilingual' : 'ov_mono');
     if (persist) queueUiSave();
+  }
+
+  /* ---------------- felolvasás ---------------- */
+
+  function setTts(on, persist) {
+    ttsOn = !!on;
+    el.tts.textContent = ttsOn ? '🔊' : '🔇';
+    el.tts.classList.toggle('on', ttsOn);
+    el.tts.title = LFT.t(ttsOn ? 'ov_tip_tts_on' : 'ov_tip_tts_off');
+    if (!ttsOn) ttsStop();
+    if (persist) {
+      settings.ttsEnabled = ttsOn;
+      LFT.store.saveSettings({ ttsEnabled: ttsOn });
+      if (ttsOn && !settings.googleKey) setStatus(LFT.t('ov_tts_nokey'), 'warn');
+    }
+  }
+
+  function ttsStop() {
+    ttsQueue = [];
+    if (ttsAudio) {
+      try { ttsAudio.pause(); } catch (e) { /* már leállt */ }
+      ttsAudio = null;
+    }
+  }
+
+  /* A hangot már a sorba álláskor elkezdjük legyártatni (párhuzamosan), de
+     lejátszani szigorúan egymás után fogjuk. */
+  function ttsEnqueue(text) {
+    if (!ttsOn || !text) return;
+    ttsQueue.push({ audio: bg({ type: 'tts', text: text }) });
+    if (ttsQueue.length > TTS_MAX_QUEUE) ttsQueue.splice(0, ttsQueue.length - TTS_MAX_QUEUE);
+    ttsPump();
+  }
+
+  async function ttsPump() {
+    if (ttsPumping) return;
+    ttsPumping = true;
+    try {
+      while (ttsQueue.length && ttsOn) {
+        const item = ttsQueue.shift();
+        let res = null;
+        try { res = await item.audio; } catch (e) { res = null; }
+        if (!ttsOn) break;
+        if (!res || res.skip) continue;
+        if (!res.audio) {
+          if (res.error) setStatus(res.error, 'warn');
+          continue;
+        }
+        await ttsPlay(res.audio);
+      }
+    } finally {
+      ttsPumping = false;
+    }
+  }
+
+  function ttsPlay(b64) {
+    return new Promise(resolve => {
+      let done = false;
+      const finish = () => { if (!done) { done = true; ttsAudio = null; resolve(); } };
+      try {
+        const a = new Audio('data:audio/mp3;base64,' + b64);
+        ttsAudio = a;
+        a.onended = finish;
+        a.onerror = finish;
+        a.play().catch(() => {
+          /* a böngésző autoplay-tiltása — a Start gomb megnyomása után ez ritka */
+          setStatus(LFT.t('ov_tts_blocked'), 'warn');
+          finish();
+        });
+      } catch (e) { finish(); }
+    });
   }
 
   function setVisible(on, persist) {
@@ -293,6 +374,10 @@ globalThis.LFT = globalThis.LFT || {};
 
   async function onSegment(payload) {
     if (!recording) return;
+
+    const prevGate = ttsGate;
+    let openGate;
+    ttsGate = new Promise(r => { openGate = r; });
     const line = {
       id: ++seq,
       t: payload.t || Date.now(),
@@ -319,6 +404,16 @@ globalThis.LFT = globalThis.LFT || {};
     }
     updateLine(line);
     markDirty();
+
+    /* A fordítások nem feltétlenül ugyanabban a sorrendben készülnek el, ahogy
+       a mondatok elhangzottak. Ez a kapu biztosítja, hogy a felolvasás sorrendje
+       a felirat sorrendje legyen. */
+    try {
+      await prevGate;
+      if (line.hu) ttsEnqueue(line.hu);
+    } finally {
+      openGate();
+    }
   }
 
   function markDirty() {
@@ -373,6 +468,7 @@ globalThis.LFT = globalThis.LFT || {};
 
   async function stopRec(openDialog) {
     setRecUi(false);
+    ttsStop();
     await bg({ type: 'relay:frames', payload: { type: 'capture:stop' } });
     await flushSave(Date.now());
     setStatus(lines.length ? LFT.tn('ov_stopped_lines', lines.length, [String(lines.length)]) : LFT.t('ov_stopped'), 'ok');
@@ -493,6 +589,7 @@ globalThis.LFT = globalThis.LFT || {};
       case 'fsup': setFontSize((ui.fontSize || 20) + 2, true); break;
       case 'fsdown': setFontSize((ui.fontSize || 20) - 2, true); break;
       case 'pick': startPicking(); break;
+      case 'tts': setTts(!ttsOn, true); break;
       case 'save': openSaveDialog(); break;
       case 'opts': bg({ type: 'openOptions' }); break;
       case 'close': setVisible(false, true); break;
@@ -547,6 +644,7 @@ globalThis.LFT = globalThis.LFT || {};
       clearTimeout(uiTimer); uiTimer = null;
       recording = false;
       setRecUi(false);
+      ttsStop();
       panel.classList.add('stale');
       el.msg.textContent = LFT.t('ov_stale');
       el.msg.className = 'msg warn';
@@ -560,6 +658,7 @@ globalThis.LFT = globalThis.LFT || {};
         if (area !== 'local' || !changes.settings) return;
         settings = Object.assign({}, settings, changes.settings.newValue || {});
         applyTargetLang();
+        if (!!settings.ttsEnabled !== ttsOn) setTts(settings.ttsEnabled, false);
       });
     } catch (e) { /* érvénytelen kontextus */ }
   }
@@ -580,6 +679,7 @@ globalThis.LFT = globalThis.LFT || {};
     setBilingual(ui.bilingual, false);
     setVisible(ui.visible !== false, false);
     setRecUi(false);
+    setTts(settings.ttsEnabled, false);
     applyTargetLang();
     updateCount();
 

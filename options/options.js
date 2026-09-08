@@ -137,11 +137,114 @@ async function refreshLangs(quiet) {
 
 $('target').addEventListener('change', () => {
   queueSave({ targetLang: $('target').value });
+  refreshVoices(true);   // a hangok a célnyelvhez igazodnak
   const label = $('target').options[$('target').selectedIndex].textContent;
   result('langResult', LFT.t('opt_lang_changed', [label]), 'ok');
 });
 
 $('langRefresh').addEventListener('click', () => refreshLangs(false));
+
+/* ---------------- felolvasás (Google TTS) ---------------- */
+
+$('gkeyShow').addEventListener('click', () => {
+  const f = $('gkey');
+  const shown = f.type === 'text';
+  f.type = shown ? 'password' : 'text';
+  $('gkeyShow').textContent = LFT.t(shown ? 'opt_show' : 'opt_hide');
+});
+
+$('gkey').addEventListener('input', () => {
+  queueSave({ googleKey: $('gkey').value.trim() });
+  result('ttsResult', LFT.t('opt_key_saved'), 'info');
+});
+
+$('ttsEnabled').addEventListener('change', () => {
+  queueSave({ ttsEnabled: $('ttsEnabled').checked });
+});
+
+$('rate').addEventListener('input', () => {
+  const v = Number($('rate').value);
+  $('rateVal').textContent = v.toFixed(2).replace(/0$/, '') + '×';
+  queueSave({ ttsRate: v });
+});
+
+function fillVoices(list, selected) {
+  const sel = $('ttsVoice');
+  sel.innerHTML = '';
+  /* a Chirp3 HD hangok előre, azok szólnak a legtermészetesebben */
+  const sorted = list.slice().sort((a, b) => {
+    const ca = /Chirp3-HD/i.test(a.name) ? 0 : 1;
+    const cb = /Chirp3-HD/i.test(b.name) ? 0 : 1;
+    return ca !== cb ? ca - cb : a.name.localeCompare(b.name);
+  });
+  for (const v of sorted) {
+    const o = document.createElement('option');
+    o.value = v.name;
+    o.textContent = LFT.tts.labelFor(v);
+    sel.appendChild(o);
+  }
+  if (selected && sorted.some(v => v.name === selected)) sel.value = selected;
+  else if (sorted.length) sel.value = LFT.tts.pickDefaultVoice(sorted);
+  return sel.value || '';
+}
+
+async function refreshVoices(quiet) {
+  const key = $('gkey').value.trim();
+  if (!key) {
+    if (!quiet) result('ttsResult', LFT.t('opt_tts_needkey'), 'err');
+    return;
+  }
+  const lang = LFT.tts.voiceLangFor(settings.targetLang);
+  if (!quiet) result('ttsResult', LFT.t('opt_tts_loading'), 'info');
+
+  const res = await chrome.runtime.sendMessage({ type: 'tts:voices', key: key, lang: lang });
+  if (!res || !res.ok) {
+    if (!quiet) result('ttsResult', (res && res.error) || LFT.t('opt_tts_voices_failed'), 'err');
+    return;
+  }
+  const list = res.voices || [];
+  if (!list.length) {
+    result('ttsResult', LFT.t('opt_tts_no_voices', [lang]), 'err');
+    return;
+  }
+  const chosen = fillVoices(list, settings.targetLang && settings.ttsVoice);
+  /* ha a mentett hang nem ehhez a nyelvhez tartozik, az újat el is mentjük */
+  if (chosen && chosen !== settings.ttsVoice) queueSave({ ttsVoice: chosen });
+  if (!quiet) result('ttsResult', LFT.t('opt_tts_voices_count', [String(list.length), lang]), 'ok');
+}
+
+$('voiceRefresh').addEventListener('click', () => refreshVoices(false));
+
+$('ttsVoice').addEventListener('change', () => {
+  queueSave({ ttsVoice: $('ttsVoice').value });
+  const label = $('ttsVoice').options[$('ttsVoice').selectedIndex].textContent;
+  result('ttsResult', LFT.t('opt_tts_voice_changed', [label]), 'ok');
+});
+
+$('gkeyTest').addEventListener('click', async () => {
+  const key = $('gkey').value.trim();
+  if (!key) { result('ttsResult', LFT.t('opt_tts_needkey'), 'err'); return; }
+  let voice = $('ttsVoice').value;
+  if (!voice) { await refreshVoices(true); voice = $('ttsVoice').value; }
+  if (!voice) { result('ttsResult', LFT.t('tts_err_novoice'), 'err'); return; }
+
+  result('ttsResult', LFT.t('opt_tts_testing'), 'info');
+  const res = await chrome.runtime.sendMessage({
+    type: 'tts:sample', key: key, voice: voice,
+    rate: Number($('rate').value), text: LFT.t('opt_tts_sample')
+  });
+  if (!res || !res.ok || !res.audio) {
+    result('ttsResult', (res && res.error) || LFT.t('opt_tts_test_failed'), 'err');
+    return;
+  }
+  try {
+    const a = new Audio('data:audio/mp3;base64,' + res.audio);
+    await a.play();
+    result('ttsResult', LFT.t('opt_tts_test_ok'), 'ok');
+  } catch (e) {
+    result('ttsResult', LFT.t('opt_tts_test_failed'), 'err');
+  }
+});
 
 /* ---------------- domainek ---------------- */
 
@@ -376,6 +479,15 @@ async function init() {
   // előbb a gyorsítótárazott (vagy a beépített) lista, hogy azonnal legyen mit választani
   fillLangs((await LFT.store.getLangs()) || LFT.deepl.FALLBACK_TARGETS, settings.targetLang);
   if (settings.deeplKey) refreshLangs(true);   // majd csendben frissítjük a DeepL-től
+
+  $('gkey').value = settings.googleKey || '';
+  $('ttsEnabled').checked = !!settings.ttsEnabled;
+  $('rate').value = settings.ttsRate || 1;
+  $('rateVal').textContent = Number(settings.ttsRate || 1).toFixed(2).replace(/0$/, '') + '×';
+  if (settings.ttsVoice) {
+    fillVoices([{ name: settings.ttsVoice, ssmlGender: '' }], settings.ttsVoice);
+  }
+  if (settings.googleKey) refreshVoices(true);
 
   await renderDomains();
   await renderTargets();

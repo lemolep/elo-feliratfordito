@@ -28,7 +28,7 @@ than copying it. If you delete or rename the folder, the extension stops working
 
 1. Get a key at <https://www.deepl.com/pro-api> (the Free tier gives 500,000 characters per
    month; signup requires a card but it is not charged)
-2. Extension icon → **Settings and history** → *1. DeepL API key*
+2. Extension icon → **Settings and history** → *DeepL API key*
 3. Paste the key, then press **Test**
 
 Free keys end in `:fx` — the extension uses that to pick the right DeepL endpoint, so you can
@@ -38,7 +38,7 @@ The key is stored **unencrypted** in the browser's own storage on this machine.
 
 ### Target language
 
-Settings → *3. Translation and appearance* → **Target language**. The dropdown lists every
+Settings → *Translation and appearance* → **Target language**. The dropdown lists every
 DeepL target language, named in your interface language.
 
 You do not need to specify a source language — DeepL detects it automatically.
@@ -46,13 +46,38 @@ You do not need to specify a source language — DeepL detects it automatically.
 The list is bundled with the extension, but as soon as you enter a key it is refreshed from
 the DeepL API, so newly supported languages show up too. The *Refresh list* button refreshes it manually. The floating window header always shows the current target (e.g. `→ EN-GB`).
 
-## 3. Allow a site
+## 3. Speech (Google Cloud TTS) — optional
+
+The translated lines can also be read aloud as they arrive.
+
+1. In the [Google Cloud console](https://console.cloud.google.com/), enable the
+   **Cloud Text-to-Speech API** and create an **API key**
+2. Settings → *Speech* → paste the key → **Test** (plays a sample)
+3. Tick **Enable speech** and pick a **voice**
+
+The voice list follows the target language: when you change what the subtitles are
+translated into, the extension fetches the matching voices and puts the **Chirp3 HD**
+ones first — those sound the most natural. **Speaking rate** is adjustable between
+0.25× and 2×; 1.1–1.3 often helps with live subtitles.
+
+Toggle it on the fly with the **🔊 / 🔇** button in the translator window.
+
+**How it works:** every translated sentence gets its own TTS request, but the clips are
+played strictly **one after another**, in subtitle order — they never overlap. If speech
+falls far behind (more than 10 sentences queued), the oldest are dropped so it catches
+up with the present; the transcript still keeps every line.
+
+> Google Cloud TTS is a **separate paid service** with a monthly free tier, entirely
+> independent of the DeepL key. In the Google console, restrict the key to the
+> Text-to-Speech API.
+
+## 4. Allow a site
 
 The extension only runs on sites you explicitly allow. It requests **no host access at
 install time**.
 
 - **Quick way:** open the site, click the extension icon → *Allow on this site*
-- **Or:** Settings → *2. Allowed sites* → type the domain (e.g. `example.com`) → **Add**
+- **Or:** Settings → *Allowed sites* → type the domain (e.g. `example.com`) → **Add**
 
 Subdomains are included automatically.
 
@@ -62,7 +87,7 @@ Subdomains are included automatically.
 > *Allow* button. This is a browser security boundary — content
 > of a cross-origin frame cannot be read without permission, by any means.
 
-## 4. Usage
+## 5. Usage
 
 1. Open the page, start the video and **turn on subtitles (CC)** in the player
 2. Press **Start** in the floating window
@@ -91,6 +116,7 @@ the video image.
 | **A− / A+** | font size between 12 and 48 px |
 | slider | background opacity (30–100%) |
 | **◎** | picker — select the subtitle element on the page |
+| **🔊 / 🔇** | turn speech on and off |
 | **Save** | download the transcript as `.txt` |
 | **⚙** | settings and history |
 | **✕** | hide the window |
@@ -105,11 +131,11 @@ opacity and view mode are remembered **per site**.
 
 Both can be rebound at `chrome://extensions/shortcuts`.
 
-## 5. Saving and history
+## 6. Saving and history
 
 - **Live backup:** every line reaches storage within 3 seconds, so nothing is lost if the tab
   crashes or you close it by accident
-- **History:** Settings → *5. Previous recordings* — date, site, duration, line count; any of
+- **History:** Settings → *Previous recordings* — date, site, duration, line count; any of
   them can be downloaded or deleted later
 - The `.txt` always contains **both languages**, regardless of the current view:
 
@@ -124,7 +150,7 @@ ORIGINAL: Hallo zusammen, willkommen zurück.
 EN-GB: Hello everyone, welcome back.
 ```
 
-## 6. How it finds the subtitles
+## 7. How it finds the subtitles
 
 Two sources, in this order:
 
@@ -146,7 +172,7 @@ The delay is adjustable between 300 and 3000 ms.
 one arrives at the bottom, exactly how YouTube's automatic captions behave. The extension
 detects the overlap between the old and new state, so text is neither duplicated nor lost.
 
-## 7. Troubleshooting
+## 8. Troubleshooting
 
 | Symptom | What to do |
 |---|---|
@@ -156,13 +182,13 @@ detects the overlap between the old and new state, so text is neither duplicated
 | The picked element has no text | First check that subtitles are on. If they are visible but **Diagnostics** still finds no text, the subtitle is **burned into the video image** and cannot be read from the DOM. This extension cannot handle that — it would need OCR or speech recognition. |
 | Diagnostics reports `videó: 0` while a video is playing | The player is in a cross-origin iframe. Diagnostics lists the embedded frames (largest first) — press *Allow* next to it, then F5. In this case the picker does not work over the video either: the click stays inside the iframe. |
 | "(not translated)" next to the lines | Check the message in the window's status bar: bad key (403) or exhausted quota (456). The original text is still recorded. |
-| Subtitles are lost mid-session | The player replaced the element. Pick again, or delete the rule: Settings → *4. Selected subtitle elements*, or the *Delete rule* button on the Diagnostics card. |
+| Subtitles are lost mid-session | The player replaced the element. Pick again, or delete the rule: Settings → *Selected subtitle elements*, or the *Delete rule* button on the Diagnostics card. |
 | Wrong element picked (it translates a menu label) | Diagnostics → *Delete rule*. If you don't delete it, after 6 seconds the extension falls back to the video's own text track when one exists — but the bad rule stays until removed. |
 
 For debugging: `chrome://extensions` → the **service worker** link under the extension (background
 log), and F12 → Console on the page itself.
 
-## 8. Project layout
+## 9. Project layout
 
 ```
 manifest.json
@@ -172,6 +198,7 @@ content/capture.js             subtitle capture and picker, runs in every frame
 content/overlay.js             the floating window (top frame only)
 content/overlay-css.js         window styling (injected into Shadow DOM, CSP-safe)
 lib/i18n.js                    translation layer (chrome.i18n + DOM labelling)
+lib/tts.js                     Google Cloud TTS client (voices, synthesis)
 lib/store.js                   chrome.storage layer
 lib/deepl.js                   DeepL client (endpoint, languages, error handling)
 lib/segmenter.js               raw subtitles -> finished sentences, dedup, rolling captions
@@ -180,30 +207,32 @@ popup/                         quick controls and diagnostics
 options/                       settings and history
 ```
 
-## 9. Privacy
+## 10. Privacy
 
 - **There is no server behind this extension.** No telemetry, nothing is sent to the author.
-- **Exactly one outbound connection exists:** finished subtitle sentences go to the DeepL API
-  using *your own* key, to be translated. That is governed by DeepL's privacy policy —
+- **Outbound connections exist only for translation and speech:** finished subtitle sentences
+  go to the DeepL API using *your own* key, and if you enable speech, the translated sentences
+  go to Google Cloud TTS using *your own* Google key. That is governed by DeepL's privacy policy —
   <https://www.deepl.com/privacy>. If that is not acceptable for a given piece of content,
   do not use the extension there.
 - **Everything else stays local:** the DeepL key, allowed domains, picked subtitle elements,
   window settings and recorded transcripts live in the browser's own storage
   (`chrome.storage.local`) on that machine. Removing the extension removes them too.
 - **It only runs on sites you allow.** No host access is requested at install time; you grant
-  each domain explicitly and can revoke it at any time (Settings → *2. Allowed sites*).
+  each domain explicitly and can revoke it at any time (Settings → *Allowed sites*).
 - The DeepL key is stored unencrypted. Do not use it on a shared machine.
 
-## 10. License
+## 11. License
 
 MIT — see [LICENSE](LICENSE). Use it, modify it, redistribute it freely.
 
 Not affiliated with DeepL SE or with any video provider.
 
-## 11. Deliberately not supported (yet)
+## 12. Deliberately not supported (yet)
 
 - Custom glossary for domain-specific terminology
 - `.srt` export with timecodes
-- OCR (burned-in subtitles) and speech recognition
+- Muting the original audio while speaking
+- OCR (burned-in subtitles) and speech recognition (STT)
 - Translation engines other than DeepL
 - Interface languages beyond Hungarian and English

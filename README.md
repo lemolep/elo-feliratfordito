@@ -24,7 +24,7 @@ Manifest V3, tiszta JavaScript — **nincs build lépés, nincs npm**.
 
 1. Kulcs a <https://www.deepl.com/pro-api> oldalon szerezhető (a Free szint havi
    500 000 karakter; regisztrációhoz bankkártya kell, de nem terhel)
-2. Bővítmény ikon → **Beállítások és előzmények** → *1. DeepL API kulcs*
+2. Bővítmény ikon → **Beállítások és előzmények** → *DeepL API kulcs*
 3. Írd be a kulcsot, majd nyomd meg a **Teszt** gombot
 
 A Free kulcs `:fx`-re végződik — a bővítmény ebből ismeri fel, melyik DeepL végpontot
@@ -34,7 +34,7 @@ A kulcs **titkosítatlanul**, a böngésző saját tárolójában marad ezen a g
 
 ### Célnyelv
 
-Beállítások → *3. Fordítás és megjelenés* → **Célnyelv**. A legördülő menüben a DeepL összes
+Beállítások → *Fordítás és megjelenés* → **Célnyelv**. A legördülő menüben a DeepL összes
 célnyelve szerepel (magyar, német, spanyol, japán, ukrán és a többi).
 
 A **forrásnyelvet nem kell megadni** — a DeepL magától felismeri, tehát ugyanaz a beállítás
@@ -45,13 +45,39 @@ a **valóban aktuális** listát, így az újonnan támogatott nyelvek is megjel
 *Lista frissítése* gombbal is elkérhető. A fordítóablak fejléce mindig mutatja az aktuális
 célnyelvet (pl. `→ HU`).
 
-## 3. Oldal engedélyezése
+## 3. Felolvasás (Google Cloud TTS) — nem kötelező
+
+A lefordított sorokat hangosan is felolvastathatod, ahogy megérkeznek.
+
+1. A [Google Cloud konzolban](https://console.cloud.google.com/) engedélyezd a
+   **Cloud Text-to-Speech API**-t, majd hozz létre egy **API kulcsot**
+2. Beállítások → *Felolvasás* → írd be a kulcsot → **Teszt** (lejátszik egy hangmintát)
+3. Pipáld ki a **Felolvasás bekapcsolása** jelölőt, és válassz **hangot**
+
+A hanglista a célnyelvhez igazodik: ha átállítod a fordítás célnyelvét, a bővítmény
+magától lekéri az ahhoz tartozó hangokat, és a **Chirp3 HD** hangokat teszi előre — azok
+szólnak a legtermészetesebben. A **beszédtempó** 0,25× és 2× között állítható; élő
+felirathoz gyakran jól jön az 1,1–1,3.
+
+Menet közben a fordítóablak **🔊 / 🔇** gombjával kapcsolhatod ki-be.
+
+**Hogyan működik:** minden lefordított mondat külön TTS-kérést kap, a hangok viszont
+szigorúan **egymás után** szólalnak meg, a felirat sorrendjében — soha nem csúsznak
+egymásra. Ha a beszéd nagyon lemarad (több mint 10 mondat torlódik), a bővítmény a
+legrégebbieket eldobja, és felzárkózik a jelenhez; az átiratban természetesen minden
+sor megmarad.
+
+> A Google Cloud TTS **külön fizetős szolgáltatás**, havi ingyenes kerettel — a DeepL
+> kulcstól teljesen független. A kulcsot a Google konzolban érdemes a Text-to-Speech
+> API-ra korlátozni.
+
+## 4. Oldal engedélyezése
 
 A bővítmény csak az általad felsorolt oldalakon fut.
 
 - **Gyorsan:** menj a kívánt oldalra, kattints a bővítmény ikonjára →
   *Engedélyezés ezen az oldalon*
-- **Vagy:** Beállítások → *2. Engedélyezett oldalak* → írd be a domaint (pl.
+- **Vagy:** Beállítások → *Engedélyezett oldalak* → írd be a domaint (pl.
   `pelda-stream.hu`) → **Hozzáadás**
 
 Az aldomainek automatikusan beleértendők.
@@ -62,7 +88,7 @@ Az aldomainek automatikusan beleértendők.
 > *Engedélyezem* gomb. Ez böngésző-biztonsági határ — idegen domainről betöltött keret
 > tartalmát semmilyen trükkel nem lehet kiolvasni engedély nélkül.
 
-## 4. Használat
+## 5. Használat
 
 1. Menj az oldalra, indítsd el a videót, és **kapcsold be a feliratot (CC)** a lejátszóban
 2. Nyomd meg a lebegő ablakon a **Start** gombot
@@ -91,6 +117,7 @@ videóképre van égetve.
 | **A− / A+** | betűméret 12 és 48 px között |
 | csúszka | a háttér átlátszatlansága (30–100%) |
 | **◎** | célzó — felirat kijelölése az oldalon |
+| **🔊 / 🔇** | felolvasás be- és kikapcsolása |
 | **Mentés** | átirat letöltése `.txt` fájlba |
 | **⚙** | beállítások és előzmények |
 | **✕** | ablak elrejtése |
@@ -105,11 +132,11 @@ betűméretet, átlátszóságot és a nézetet **oldalanként megjegyzi**.
 
 Átírhatók a `chrome://extensions/shortcuts` oldalon.
 
-## 5. Mentés és előzmények
+## 6. Mentés és előzmények
 
 - **Élő biztonsági mentés:** minden sor 3 másodpercen belül a tárolóba kerül, tehát ha
   összeomlik vagy véletlenül bezárul a fül, az anyag megmarad
-- **Előzmények:** Beállítások → *5. Korábbi felvételek* — dátum, oldal, hossz, sorok száma;
+- **Előzmények:** Beállítások → *Korábbi felvételek* — dátum, oldal, hossz, sorok száma;
   bármelyik utólag letölthető vagy törölhető
 - A `.txt` mindig **mindkét nyelvet** tartalmazza, függetlenül attól, hogy az ablakban
   éppen mi látszik:
@@ -125,7 +152,7 @@ EREDETI: Hello everyone, welcome back to the show.
 HU: Sziasztok, üdv újra a műsorban.
 ```
 
-## 6. Hogyan találja meg a feliratot?
+## 7. Hogyan találja meg a feliratot?
 
 Két forrást ismer, ebben a sorrendben:
 
@@ -147,7 +174,7 @@ Kezeli a **gördülő feliratot** is (amikor a régi sor felül kicsúszik, mik�
 érkezik — a YouTube automatikus felirata pontosan így működik): felismeri a régi és az új
 állapot közötti átfedést, így a szöveg se nem duplázódik, se nem vész el belőle rész.
 
-## 7. Ha nem működik
+## 8. Ha nem működik
 
 | Tünet | Mit tegyél |
 |---|---|
@@ -157,13 +184,13 @@ Kezeli a **gördülő feliratot** is (amikor a régi sor felül kicsúszik, mik�
 | A kijelölt elemben nincs szöveg | Előbb ellenőrizd, hogy be van-e kapcsolva a felirat. Ha be van és látszik is, de a **Diagnosztika** sem talál szöveget, akkor a felirat a **videóképre van égetve** — DOM-ból nem olvasható. Ezt a bővítmény nem tudja kezelni, OCR vagy beszédfelismerés kellene hozzá. |
 | A Diagnosztika `videó: 0`-t ír, pedig fut a videó | A lejátszó másik domainről betöltött iframe-ben van. A Diagnosztika felsorolja a beágyazott kereteket (a legnagyobbat elöl) — nyomd meg mellette az *Engedélyezem* gombot, majd F5. Ilyenkor a célzó sem működik a videó fölött: a kattintás az iframe-en belül marad, a főoldal nem kapja meg. |
 | „(nincs fordítás)" a sorok mellett | Nézd meg az ablak alsó sávjában a hibaüzenetet: rossz kulcs (403) vagy elfogyott keret (456). Az eredeti szöveg ilyenkor is rögzül. |
-| Elveszik a felirat menet közben | A lejátszó kicserélte az elemet. Célozz újra, vagy töröld a szabályt: Beállítások → *4. Kijelölt feliratelemek*, illetve a **Diagnosztika** kártyáján a *Szabály törlése* gombbal. |
+| Elveszik a felirat menet közben | A lejátszó kicserélte az elemet. Célozz újra, vagy töröld a szabályt: Beállítások → *Kijelölt feliratelemek*, illetve a **Diagnosztika** kártyáján a *Szabály törlése* gombbal. |
 | Rossz elemet jelöltél ki (pl. egy menüfeliratot fordít) | Diagnosztika → *Szabály törlése*. Ha nem törlöd, a bővítmény 6 másodperc után magától átvált a videó saját feliratsávjára, ha van ilyen — de a rossz szabály addig is ott marad. |
 
 Hibák keresésekor: `chrome://extensions` → a bővítménynél **service worker** link (háttér
 naplója), illetve az oldalon F12 → Console (a content script üzenetei `[LFT]` előtaggal).
 
-## 8. Fájlszerkezet
+## 9. Fájlszerkezet
 
 ```
 manifest.json
@@ -173,6 +200,7 @@ content/capture.js             felirat kiolvasása, célzó, minden frame-ben fu
 content/overlay.js             a lebegő ablak (csak a legfelső frame-ben)
 content/overlay-css.js         az ablak stílusa (Shadow DOM-ba, CSP-biztosan)
 lib/i18n.js                    nyelvi réteg (chrome.i18n + DOM feliratozás)
+lib/tts.js                     Google Cloud TTS kliens (hangok, szintézis)
 lib/store.js                   chrome.storage réteg
 lib/deepl.js                   DeepL kliens (endpoint, hibakezelés)
 lib/segmenter.js               felirat -> lezárt mondatok, ismétlésszűrés
@@ -181,30 +209,32 @@ popup/                         gyorsvezérlő
 options/                       beállítások és előzmények
 ```
 
-## 9. Adatvédelem
+## 10. Adatvédelem
 
 - **Nincs szerver a bővítmény mögött.** Nem gyűjt telemetriát, nem küld semmit a szerzőnek.
-- **Egyetlen kimenő kapcsolat van:** a lezárt feliratmondatok a te saját DeepL kulcsoddal
-  mennek a DeepL API-ra fordításra. Ezt a DeepL adatkezelése szabályozza —
+- **Kimenő kapcsolat csak a fordításhoz és a felolvasáshoz van:** a lezárt feliratmondatok a
+  te saját DeepL kulcsoddal mennek a DeepL API-ra, és ha bekapcsolod a felolvasást, a
+  lefordított mondatok a te saját Google kulcsoddal a Google Cloud TTS-re. Ezt a DeepL adatkezelése szabályozza —
   <https://www.deepl.com/privacy>. Ha ez nem elfogadható egy adott tartalomnál, ne használd ott.
 - **Minden más helyben marad:** a DeepL kulcs, az engedélyezett domainek, a kijelölt
   feliratelemek, az ablakbeállítások és a rögzített átiratok a böngésző saját tárolójában
   (`chrome.storage.local`) vannak, azon a gépen. A bővítmény törlésével ezek is törlődnek.
 - **A bővítmény csak azokon az oldalakon fut, amelyeket te engedélyezel.** Telepítéskor nem
   kér hozzáférést egyetlen weboldalhoz sem; minden domaint külön, kattintással engedélyezel,
-  és bármikor visszavonhatod (Beállítások → *2. Engedélyezett oldalak* → Törlés).
+  és bármikor visszavonhatod (Beállítások → *Engedélyezett oldalak* → Törlés).
 - A DeepL kulcs titkosítatlanul van tárolva. Közös gépen ne használd.
 
-## 10. Licenc
+## 11. Licenc
 
 MIT — lásd a [LICENSE](LICENSE) fájlt. Használd, módosítsd, terjeszd szabadon.
 
 A bővítmény nem áll kapcsolatban a DeepL SE-vel, és semmilyen videószolgáltatóval sem.
 
-## 11. Amit szándékosan nem tud (még)
+## 12. Amit szándékosan nem tud (még)
 
 - Saját szótár / glosszárium a szakkifejezésekhez
 - `.srt` export időkódokkal
-- OCR (ráégetett felirat) és beszédfelismerés
+- Az eredeti hang némítása felolvasás közben
+- OCR (ráégetett felirat) és beszédfelismerés (STT)
 - DeepL-en kívüli fordítómotor
 - További felületi nyelvek a magyaron és angolon túl
