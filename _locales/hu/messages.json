@@ -635,6 +635,42 @@
   "opt_domain_grant": {
     "message": "Engedélyezem"
   },
+  "opt_gloss_title": {
+    "message": "Szakszótár"
+  },
+  "opt_gloss_hint": {
+    "message": "Ha a DeepL következetlenül fordít egy-egy szakkifejezést, itt megadhatod, minek fordítsa. Soronként egy pár: <code>eredeti = fordítás</code>. Elválasztónak a tabulátor, a nyíl és a pontosvessző is jó; a <code>#</code>-cel kezdődő sor megjegyzés."
+  },
+  "opt_gloss_ph": {
+    "message": "polyvagal = polivagális\nautonomic nervous system = autonóm idegrendszer\n# a # jellel kezdődő sor megjegyzés"
+  },
+  "opt_gloss_note": {
+    "message": "A szótárt a DeepL alkalmazza fordítás közben, tehát a ragozott alakokra is hat. A DeepL megköveteli a forrásnyelv ismeretét, ezért a szótár a felirat első lefordított mondata után lép életbe — onnantól végig érvényes. A célnyelv váltásakor a bővítmény új szótárt tölt fel ugyanezekből a párokból."
+  },
+  "opt_gloss_check": {
+    "message": "Ellenőrzés és feltöltés"
+  },
+  "opt_gloss_saved": {
+    "message": "Elmentve. Az „Ellenőrzés és feltöltés\" gombbal küldheted el a DeepL-nek."
+  },
+  "opt_gloss_empty": {
+    "message": "A szótár üres."
+  },
+  "opt_gloss_count": {
+    "message": "$1 szópár rendben."
+  },
+  "opt_gloss_bad": {
+    "message": "Hibás sorok (nincs bennük elválasztó): $1"
+  },
+  "opt_gloss_uploaded": {
+    "message": "Feltöltve a DeepL-hez, $1 nyelvpárra — mostantól ezt használja."
+  },
+  "opt_gloss_waiting": {
+    "message": "A DeepL még nem ismerte fel a felirat nyelvét — a szótár az első lefordított mondat után töltődik fel magától."
+  },
+  "opt_gloss_failed": {
+    "message": "A szótárt nem sikerült feltölteni: $1"
+  },
   "dl_err_key": {
     "message": "Hibás vagy lejárt DeepL kulcs — ellenőrizd a beállításokban."
   },

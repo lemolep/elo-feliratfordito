@@ -46,6 +46,31 @@ You do not need to specify a source language — DeepL detects it automatically.
 The list is bundled with the extension, but as soon as you enter a key it is refreshed from
 the DeepL API, so newly supported languages show up too. The *Refresh list* button refreshes it manually. The floating window header always shows the current target (e.g. `→ EN-GB`).
 
+### Terminology glossary
+
+If DeepL translates a term inconsistently, set the wording under Settings →
+**Terminology glossary**. One pair per line:
+
+```
+neuroception = Neurozeption
+autonomic nervous system = autonomes Nervensystem
+# a line starting with # is a comment
+```
+
+Besides `=`, a tab, `→` and `;` also work as separators. **Check and upload** reports how
+many pairs are valid, lists any invalid lines, and uploads the glossary to DeepL.
+
+This uses DeepL's own glossary feature rather than a find-and-replace afterwards: it applies
+**during** translation, so it also affects inflected forms. Two things worth knowing:
+
+- DeepL requires the source language to be known, while we let it auto-detect. So the glossary
+  takes effect **after the first translated sentence** — and stays active from then on.
+- When you switch target language, a new glossary is uploaded from the same pairs. The pairs
+  naturally belong to one target language, so rewrite them if you switch.
+
+If the upload fails for any reason, translation **continues without the glossary** — nothing
+breaks — and the Check button reports the error.
+
 ## 3. Speech (Google Cloud TTS) — optional
 
 The translated lines can also be read aloud as they arrive.
@@ -260,7 +285,6 @@ Not affiliated with DeepL SE or with any video provider.
 
 ## 12. Deliberately not supported (yet)
 
-- Custom glossary for domain-specific terminology
 - `.srt` export with timecodes
 - OCR (burned-in subtitles) and speech recognition (STT)
 - Translation engines other than DeepL

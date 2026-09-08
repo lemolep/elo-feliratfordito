@@ -95,7 +95,11 @@ let chain = Promise.resolve();
 let quotaBlocked = false;
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && changes.settings) quotaBlocked = false;
+  if (area === 'local' && changes.settings) {
+    quotaBlocked = false;
+    glossaryFailed = false;
+    glossaryError = '';
+  }
 });
 
 function trimCache() {
@@ -105,6 +109,10 @@ function trimCache() {
 /* A gyorsítótár kulcsában benne van a célnyelv is — különben nyelvváltás után
    a korábbi nyelvű fordítást adnánk vissza. */
 function cacheKey(lang, text) { return lang + '\u0000' + text; }
+
+/* A szótár megváltozásakor a korábbi fordítások már nem érvényesek. */
+let glossaryTagValue = '';
+function glossaryTag() { return glossaryTagValue; }
 
 function translateText(text) {
   return new Promise(resolve => {
@@ -139,25 +147,37 @@ async function runBatch() {
   /* Amit már lefordítottunk ugyanerre a nyelvre, azt nem kérjük el újra. */
   const pending = [];
   for (const b of batch) {
-    const hit = cache.get(cacheKey(lang, b.text));
+    const hit = cache.get(cacheKey(lang + glossaryTag(), b.text));
     if (hit) b.resolve({ hu: hit });
     else pending.push(b);
   }
   if (!pending.length) return;
 
   const texts = pending.map(b => b.text);
+  let glossaryId = lastDetected ? await ensureGlossary(s, lastDetected, lang) : '';
+
   for (let attempt = 0; ; attempt++) {
     try {
-      const out = await LFT.deepl.translate(s.deeplKey, texts, lang);
+      const out = await LFT.deepl.translate(s.deeplKey, texts, lang, {
+        sourceLang: baseLang(lastDetected), glossaryId: glossaryId
+      });
+      if (out.detected) lastDetected = out.detected;
       pending.forEach((b, i) => {
-        const hu = out[i] || '';
-        if (hu) cache.set(cacheKey(lang, b.text), hu);
+        const hu = out.texts[i] || '';
+        if (hu) cache.set(cacheKey(lang + glossaryTag(), b.text), hu);
         b.resolve(hu ? { hu: hu } : { error: LFT.t('dl_err_empty') });
       });
       trimCache();
       return;
     } catch (e) {
       const st = e.status || 0;
+      /* Rossz szótár esetén ne vesszen el a fordítás: egyszer újrapróbáljuk nélküle. */
+      if (st === 400 && glossaryId) {
+        glossaryFailed = true;
+        glossaryError = e.message;
+        glossaryId = '';
+        continue;
+      }
       if (st === 456) {
         quotaBlocked = true;
         pending.forEach(b => b.resolve({ error: e.message }));
@@ -170,6 +190,88 @@ async function runBatch() {
       pending.forEach(b => b.resolve({ error: e.message }));
       return;
     }
+  }
+}
+
+/* ---------------- szakszótár ---------------- */
+
+/* A DeepL szótára csak akkor használható, ha a forrásnyelvet is megadjuk. Mi
+   viszont felismertetjük — ezért a DeepL válaszából megtanuljuk, és onnantól
+   használjuk. Az első mondat így még szótár nélkül fordul le. */
+let lastDetected = '';
+let glossaryFailed = false;
+let glossaryError = '';
+
+function baseLang(l) { return String(l || '').split('-')[0].toLowerCase(); }
+
+/* Soronként "eredeti = fordítás". Elválasztónak elfogadjuk a tabulátort, az
+   egyenlőségjelet, a nyilat és a pontosvesszőt is; a # sor megjegyzés. */
+function parseGlossary(text) {
+  const out = [];
+  const bad = [];
+  const seen = new Set();
+  const lines = String(text || '').split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line || line.charAt(0) === '#') continue;
+    const parts = line.split(/\t|=|→|;/);
+    if (parts.length < 2) { bad.push(i + 1); continue; }
+    const a = parts[0].trim();
+    const b = parts.slice(1).join(' ').trim();
+    if (!a || !b) { bad.push(i + 1); continue; }
+    const k = a.toLowerCase();
+    if (seen.has(k)) continue;          // a DeepL nem fogad ismétlődő forrásoldalt
+    seen.add(k);
+    out.push({ a: a, b: b });
+  }
+  return { entries: out, bad: bad };
+}
+
+function hashOf(s) {
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return String(h >>> 0);
+}
+
+/* Gondoskodik róla, hogy a DeepL-nél a mostani szólistának megfelelő szótár
+   legyen, és visszaadja az azonosítóját. A DeepL szótárai nem módosíthatók,
+   ezért változáskor újat hozunk létre és a régit töröljük. */
+async function ensureGlossary(s, srcLang, tgtLang) {
+  const id = await ensureGlossaryInner(s, srcLang, tgtLang);
+  /* A gyorsítótár kulcsába is bekerül, így szótárváltás után nem a régi
+     fordítást adjuk vissza. */
+  glossaryTagValue = id ? '|' + id : '';
+  return id;
+}
+
+async function ensureGlossaryInner(s, srcLang, tgtLang) {
+  if (glossaryFailed) return '';
+  const parsed = parseGlossary(s.glossary);
+  if (!parsed.entries.length) return '';
+
+  const sl = baseLang(srcLang), tl = baseLang(tgtLang);
+  if (!sl || !tl || sl === tl) return '';
+
+  const tsv = parsed.entries.map(e => e.a + '\t' + e.b).join('\n');
+  const want = sl + ':' + tl + ':' + hashOf(tsv);
+
+  const st = (await chrome.storage.local.get('glossaryState')).glossaryState || {};
+  if (st.id && st.hash === want) return st.id;
+
+  try {
+    if (st.id) { try { await LFT.deepl.glossaryDelete(s.deeplKey, st.id); } catch (e) { /* lehet, hogy már nincs meg */ } }
+    const g = await LFT.deepl.glossaryCreate(
+      s.deeplKey, 'elo-feliratfordito ' + sl + '-' + tl, sl, tl, tsv);
+    const id = g && g.glossary_id;
+    if (!id) throw new Error('glossary_id');
+    await chrome.storage.local.set({ glossaryState: { id: id, hash: want, at: Date.now(), pair: sl + '-' + tl } });
+    glossaryError = '';
+    return id;
+  } catch (e) {
+    /* Nem állítjuk meg a fordítást emiatt — csak szótár nélkül megy tovább. */
+    glossaryFailed = true;
+    glossaryError = e.message || String(e);
+    return '';
   }
 }
 
@@ -231,6 +333,28 @@ async function handle(msg, sender) {
         return { ok: false, error: e.message, status: e.status };
       }
     }
+    /* szakszótár állapota és feltöltése */
+    case 'deepl:glossary': {
+      const s = await LFT.store.getSettings();
+      const parsed = parseGlossary(s.glossary);
+      const st = (await chrome.storage.local.get('glossaryState')).glossaryState || {};
+      if (msg.force) { glossaryFailed = false; glossaryError = ''; }
+
+      let id = '';
+      if (parsed.entries.length && lastDetected) {
+        id = await ensureGlossary(s, lastDetected, s.targetLang || 'HU');
+      }
+      return {
+        ok: true,
+        entries: parsed.entries.length,
+        bad: parsed.bad,
+        detected: lastDetected,
+        pair: id ? (baseLang(lastDetected) + ' → ' + baseLang(s.targetLang || 'HU')) : '',
+        uploaded: !!id,
+        error: glossaryError
+      };
+    }
+
     /* célnyelvek lekérése a DeepL-től (a beállítások oldalnak) */
     case 'deepl:languages': {
       const s = await LFT.store.getSettings();

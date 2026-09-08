@@ -256,6 +256,32 @@ $('gkeyTest').addEventListener('click', async () => {
   }
 });
 
+/* ---------------- szakszótár ---------------- */
+
+$('glossary').addEventListener('input', () => {
+  queueSave({ glossary: $('glossary').value });
+  result('glossResult', LFT.t('opt_gloss_saved'), 'info');
+});
+
+$('glossCheck').addEventListener('click', async () => {
+  await LFT.store.saveSettings({ glossary: $('glossary').value });
+  const res = await chrome.runtime.sendMessage({ type: 'deepl:glossary', force: true });
+  if (!res || !res.ok) {
+    result('glossResult', (res && res.error) || LFT.t('opt_gloss_failed', ['?']), 'err');
+    return;
+  }
+  if (!res.entries) { result('glossResult', LFT.t('opt_gloss_empty'), 'info'); return; }
+
+  const parts = [LFT.t('opt_gloss_count', [String(res.entries)])];
+  if (res.bad && res.bad.length) parts.push(LFT.t('opt_gloss_bad', [res.bad.join(', ')]));
+  if (res.uploaded) parts.push(LFT.t('opt_gloss_uploaded', [res.pair]));
+  else if (res.error) parts.push(LFT.t('opt_gloss_failed', [res.error]));
+  else if (!res.detected) parts.push(LFT.t('opt_gloss_waiting'));
+
+  const kind = (res.bad && res.bad.length) || res.error ? 'err' : 'ok';
+  result('glossResult', parts.join(' '), kind);
+});
+
 /* ---------------- domainek ---------------- */
 
 async function renderDomains() {
@@ -506,6 +532,7 @@ async function fillForm() {
   $('op').value = settings.opacity;
   $('opVal').textContent = settings.opacity + '%';
   $('bilingual').checked = !!settings.bilingual;
+  $('glossary').value = settings.glossary || '';
 
   // előbb a gyorsítótárazott (vagy a beépített) lista, hogy azonnal legyen mit választani
   fillLangs((await LFT.store.getLangs()) || LFT.deepl.FALLBACK_TARGETS, settings.targetLang);

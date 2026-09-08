@@ -635,6 +635,42 @@
   "opt_domain_grant": {
     "message": "Allow"
   },
+  "opt_gloss_title": {
+    "message": "Terminology glossary"
+  },
+  "opt_gloss_hint": {
+    "message": "If DeepL translates a term inconsistently, set the wording here. One pair per line: <code>source = translation</code>. Tab, arrow and semicolon also work as separators; a line starting with <code>#</code> is a comment."
+  },
+  "opt_gloss_ph": {
+    "message": "neuroception = Neurozeption\nautonomic nervous system = autonomes Nervensystem\n# a line starting with # is a comment"
+  },
+  "opt_gloss_note": {
+    "message": "DeepL applies the glossary during translation, so it also affects inflected forms. DeepL needs to know the source language, so the glossary takes effect after the first translated sentence — and stays active from then on. When you switch target language, a new glossary is uploaded from the same pairs."
+  },
+  "opt_gloss_check": {
+    "message": "Check and upload"
+  },
+  "opt_gloss_saved": {
+    "message": "Saved. Use “Check and upload” to send it to DeepL."
+  },
+  "opt_gloss_empty": {
+    "message": "The glossary is empty."
+  },
+  "opt_gloss_count": {
+    "message": "$1 term pairs are valid."
+  },
+  "opt_gloss_bad": {
+    "message": "Invalid lines (no separator): $1"
+  },
+  "opt_gloss_uploaded": {
+    "message": "Uploaded to DeepL for $1 — it is in use from now on."
+  },
+  "opt_gloss_waiting": {
+    "message": "DeepL has not detected the subtitle language yet — the glossary uploads itself after the first translated sentence."
+  },
+  "opt_gloss_failed": {
+    "message": "The glossary could not be uploaded: $1"
+  },
   "dl_err_key": {
     "message": "Invalid or expired DeepL key — check it in the settings."
   },

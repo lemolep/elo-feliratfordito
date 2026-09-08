@@ -45,6 +45,33 @@ a **valóban aktuális** listát, így az újonnan támogatott nyelvek is megjel
 *Lista frissítése* gombbal is elkérhető. A fordítóablak fejléce mindig mutatja az aktuális
 célnyelvet (pl. `→ HU`).
 
+### Szakszótár
+
+Ha a DeepL következetlenül fordít egy-egy szakkifejezést, Beállítások → **Szakszótár**
+alatt megadhatod, minek fordítsa. Soronként egy pár:
+
+```
+polyvagal = polivagális
+autonomic nervous system = autonóm idegrendszer
+neuroception = neurocepció
+# a # jellel kezdődő sor megjegyzés
+```
+
+Elválasztónak az `=` mellett a tabulátor, a `→` és a `;` is jó. Az **Ellenőrzés és
+feltöltés** gomb megmondja, hány pár érvényes, kiírja a hibás sorokat, és feltölti a
+szótárt a DeepL-hez.
+
+Ez a DeepL saját szótárfunkciója, nem utólagos csere: a fordítás **közben** érvényesül,
+így a ragozott alakokra is hat. Két dolgot érdemes tudni:
+
+- A DeepL megköveteli a forrásnyelv ismeretét, mi viszont felismertetjük vele. Ezért a
+  szótár **az első lefordított mondat után** lép életbe — onnantól végig érvényes.
+- A célnyelv váltásakor a bővítmény ugyanezekből a párokból új szótárt tölt fel. A párok
+  értelemszerűen az adott célnyelvhez tartoznak, tehát más nyelvre váltva érdemes átírni őket.
+
+Ha a feltöltés bármi okból nem sikerül, a fordítás **szótár nélkül megy tovább** — nem áll
+meg emiatt semmi —, a hibát pedig az Ellenőrzés gomb kiírja.
+
 ## 3. Felolvasás (Google Cloud TTS) — nem kötelező
 
 A lefordított sorokat hangosan is felolvastathatod, ahogy megérkeznek.
@@ -262,7 +289,6 @@ A bővítmény nem áll kapcsolatban a DeepL SE-vel, és semmilyen videószolgá
 
 ## 12. Amit szándékosan nem tud (még)
 
-- Saját szótár / glosszárium a szakkifejezésekhez
 - `.srt` export időkódokkal
 - OCR (ráégetett felirat) és beszédfelismerés (STT)
 - DeepL-en kívüli fordítómotor
