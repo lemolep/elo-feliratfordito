@@ -61,6 +61,17 @@ felirathoz gyakran jól jön az 1,1–1,3.
 
 Menet közben a fordítóablak **🔊 / 🔇** gombjával kapcsolhatod ki-be.
 
+### Az eredeti hang lehalkítása
+
+Amíg a fordítás hangja szól, a videó saját hangja lehalkul, utána visszaáll — így a két
+beszéd nem megy egymásra. A mértéke a beállításokban állítható (*Eredeti hang a felolvasás
+alatt*), alapban **20%**; a 0% teljes némítást jelent.
+
+A halkítás rövid átmenettel történik, hogy ne kattanjon, és **egymás utáni mondatok között
+nem áll vissza** — csak akkor, amikor a felolvasás tényleg elhallgat. Ha a lejátszó
+beágyazott keretben van, ez is működik, feltéve hogy annak a keretnek a domainjét
+engedélyezted.
+
 **Hogyan működik:** a hangok szigorúan **egymás után** szólalnak meg, a felirat
 sorrendjében — soha nem csúsznak egymásra.
 
@@ -240,7 +251,6 @@ A bővítmény nem áll kapcsolatban a DeepL SE-vel, és semmilyen videószolgá
 
 - Saját szótár / glosszárium a szakkifejezésekhez
 - `.srt` export időkódokkal
-- Az eredeti hang némítása felolvasás közben
 - OCR (ráégetett felirat) és beszédfelismerés (STT)
 - DeepL-en kívüli fordítómotor
 - További felületi nyelvek a magyaron és angolon túl

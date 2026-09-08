@@ -590,6 +590,15 @@
   "opt_tts_voice_changed": {
     "message": "Selected voice: $1"
   },
+  "opt_tts_duck_label": {
+    "message": "Original audio while speaking"
+  },
+  "opt_tts_duck_hint": {
+    "message": "While the translated voice speaks, the video’s own audio is turned down to this level, then restored. 0% = fully silent. It fades briefly so there is no click."
+  },
+  "opt_tts_duck_mute": {
+    "message": "silent"
+  },
   "dl_err_key": {
     "message": "Invalid or expired DeepL key — check it in the settings."
   },

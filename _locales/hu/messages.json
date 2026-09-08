@@ -590,6 +590,15 @@
   "opt_tts_voice_changed": {
     "message": "Kiválasztott hang: $1"
   },
+  "opt_tts_duck_label": {
+    "message": "Eredeti hang a felolvasás alatt"
+  },
+  "opt_tts_duck_hint": {
+    "message": "Amíg a fordítás hangja szól, a videó saját hangja ennyire halkul le, utána visszaáll. 0% = teljesen néma. Rövid átmenettel történik, hogy ne kattanjon."
+  },
+  "opt_tts_duck_mute": {
+    "message": "néma"
+  },
   "dl_err_key": {
     "message": "Hibás vagy lejárt DeepL kulcs — ellenőrizd a beállításokban."
   },

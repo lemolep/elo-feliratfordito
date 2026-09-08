@@ -220,6 +220,7 @@ globalThis.LFT = globalThis.LFT || {};
   }
 
   function ttsStop() {
+    bg({ type: 'relay:frames', payload: { type: 'audio:unduck' } });
     clearTimeout(ttsMergeTimer);
     ttsMergeTimer = null;
     ttsPending = [];
@@ -274,6 +275,7 @@ globalThis.LFT = globalThis.LFT || {};
   async function ttsPump() {
     if (ttsPumping) return;
     ttsPumping = true;
+    let duckedNow = false;
     try {
       while (ttsOn) {
         clearTimeout(ttsMergeTimer);
@@ -291,10 +293,20 @@ globalThis.LFT = globalThis.LFT || {};
           if (res.error) setStatus(res.error, 'warn');
           continue;
         }
+
+        /* Csak akkor halkítjuk le az eredeti hangot, amikor tényleg megszólalunk —
+           és a hangok között NEM állítjuk vissza, csak amikor elfogyott a sor.
+           A videó lehet másik keretben, ezért üzenetben megy. */
+        if (!duckedNow) {
+          duckedNow = true;
+          bg({ type: 'relay:frames',
+               payload: { type: 'audio:duck', level: settings && settings.ttsDuck } });
+        }
         await ttsPlay(res.audio);
       }
     } finally {
       ttsPumping = false;
+      if (duckedNow) bg({ type: 'relay:frames', payload: { type: 'audio:unduck' } });
     }
   }
 

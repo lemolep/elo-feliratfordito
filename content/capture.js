@@ -233,8 +233,52 @@ globalThis.LFT = globalThis.LFT || {};
     clearInterval(rescanTimer);
     detachObserver();
     disablePicker();
+    duckEnd();
     if (seg) seg.dispose();
   }, 2000);
+
+  /* ---------------- eredeti hang lehalkítása ---------------- */
+
+  /* A felolvasás a legfelső frame-ben szól, a videó viszont lehet egy beágyazott
+     keretben — ezért a halkítás ide, a videó keretébe kerül, és üzenetben vezéreljük.
+     Az átmenet rövid, hogy ne kattanjon. */
+  let ducked = null;        // [{ el, volume }] — az eredeti hangerők
+  let duckTimer = null;
+
+  function fadeVolumes(pairs, ms, onDone) {
+    clearInterval(duckTimer);
+    const steps = 6, dt = Math.max(16, ms / steps);
+    let i = 0;
+    duckTimer = setInterval(() => {
+      i++;
+      const k = Math.min(1, i / steps);
+      for (const p of pairs) {
+        try { p.el.volume = Math.max(0, Math.min(1, p.from + (p.to - p.from) * k)); }
+        catch (e) { /* elveszett elem */ }
+      }
+      if (i >= steps) {
+        clearInterval(duckTimer);
+        duckTimer = null;
+        if (onDone) onDone();
+      }
+    }, dt);
+  }
+
+  function duckStart(level) {
+    if (ducked) return;                       // már halkítva van
+    const els = Array.from(document.querySelectorAll('video, audio'));
+    if (!els.length) return;
+    const factor = Math.max(0, Math.min(1, (level == null ? 20 : level) / 100));
+    ducked = els.map(el => ({ el: el, volume: el.volume }));
+    fadeVolumes(ducked.map(d => ({ el: d.el, from: d.el.volume, to: d.volume * factor })), 120);
+  }
+
+  function duckEnd() {
+    if (!ducked) return;
+    const saved = ducked;
+    ducked = null;
+    fadeVolumes(saved.map(d => ({ el: d.el, from: d.el.volume, to: d.volume })), 260);
+  }
 
   /* ---------------- célzó ---------------- */
 
@@ -482,6 +526,8 @@ globalThis.LFT = globalThis.LFT || {};
     switch (msg.type) {
       case 'capture:start': start(msg.flushDelay); return;
       case 'capture:stop': stop(); return;
+      case 'audio:duck': duckStart(msg.level); return;
+      case 'audio:unduck': duckEnd(); return;
       case 'picker:enable': enablePicker(); return;
       case 'picker:disable': disablePicker(); return;
       case 'capture:diagnose': diagnose().then(sendResponse); return true;

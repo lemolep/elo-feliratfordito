@@ -62,6 +62,16 @@ ones first — those sound the most natural. **Speaking rate** is adjustable bet
 
 Toggle it on the fly with the **🔊 / 🔇** button in the translator window.
 
+### Turning down the original audio
+
+While the translated voice speaks, the video's own audio is turned down and restored
+afterwards, so the two do not talk over each other. The level is configurable (*Original
+audio while speaking*), **20%** by default; 0% means fully silent.
+
+It fades briefly so there is no click, and it **does not come back between consecutive
+sentences** — only when speech actually stops. This works for players in an embedded frame
+too, as long as you allowed that frame's domain.
+
 **How it works:** clips are played strictly **one after another**, in subtitle order — they
 never overlap.
 
@@ -239,7 +249,6 @@ Not affiliated with DeepL SE or with any video provider.
 
 - Custom glossary for domain-specific terminology
 - `.srt` export with timecodes
-- Muting the original audio while speaking
 - OCR (burned-in subtitles) and speech recognition (STT)
 - Translation engines other than DeepL
 - Interface languages beyond Hungarian and English

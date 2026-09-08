@@ -162,6 +162,16 @@ $('ttsEnabled').addEventListener('change', () => {
   queueSave({ ttsEnabled: $('ttsEnabled').checked });
 });
 
+function duckLabel(v) {
+  return v <= 0 ? LFT.t('opt_tts_duck_mute') : v + '%';
+}
+
+$('duck').addEventListener('input', () => {
+  const v = Number($('duck').value);
+  $('duckVal').textContent = duckLabel(v);
+  queueSave({ ttsDuck: v });
+});
+
 $('rate').addEventListener('input', () => {
   const v = Number($('rate').value);
   $('rateVal').textContent = v.toFixed(2).replace(/0$/, '') + '×';
@@ -482,6 +492,8 @@ async function init() {
 
   $('gkey').value = settings.googleKey || '';
   $('ttsEnabled').checked = !!settings.ttsEnabled;
+  $('duck').value = settings.ttsDuck == null ? 20 : settings.ttsDuck;
+  $('duckVal').textContent = duckLabel(Number($('duck').value));
   $('rate').value = settings.ttsRate || 1;
   $('rateVal').textContent = Number(settings.ttsRate || 1).toFixed(2).replace(/0$/, '') + '×';
   if (settings.ttsVoice) {
