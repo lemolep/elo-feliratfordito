@@ -61,11 +61,17 @@ felirathoz gyakran jól jön az 1,1–1,3.
 
 Menet közben a fordítóablak **🔊 / 🔇** gombjával kapcsolhatod ki-be.
 
-**Hogyan működik:** minden lefordított mondat külön TTS-kérést kap, a hangok viszont
-szigorúan **egymás után** szólalnak meg, a felirat sorrendjében — soha nem csúsznak
-egymásra. Ha a beszéd nagyon lemarad (több mint 10 mondat torlódik), a bővítmény a
-legrégebbieket eldobja, és felzárkózik a jelenhez; az átiratban természetesen minden
-sor megmarad.
+**Hogyan működik:** a hangok szigorúan **egymás után** szólalnak meg, a felirat
+sorrendjében — soha nem csúsznak egymásra.
+
+A bővítmény **nem várakozik szövegre**: amint van mit mondani, kimondja. Ha viszont épp
+szól egy hang, az addig érkező darabokat **egyetlen hanggá vonja össze**. Így kevesebb és
+hosszabb hangfájl lesz — kevesebb szünettel a mondatok között, és természetesebb
+hangsúlyozással, mert a TTS összefüggő szöveget kap, nem külön töredékeket. Késleltetést
+ez nem okoz: csak azt fogja össze, ami úgyis sorban állt volna.
+
+Nagyon nagy torlódásnál a legrégebbi darabokat eldobja, hogy felzárkózzon a jelenhez;
+az átiratban természetesen minden sor megmarad.
 
 > A Google Cloud TTS **külön fizetős szolgáltatás**, havi ingyenes kerettel — a DeepL
 > kulcstól teljesen független. A kulcsot a Google konzolban érdemes a Text-to-Speech

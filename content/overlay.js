@@ -29,11 +29,15 @@ globalThis.LFT = globalThis.LFT || {};
 
   /* felolvasás */
   let ttsOn = false;
-  let ttsQueue = [];          // { audio: Promise }
+  let ttsPending = [];        // még ki nem mondott szövegdarabok
+  let ttsNext = null;         // előre legyártott következő hang
+  let ttsMergeTimer = null;
   let ttsPumping = false;
   let ttsAudio = null;        // épp szóló hang
   let ttsGate = Promise.resolve();   // a sorba állítás sorrendjét őrzi
-  const TTS_MAX_QUEUE = 10;   // ha nagyon lemarad, a legrégebbit dobjuk
+  const TTS_MAX_PENDING = 15; // ennél többnél a legrégebbit dobjuk
+  const TTS_MAX_CHARS = 600;  // egy hangba ennél több szöveget nem fűzünk
+  const TTS_MERGE_MS = 400;   // ennyit adunk a szomszédos daraboknak, hogy összeérjenek
 
   /* ---------------- segédek ---------------- */
 
@@ -216,28 +220,69 @@ globalThis.LFT = globalThis.LFT || {};
   }
 
   function ttsStop() {
-    ttsQueue = [];
+    clearTimeout(ttsMergeTimer);
+    ttsMergeTimer = null;
+    ttsPending = [];
+    ttsNext = null;
     if (ttsAudio) {
       try { ttsAudio.pause(); } catch (e) { /* már leállt */ }
       ttsAudio = null;
     }
   }
 
-  /* A hangot már a sorba álláskor elkezdjük legyártatni (párhuzamosan), de
-     lejátszani szigorúan egymás után fogjuk. */
+  /* A felirat sok rövid darabban érkezik. Ha mindegyik külön hangfájl lenne, a
+     fájlok közötti rés és a darabonkénti lezáró hanglejtés miatt szaggatottan
+     szólna. Ezért NEM várunk szövegre: az elsőt azonnal kimondjuk, és ami közben
+     gyűlik össze — vagyis ami úgyis sorban állna, amíg szól a hang —, azt egyetlen
+     hanggá vonjuk össze. Így nő a darabok hossza anélkül, hogy késleltetnénk. */
   function ttsEnqueue(text) {
     if (!ttsOn || !text) return;
-    ttsQueue.push({ audio: bg({ type: 'tts', text: text }) });
-    if (ttsQueue.length > TTS_MAX_QUEUE) ttsQueue.splice(0, ttsQueue.length - TTS_MAX_QUEUE);
-    ttsPump();
+    ttsPending.push(String(text).trim());
+    if (ttsPending.length > TTS_MAX_PENDING) {
+      ttsPending.splice(0, ttsPending.length - TTS_MAX_PENDING);
+    }
+
+    if (!ttsPumping) {
+      ttsPump();                       // nem szól semmi: azonnal, várakozás nélkül
+      return;
+    }
+    /* Szól egy hang. A következőt előre legyártjuk, de adunk neki egy rövid
+       ablakot, hogy a közben érkező darabok is beleférjenek. */
+    if (!ttsNext && !ttsMergeTimer) {
+      ttsMergeTimer = setTimeout(() => {
+        ttsMergeTimer = null;
+        if (!ttsNext) ttsNext = ttsTakeNext();
+      }, TTS_MERGE_MS);
+    }
+  }
+
+  /* Kivesz annyi várakozó darabot, amennyi belefér egy hangba, és elindítja a
+     szintézist. A darabokat szóközzel fűzi össze, így a TTS egy összefüggő
+     szövegként mondja ki őket, nem külön mondatokként. */
+  function ttsTakeNext() {
+    if (!ttsPending.length) return null;
+    let text = '';
+    while (ttsPending.length) {
+      const next = ttsPending[0];
+      if (text && text.length + next.length + 1 > TTS_MAX_CHARS) break;
+      text += (text ? ' ' : '') + ttsPending.shift();
+    }
+    if (!text) return null;
+    return { audio: bg({ type: 'tts', text: text }), text: text };
   }
 
   async function ttsPump() {
     if (ttsPumping) return;
     ttsPumping = true;
     try {
-      while (ttsQueue.length && ttsOn) {
-        const item = ttsQueue.shift();
+      while (ttsOn) {
+        clearTimeout(ttsMergeTimer);
+        ttsMergeTimer = null;
+
+        const item = ttsNext || ttsTakeNext();
+        ttsNext = null;
+        if (!item) break;
+
         let res = null;
         try { res = await item.audio; } catch (e) { res = null; }
         if (!ttsOn) break;

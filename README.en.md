@@ -62,10 +62,17 @@ ones first — those sound the most natural. **Speaking rate** is adjustable bet
 
 Toggle it on the fly with the **🔊 / 🔇** button in the translator window.
 
-**How it works:** every translated sentence gets its own TTS request, but the clips are
-played strictly **one after another**, in subtitle order — they never overlap. If speech
-falls far behind (more than 10 sentences queued), the oldest are dropped so it catches
-up with the present; the transcript still keeps every line.
+**How it works:** clips are played strictly **one after another**, in subtitle order — they
+never overlap.
+
+The extension **never waits for text**: as soon as there is something to say, it says it. But
+while a clip is playing, the fragments that arrive meanwhile are **merged into a single
+clip**. That means fewer, longer clips — fewer pauses between sentences, and more natural
+intonation, because the TTS receives continuous text instead of separate fragments. It adds
+no delay: only what would have been queued anyway gets merged.
+
+Under heavy backlog the oldest fragments are dropped so it catches up with the present; the
+transcript still keeps every line.
 
 > Google Cloud TTS is a **separate paid service** with a monthly free tier, entirely
 > independent of the DeepL key. In the Google console, restrict the key to the
