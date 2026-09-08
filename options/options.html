@@ -139,6 +139,25 @@
     </div>
   </section>
 
+  <!-- Mentés / visszatöltés -->
+  <section>
+    <h2 data-i18n="opt_backup_title"></h2>
+    <p class="hint" data-i18n="opt_backup_hint"></p>
+
+    <label class="check">
+      <input type="checkbox" id="exportKeys" checked>
+      <span data-i18n="opt_export_keys"></span>
+    </label>
+    <p class="warn" data-i18n="opt_export_keys_warn"></p>
+
+    <div class="row">
+      <button id="exportBtn" class="primary" type="button" data-i18n="opt_export"></button>
+      <button id="importBtn" type="button" data-i18n="opt_import"></button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+    </div>
+    <div id="backupResult" class="result"></div>
+  </section>
+
   <footer data-i18n-html="opt_footer"></footer>
 </main>
 

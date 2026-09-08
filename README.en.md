@@ -167,6 +167,19 @@ ORIGINAL: Hallo zusammen, willkommen zurück.
 EN-GB: Hello everyone, welcome back.
 ```
 
+### Moving your settings to another machine
+
+Settings → *Backup and restore settings*. **Save to file** writes your keys, allowed sites,
+selected subtitle elements and speech settings into a single JSON file; **Restore from file**
+reads it back on the other machine. Recorded transcripts are not included — download those
+separately under recordings.
+
+The **Include the API keys** checkbox can be turned off. If you leave it on, the file contains
+your DeepL and Google keys in readable form — treat it like a password.
+
+After restoring, the sites appear in the list, but the browser only grants permission on a
+click: press **Allow** next to each of them.
+
 ## 7. How it finds the subtitles
 
 Two sources, in this order:

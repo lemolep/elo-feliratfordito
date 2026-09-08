@@ -275,11 +275,33 @@ async function renderDomains() {
     box.innerHTML = '<b></b><span class="mono"></span>';
     box.querySelector('b').textContent = d;
     box.querySelector('.mono').textContent = granted ? patternFor(d) : LFT.t('opt_domain_nogrant');
+    li.appendChild(box);
+
+    /* Engedély nélkül a domain csak a listán van, de nem fut rajta semmi —
+       adjunk rá egy gombot, mert a permissions.request csak kattintásból hívható. */
+    if (!granted) {
+      const ok = document.createElement('button');
+      ok.className = 'small primary';
+      ok.textContent = LFT.t('opt_domain_grant');
+      ok.addEventListener('click', async () => {
+        let granted2 = false;
+        try { granted2 = await chrome.permissions.request({ origins: [patternFor(d)] }); }
+        catch (e) { result('domainResult', LFT.t('opt_perm_failed', [e.message]), 'err'); return; }
+        if (!granted2) { result('domainResult', LFT.t('pop_perm_denied'), 'err'); return; }
+        const r = await chrome.runtime.sendMessage({ type: 'domains:sync' });
+        result('domainResult',
+          LFT.t('opt_domain_added', [d]) + ' ' +
+          (r && r.injected ? LFT.t('opt_domain_injected', [String(r.injected)]) : LFT.t('opt_domain_reload')),
+          'ok');
+        renderDomains();
+      });
+      li.appendChild(ok);
+    }
+
     const btn = document.createElement('button');
     btn.className = 'small danger';
     btn.textContent = LFT.t('opt_delete');
     btn.addEventListener('click', () => removeDomain(d));
-    li.appendChild(box);
     li.appendChild(btn);
     ul.appendChild(li);
   }
@@ -473,8 +495,7 @@ $('clearAll').addEventListener('click', async () => {
 
 /* ---------------- indulás ---------------- */
 
-async function init() {
-  LFT.i18n.applyDom();
+async function fillForm() {
   settings = await LFT.store.getSettings();
 
   $('key').value = settings.deeplKey || '';
@@ -503,6 +524,93 @@ async function init() {
 
   await renderDomains();
   await renderTargets();
+}
+
+/* ---------- mentés / visszatöltés ---------- */
+
+const BACKUP_APP = 'elo-feliratfordito';
+
+$('exportBtn').addEventListener('click', async () => {
+  const s = await LFT.store.getSettings();
+  const withKeys = $('exportKeys').checked;
+  if (!withKeys) { s.deeplKey = ''; s.googleKey = ''; }
+
+  const data = {
+    app: BACKUP_APP,
+    format: 1,
+    exportedAt: new Date().toISOString(),
+    containsKeys: withKeys,
+    settings: s,
+    targets: await LFT.store.getTargets(),
+    ui: (await chrome.storage.local.get('ui')).ui || {}
+  };
+
+  const d = new Date();
+  const name = 'elo-feliratfordito-beallitasok_' +
+    d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + '.json';
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  result('backupResult', LFT.t('opt_exported', [name]), 'ok');
+});
+
+$('importBtn').addEventListener('click', () => $('importFile').click());
+
+$('importFile').addEventListener('change', async () => {
+  const file = $('importFile').files[0];
+  $('importFile').value = '';               // ugyanaz a fájl újra kiválasztható legyen
+  if (!file) return;
+
+  let data;
+  try {
+    data = JSON.parse(await file.text());
+  } catch (e) {
+    result('backupResult', LFT.t('opt_import_failed'), 'err');
+    return;
+  }
+  if (!data || data.app !== BACKUP_APP || !data.settings) {
+    result('backupResult', LFT.t('opt_import_bad'), 'err');
+    return;
+  }
+
+  /* Csak az ismert beállításkulcsokat vesszük át, hogy a fájlból ne kerüljön be
+     semmi váratlan. Az üres kulcsokat nem írjuk felül a meglévők fölé. */
+  const patch = {};
+  for (const k of Object.keys(LFT.store.DEFAULT_SETTINGS)) {
+    if (!(k in data.settings)) continue;
+    const v = data.settings[k];
+    if ((k === 'deeplKey' || k === 'googleKey') && !v) continue;
+    patch[k] = v;
+  }
+  await LFT.store.saveSettings(patch);
+
+  if (data.targets && typeof data.targets === 'object') {
+    const cur = await LFT.store.getTargets();
+    await chrome.storage.local.set({ targets: Object.assign(cur, data.targets) });
+  }
+  if (data.ui && typeof data.ui === 'object') {
+    const cur = (await chrome.storage.local.get('ui')).ui || {};
+    await chrome.storage.local.set({ ui: Object.assign(cur, data.ui) });
+  }
+
+  await chrome.runtime.sendMessage({ type: 'domains:sync' });
+  await fillForm();
+
+  const domains = (patch.domains || []).length;
+  const targets = Object.keys(data.targets || {}).length;
+  result('backupResult',
+    LFT.t('opt_import_ok', [String(domains), String(targets)]) +
+    (domains ? ' ' + LFT.t('opt_import_perm') : ''),
+    'ok');
+});
+
+async function init() {
+  LFT.i18n.applyDom();
+  await fillForm();
   await renderSessions();
 }
 

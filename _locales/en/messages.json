@@ -384,7 +384,7 @@
     "message": "No allowed sites yet."
   },
   "opt_domain_nogrant": {
-    "message": "no permission — remove it and add it again"
+    "message": "no permission — press Allow"
   },
   "opt_delete": {
     "message": "Delete"
@@ -598,6 +598,42 @@
   },
   "opt_tts_duck_mute": {
     "message": "silent"
+  },
+  "opt_backup_title": {
+    "message": "Backup and restore settings"
+  },
+  "opt_backup_hint": {
+    "message": "Saves your keys, allowed sites, selected subtitle elements and speech settings into a single file, so you do not have to re-enter everything on another machine. Recorded transcripts are NOT included; download those separately under recordings."
+  },
+  "opt_export": {
+    "message": "Save to file"
+  },
+  "opt_import": {
+    "message": "Restore from file"
+  },
+  "opt_export_keys": {
+    "message": "Include the API keys"
+  },
+  "opt_export_keys_warn": {
+    "message": "If ticked, the file contains your DeepL and Google keys in readable form. Treat it like a password: do not put it on a shared drive or in a public repository."
+  },
+  "opt_exported": {
+    "message": "Saved: $1"
+  },
+  "opt_import_ok": {
+    "message": "Restored. Sites: $1, selected subtitle elements: $2."
+  },
+  "opt_import_perm": {
+    "message": "The restored sites still need permission — press “Allow” next to each of them."
+  },
+  "opt_import_bad": {
+    "message": "That is not a settings file from this extension."
+  },
+  "opt_import_failed": {
+    "message": "The file could not be read."
+  },
+  "opt_domain_grant": {
+    "message": "Allow"
   },
   "dl_err_key": {
     "message": "Invalid or expired DeepL key — check it in the settings."

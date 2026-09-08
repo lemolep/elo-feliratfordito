@@ -384,7 +384,7 @@
     "message": "Még nincs engedélyezett oldal."
   },
   "opt_domain_nogrant": {
-    "message": "nincs engedély — töröld és add hozzá újra"
+    "message": "nincs engedély — nyomd meg az Engedélyezem gombot"
   },
   "opt_delete": {
     "message": "Törlés"
@@ -598,6 +598,42 @@
   },
   "opt_tts_duck_mute": {
     "message": "néma"
+  },
+  "opt_backup_title": {
+    "message": "Beállítások mentése és visszatöltése"
+  },
+  "opt_backup_hint": {
+    "message": "Egyetlen fájlba menti a kulcsokat, az engedélyezett oldalakat, a kijelölt feliratelemeket és a hangbeállításokat — így egy másik gépen nem kell mindent újra beírni. A rögzített átiratok NEM kerülnek bele; azokat a felvételeknél tudod külön letölteni."
+  },
+  "opt_export": {
+    "message": "Mentés fájlba"
+  },
+  "opt_import": {
+    "message": "Visszatöltés fájlból"
+  },
+  "opt_export_keys": {
+    "message": "Az API kulcsokat is mentse"
+  },
+  "opt_export_keys_warn": {
+    "message": "Ha bepipálod, a fájl olvasható formában tartalmazza a DeepL és a Google kulcsodat. Kezeld úgy, mint egy jelszót: ne tedd megosztott meghajtóra vagy nyilvános tárolóba."
+  },
+  "opt_exported": {
+    "message": "Mentve: $1"
+  },
+  "opt_import_ok": {
+    "message": "Visszatöltve. Oldalak: $1, kijelölt feliratelemek: $2."
+  },
+  "opt_import_perm": {
+    "message": "A visszatöltött oldalakhoz külön engedély kell — nyomd meg mellettük az „Engedélyezem\" gombot."
+  },
+  "opt_import_bad": {
+    "message": "Ez nem ennek a bővítménynek a beállításfájlja."
+  },
+  "opt_import_failed": {
+    "message": "A fájlt nem sikerült beolvasni."
+  },
+  "opt_domain_grant": {
+    "message": "Engedélyezem"
   },
   "dl_err_key": {
     "message": "Hibás vagy lejárt DeepL kulcs — ellenőrizd a beállításokban."

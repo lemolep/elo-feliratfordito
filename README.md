@@ -169,6 +169,19 @@ EREDETI: Hello everyone, welcome back to the show.
 HU: Sziasztok, üdv újra a műsorban.
 ```
 
+### Beállítások átvitele másik gépre
+
+Beállítások → *Beállítások mentése és visszatöltése*. A **Mentés fájlba** egyetlen JSON-be
+teszi a kulcsokat, az engedélyezett oldalakat, a kijelölt feliratelemeket és a
+hangbeállításokat; a másik gépen a **Visszatöltés fájlból** olvassa be. A rögzített
+átiratok nincsenek benne — azokat a felvételeknél töltheted le külön.
+
+Az **API kulcsokat is mentse** jelölő kikapcsolható. Ha bent hagyod, a fájl olvasható
+formában tartalmazza a DeepL és a Google kulcsodat — kezeld úgy, mint egy jelszót.
+
+Visszatöltés után az oldalak megjelennek a listán, de a böngésző az engedélyt csak
+kattintásra adja meg: nyomd meg mellettük az **Engedélyezem** gombot.
+
 ## 7. Hogyan találja meg a feliratot?
 
 Két forrást ismer, ebben a sorrendben:
