@@ -4,7 +4,8 @@ const $ = id => document.getElementById(id);
 let settings = null;
 let saveTimer = null;
 
-function patternFor(h) { return '*://*.' + h.toLowerCase() + '/*'; }
+/* A "*" minden oldalt jelent — egyetlen engedélykérés az összes helyett. */
+function patternFor(h) { return h === '*' ? '*://*/*' : '*://*.' + h.toLowerCase() + '/*'; }
 
 function cleanDomain(v) {
   let s = String(v || '').trim().toLowerCase();
@@ -287,12 +288,14 @@ $('glossCheck').addEventListener('click', async () => {
 async function renderDomains() {
   const ul = $('domainList');
   ul.innerHTML = '';
-  if (!settings.domains.length) {
+  // a "*" a saját szakaszában szerepel, ne duplázzuk a listában
+  const list = settings.domains.filter(d => d !== '*');
+  if (!list.length) {
     ul.innerHTML = '<li class="empty"></li>';
     ul.firstChild.textContent = LFT.t('opt_domain_none');
     return;
   }
-  for (const d of settings.domains) {
+  for (const d of list) {
     let granted = false;
     try { granted = await chrome.permissions.contains({ origins: [patternFor(d)] }); } catch (e) {}
     const li = document.createElement('li');
@@ -549,9 +552,64 @@ async function fillForm() {
   }
   if (settings.googleKey) refreshVoices(true);
 
+  $('autoTrack').checked = settings.autoTrack !== false;
+  $('autoStart').checked = settings.autoStart !== false;
+
   await renderDomains();
+  await renderAllSites();
   await renderTargets();
 }
+
+/* ---------------- minden oldal egyetlen kattintással ---------------- */
+
+const ALL_SITES = '*';
+
+async function hasAllSites() {
+  try { return await chrome.permissions.contains({ origins: [patternFor(ALL_SITES)] }); }
+  catch (e) { return false; }
+}
+
+async function renderAllSites() {
+  const on = await hasAllSites();
+  $('allSites').hidden = on;
+  $('allSitesOff').hidden = !on;
+  if (on) result('allSitesResult', LFT.t('opt_all_sites_on'), 'ok');
+}
+
+$('allSites').addEventListener('click', async () => {
+  let granted = false;
+  try { granted = await chrome.permissions.request({ origins: [patternFor(ALL_SITES)] }); }
+  catch (e) { result('allSitesResult', LFT.t('opt_perm_failed', [e.message]), 'err'); return; }
+  if (!granted) { result('allSitesResult', LFT.t('pop_perm_denied'), 'err'); return; }
+
+  if (!settings.domains.includes(ALL_SITES)) settings.domains.push(ALL_SITES);
+  await LFT.store.saveSettings({ domains: settings.domains });
+  const r = await chrome.runtime.sendMessage({ type: 'domains:sync' });
+  result('allSitesResult',
+    LFT.t('opt_all_sites_done') + ' ' +
+    (r && r.injected ? LFT.t('opt_domain_injected', [String(r.injected)]) : LFT.t('opt_domain_reload')),
+    'ok');
+  await renderAllSites();
+  await renderDomains();
+});
+
+$('allSitesOff').addEventListener('click', async () => {
+  try { await chrome.permissions.remove({ origins: [patternFor(ALL_SITES)] }); }
+  catch (e) { /* lehet, hogy már nincs meg */ }
+  settings.domains = settings.domains.filter(d => d !== ALL_SITES);
+  await LFT.store.saveSettings({ domains: settings.domains });
+  await chrome.runtime.sendMessage({ type: 'domains:sync' });
+  result('allSitesResult', LFT.t('opt_all_sites_removed'), 'info');
+  await renderAllSites();
+  await renderDomains();
+});
+
+$('autoTrack').addEventListener('change', () => {
+  queueSave({ autoTrack: $('autoTrack').checked });
+});
+$('autoStart').addEventListener('change', () => {
+  queueSave({ autoStart: $('autoStart').checked });
+});
 
 /* ---------- mentés / visszatöltés ---------- */
 

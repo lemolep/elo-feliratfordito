@@ -77,6 +77,30 @@
     <ul id="domainList" class="list"></ul>
   </section>
 
+  <!-- Automatikus működés -->
+  <section>
+    <h2 data-i18n="opt_auto_title"></h2>
+    <p class="hint" data-i18n="opt_auto_hint"></p>
+    <div class="row">
+      <button id="allSites" class="primary" type="button" data-i18n="opt_all_sites"></button>
+      <button id="allSitesOff" class="ghost small" type="button" data-i18n="opt_all_sites_off" hidden></button>
+    </div>
+    <div id="allSitesResult" class="result"></div>
+
+    <label class="check">
+      <input type="checkbox" id="autoTrack">
+      <span data-i18n="opt_auto_track"></span>
+    </label>
+    <p class="hint" data-i18n="opt_auto_track_hint"></p>
+
+    <label class="check">
+      <input type="checkbox" id="autoStart">
+      <span data-i18n="opt_auto_start"></span>
+    </label>
+    <p class="hint" data-i18n="opt_auto_start_hint"></p>
+    <p class="warn" data-i18n="opt_auto_quota"></p>
+  </section>
+
   <!-- 3. Működés -->
   <section>
     <h2 data-i18n="opt_s3_title"></h2>

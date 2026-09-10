@@ -5,7 +5,8 @@ let tab = null;
 let host = '';
 let injected = false;
 
-function patternFor(h) { return '*://*.' + h.toLowerCase() + '/*'; }
+/* A "*" minden oldalt jelent — egyetlen engedélykérés az összes helyett. */
+function patternFor(h) { return h === '*' ? '*://*/*' : '*://*.' + h.toLowerCase() + '/*'; }
 
 async function send(type, extra) {
   if (!tab) return null;
@@ -34,11 +35,13 @@ async function refresh() {
     $('dot').className = 'dot off';
     $('stateText').textContent = LFT.t('pop_state_notrunning');
     $('enable').hidden = !host;
+    $('allSites').hidden = !host || await hasAllSites();
     setControls(false);
     return;
   }
 
   $('enable').hidden = true;
+  $('allSites').hidden = true;
   setControls(true);
   $('dot').className = 'dot ' + (state.recording ? 'on' : '');
   $('stateText').textContent = state.recording
@@ -79,6 +82,33 @@ $('enable').addEventListener('click', async () => {
   const s = await LFT.store.getSettings();
   if (!s.domains.includes(host)) {
     s.domains.push(host);
+    await LFT.store.saveSettings({ domains: s.domains });
+  }
+  await chrome.runtime.sendMessage({ type: 'domains:sync' });
+  await new Promise(r => setTimeout(r, 300));
+  await refresh();
+  if (!injected) note(LFT.t('pop_enabled_reload'));
+});
+
+/* Egyetlen engedélykérés minden oldalra — utána nem kell domainenként
+   kattintgatni. A böngésző párbeszédét a bővítmény nem tudja magától
+   elfogadni, ezért az az egy kattintás elkerülhetetlen. */
+const ALL_SITES = '*';
+
+async function hasAllSites() {
+  try { return await chrome.permissions.contains({ origins: [patternFor(ALL_SITES)] }); }
+  catch (e) { return false; }
+}
+
+$('allSites').addEventListener('click', async () => {
+  let granted = false;
+  try { granted = await chrome.permissions.request({ origins: [patternFor(ALL_SITES)] }); }
+  catch (e) { note(LFT.t('pop_perm_failed', [ALL_SITES])); return; }
+  if (!granted) { note(LFT.t('pop_perm_denied')); return; }
+
+  const s = await LFT.store.getSettings();
+  if (!s.domains.includes(ALL_SITES)) {
+    s.domains.push(ALL_SITES);
     await LFT.store.saveSettings({ domains: s.domains });
   }
   await chrome.runtime.sendMessage({ type: 'domains:sync' });
@@ -172,7 +202,9 @@ function frameCard(f, skipHosts) {
   }
 
   const ifr = f.iframes || { list: [], unknown: 0 };
-  const offer = ifr.list.filter(it => !skipHosts.has(it.host.toLowerCase()));
+  // a "*" azt jelenti, hogy minden oldalra van engedély — nincs mit felajánlani
+  const offer = skipHosts.has('*') ? []
+    : ifr.list.filter(it => !skipHosts.has(it.host.toLowerCase()));
   if (offer.length) {
     line('bad', LFT.t('pop_iframes_intro'));
     offer.forEach(it => {
@@ -196,6 +228,7 @@ function frameCard(f, skipHosts) {
    keretek gombjai minden futtatásnál újra megjelentek. */
 async function alreadyAllowed(frames) {
   const skip = new Set();
+  if (await hasAllSites()) { skip.add('*'); return skip; }
   frames.forEach(f => { if (f.frame) skip.add(String(f.frame).toLowerCase()); });
 
   const hosts = new Set();

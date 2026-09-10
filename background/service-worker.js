@@ -16,11 +16,17 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 /* ---------------- content scriptek regisztrációja ---------------- */
 
+/* A "*" domain jelentése: minden oldal. Így egyetlen engedélykéréssel le
+   lehet tudni az egészet, és nem kell oldalanként kattintgatni. */
+const ALL_SITES = '*';
+
 function patternFor(host) {
+  if (String(host) === ALL_SITES) return '*://*/*';
   return '*://*.' + String(host).replace(/^\*?\.?/, '').toLowerCase() + '/*';
 }
 
 function hostMatches(host, domain) {
+  if (String(domain) === ALL_SITES) return true;
   host = String(host).toLowerCase();
   domain = String(domain).toLowerCase();
   return host === domain || host.endsWith('.' + domain);
@@ -313,6 +319,9 @@ async function handle(msg, sender) {
       return { ok: true };
     case 'relay:status':
       if (tabId != null) chrome.tabs.sendMessage(tabId, { type: 'status', text: msg.text, kind: msg.kind }, { frameId: 0 }).catch(() => {});
+      return { ok: true };
+    case 'relay:sourcefound':
+      if (tabId != null) chrome.tabs.sendMessage(tabId, { type: 'sourcefound' }, { frameId: 0 }).catch(() => {});
       return { ok: true };
     case 'relay:picked':
       if (tabId != null) chrome.tabs.sendMessage(tabId, { type: 'picked' }, { frameId: 0 }).catch(() => {});

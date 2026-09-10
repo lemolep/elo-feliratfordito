@@ -118,8 +118,17 @@ transcript still keeps every line.
 The extension only runs on sites you explicitly allow. It requests **no host access at
 install time**.
 
-- **Quick way:** open the site, click the extension icon → *Allow on this site*
+- **Simplest:** Settings → *Automatic mode* → **Allow on every site**. That is a single
+  permission prompt, and afterwards it never asks again — not per site, not for embedded
+  frames. (The same button is in the popup.)
+- **Quick way, this site only:** open the site, click the extension icon → *Allow on this site*
 - **Or:** Settings → *Allowed sites* → type the domain (e.g. `example.com`) → **Add**
+
+> The extension **cannot accept the browser's permission prompt on its own** — Chrome
+> forbids that, precisely so an extension cannot grant itself access behind your back.
+> What is possible is to ask once for everything, after which there are no more prompts.
+
+You can revoke the *every site* grant at any time with the **Revoke** button in the same place.
 
 Subdomains are included automatically.
 
@@ -128,6 +137,21 @@ Subdomains are included automatically.
 > have to hunt for it: **Diagnostics** lists the embedded frames on the page, each with an
 > *Allow* button. This is a browser security boundary — content
 > of a cross-origin frame cannot be read without permission, by any means.
+
+### Automatic mode
+
+*Settings → Automatic mode* has two switches, both on by default:
+
+| Switch | What it does |
+|---|---|
+| **Turn the subtitle track on automatically** | If the video has a subtitle track that is switched off, the extension enables it in `hidden` mode. It receives the text, but **no subtitle appears on the video**, so what you see does not change. The original state is restored when you stop. |
+| **Start automatically when subtitles are found** | When subtitles show up on a video that is already playing, the window opens and translation starts by itself. It fires once per page load: if you stop it, it will not restart behind your back. |
+
+Automatic start needs the DeepL key — without one it will not start by itself.
+
+> **Mind the quota:** automatic start spends your DeepL character quota on every subtitled
+> video, even while you are doing something else. If the quota runs low, switch it off and
+> start manually with **Start**.
 
 ## 5. Usage
 
@@ -207,16 +231,23 @@ click: press **Allow** next to each of them.
 
 ## 7. How it finds the subtitles
 
-Two sources, in this order:
+It **hunts on its own**, with no clicking, in this order:
 
-1. **A picked DOM element** — if you selected one for this site, it is watched with a
-   `MutationObserver`. If the player re-renders it, the element is looked up again twice a
-   second. The picker does not take exactly what you clicked: starting from the clicked text
-   node it **walks up** while the parent still holds essentially the same text. That lands on
-   the stable subtitle container (on YouTube, `#ytp-caption-window-container`) instead of the
-   span the player throws away after every sentence.
-2. **The video's own text track** (`TextTrack` / `cuechange`) — used when no element is picked.
-   This is the more reliable source when the player uses standard HTML5 subtitles.
+1. **A picked DOM element** — if you selected one for this site it wins; it is watched with a
+   `MutationObserver` and looked up again twice a second if the player re-renders it. The
+   picker does not take exactly what you clicked: starting from the clicked text node it
+   **walks up** while the parent still holds essentially the same text. That lands on the
+   stable subtitle container instead of the span the player throws away after every sentence.
+   If your own rule yields nothing for 8 seconds, the extension looks for another source.
+2. **The video's own text track** (`TextTrack` / `cuechange`). If the track is switched off,
+   it is enabled in `hidden` mode — the text arrives without any subtitle appearing on the
+   video. **One** track per video is bound, otherwise two languages would interleave.
+3. **Known player caption containers** — YouTube, Video.js, JW Player, Shaka, Plyr, Bitmovin,
+   Vimeo. No picking needed there; the extension knows where to look.
+4. **A guess** — based on `caption` / `subtitle` / `cue` class names and `aria-live`.
+
+Until text actually arrives it retries the whole ladder twice a second: players often build
+the subtitle element long after page load.
 
 Raw subtitle updates are not sent to DeepL one by one. The extension waits for a sentence
 boundary (`.` `!` `?`) or for the text to stay unchanged for a configurable delay (1200 ms by

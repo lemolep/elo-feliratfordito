@@ -523,6 +523,20 @@ globalThis.LFT = globalThis.LFT || {};
     await bg({ type: 'relay:frames', payload: { type: 'capture:start', flushDelay: settings.flushDelay } });
   }
 
+  /* Magától indulás: a felirat megvan, a kulcs megvan, és a felhasználó nem
+     tiltotta le. Csak egyszer sül el egy oldalbetöltésen belül. */
+  let autoStarted = false;
+  async function autoStart() {
+    if (autoStarted || recording) return;
+    const s = settings || await LFT.store.getSettings();   // jöhet az init előtt is
+    if (!s || s.autoStart === false) return;
+    if (!s.deeplKey) return;          // kulcs nélkül nincs mit fordítani
+    autoStarted = true;
+    setVisible(true, true);
+    await startRec();
+    setStatus(LFT.t('ov_auto_started'), 'ok');   // a startRec saját üzenete után
+  }
+
   async function stopRec(openDialog) {
     setRecUi(false);
     ttsStop();
@@ -664,6 +678,7 @@ globalThis.LFT = globalThis.LFT || {};
       case 'segment': onSegment(msg.seg); return;
       case 'status': setStatus(msg.text, msg.kind); return;
       case 'picked': endPicking(); return;
+      case 'sourcefound': autoStart(); return;
       case 'overlay:toggle': setVisible(!ui.visible, true); return;
       case 'overlay:show': setVisible(true, true); return;
       case 'overlay:toggleCapture':
@@ -755,7 +770,8 @@ globalThis.LFT = globalThis.LFT || {};
     LFT.overlay = {
       onSegment: onSegment,
       setStatus: setStatus,
-      show: () => setVisible(true, true)
+      show: () => setVisible(true, true),
+      autoStart: autoStart
     };
   }
 

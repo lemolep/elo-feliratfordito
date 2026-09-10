@@ -119,10 +119,21 @@ az átiratban természetesen minden sor megmarad.
 
 A bővítmény csak az általad felsorolt oldalakon fut.
 
-- **Gyorsan:** menj a kívánt oldalra, kattints a bővítmény ikonjára →
-  *Engedélyezés ezen az oldalon*
+- **A legegyszerűbb:** Beállítások → *Automatikus működés* → **Engedélyezem minden
+  oldalon**. Ez egyetlen engedélykérés, és utána soha többé nem kérdez semmit —
+  sem oldalanként, sem a beágyazott keretekre. (A popupban is ott a gomb.)
+- **Gyorsan, csak erre az oldalra:** menj a kívánt oldalra, kattints a bővítmény
+  ikonjára → *Engedélyezés ezen az oldalon*
 - **Vagy:** Beállítások → *Engedélyezett oldalak* → írd be a domaint (pl.
   `pelda-stream.hu`) → **Hozzáadás**
+
+> A böngésző engedélykérő ablakát a bővítmény **nem tudja magától elfogadni** —
+> ezt a Chrome tiltja, épp azért, hogy egy bővítmény ne szerezhessen magának
+> jogosultságot a hátad mögött. Amit meg lehet tenni, az az, hogy egyszer kérünk
+> engedélyt mindenre, és utána nincs több kérdés.
+
+A *Minden oldalon* engedélyt bármikor visszavonhatod ugyanott a **Visszavonom**
+gombbal.
 
 Az aldomainek automatikusan beleértendők.
 
@@ -131,6 +142,22 @@ Az aldomainek automatikusan beleértendők.
 > a **Diagnosztika** felsorolja az oldal beágyazott kereteit, és mindegyik mellett van egy
 > *Engedélyezem* gomb. Ez böngésző-biztonsági határ — idegen domainről betöltött keret
 > tartalmát semmilyen trükkel nem lehet kiolvasni engedély nélkül.
+
+### Automatikus működés
+
+A *Beállítások → Automatikus működés* alatt két kapcsoló van, mindkettő alapból
+bekapcsolva:
+
+| Kapcsoló | Mit csinál |
+|---|---|
+| **Feliratsáv magától bekapcsolva** | Ha a videónak van feliratsávja, de ki van kapcsolva, a bővítmény `hidden` módban bekapcsolja. A szöveget megkapja, de **a videó képén nem jelenik meg felirat**, tehát nem változik, amit látsz. Leállításkor visszaállítja az eredeti állapotot. |
+| **Automatikus indítás, ha van felirat** | Ha egy már játszó videón feliratot talál, magától megnyílik az ablak és elindul a fordítás. Oldalbetöltésenként egyszer sül el: ha leállítod, nem indul újra a hátad mögött. |
+
+Az automatikus indításhoz kell a DeepL kulcs — anélkül nem indul el magától.
+
+> **Vigyázz a kerettel:** az automatikus indítás minden feliratos videónál fogyasztja
+> a DeepL karakterkeretedet, akkor is, ha közben mást csinálsz. Ha fogyóban a keret,
+> kapcsold ki, és indítsd kézzel a **Start** gombbal.
 
 ## 5. Használat
 
@@ -211,16 +238,24 @@ kattintásra adja meg: nyomd meg mellettük az **Engedélyezem** gombot.
 
 ## 7. Hogyan találja meg a feliratot?
 
-Két forrást ismer, ebben a sorrendben:
+**Magától keres**, kattintás nélkül, ebben a sorrendben:
 
-1. **Kijelölt DOM elem** — ha a célzóval kijelöltél egy elemet erre az oldalra, mindig azt
-   figyeli (`MutationObserver`). Ha a lejátszó újrarajzolja, fél másodpercenként visszakeresi.
-   A célzó nem pontosan arra kattint, amire te: a kattintott szövegdarabkától **felfelé lép**
-   addig, amíg a szülő lényegében ugyanazt a szöveget tartalmazza. Így a stabil feliratdobozt
-   jelöli ki (YouTube-on pl. a `#ytp-caption-window-container`-t), nem azt a spant, amit a
-   lejátszó mondatonként eldob és újragyárt.
-2. **A videó saját feliratsávja** (`TextTrack` / `cuechange`) — ha nincs kijelölt elem.
-   Ez a megbízhatóbb, ha a lejátszó szabványos HTML5 feliratot használ.
+1. **Kijelölt DOM elem** — ha a célzóval kijelöltél egyet erre az oldalra, az az erősebb;
+   azt figyeli (`MutationObserver`), és ha a lejátszó újrarajzolja, fél másodpercenként
+   visszakeresi. A célzó nem pontosan arra kattint, amire te: a kattintott szövegdarabkától
+   **felfelé lép** addig, amíg a szülő lényegében ugyanazt a szöveget tartalmazza. Így a
+   stabil feliratdobozt jelöli ki, nem azt a spant, amit a lejátszó mondatonként eldob és
+   újragyárt. Ha a saját szabályod 8 másodpercig egy szót sem ad, magától keres helyette mást.
+2. **A videó saját feliratsávja** (`TextTrack` / `cuechange`). Ha a sáv ki van kapcsolva,
+   `hidden` módban bekapcsolja — így megkapja a szöveget anélkül, hogy a videó képén
+   felirat jelenne meg. Videónként **egy** sávot köt be, különben két nyelv mondatai
+   keverednének össze.
+3. **Ismert lejátszók felirat-konténere** — YouTube, Video.js, JW Player, Shaka, Plyr,
+   Bitmovin, Vimeo. Ezeken nem kell célozni, a bővítmény tudja, hol keresse.
+4. **Találgatás** — `caption` / `subtitle` / `cue` osztálynevek és `aria-live` alapján.
+
+Amíg tényleg nem jön szöveg, fél másodpercenként újrapróbálja az egészet: a lejátszók
+gyakran csak jóval a betöltés után építik fel a felirat elemét.
 
 A nyers feliratot nem küldi soronként a DeepL-nek: megvárja a mondat végét (`.` `!` `?`)
 vagy azt, hogy a szöveg ne változzon a beállított ideig (alap 1200 ms). Ez nagyjából

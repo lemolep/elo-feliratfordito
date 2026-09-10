@@ -697,5 +697,47 @@
   },
   "dl_err_empty": {
     "message": "DeepL returned an empty translation."
+  },
+  "opt_auto_title": {
+    "message": "Automatic mode"
+  },
+  "opt_auto_hint": {
+    "message": "So you do not have to grant permission per site or fiddle with the picker: the extension finds the subtitles by itself."
+  },
+  "opt_all_sites": {
+    "message": "Allow on every site"
+  },
+  "opt_all_sites_off": {
+    "message": "Revoke"
+  },
+  "opt_all_sites_on": {
+    "message": "Allowed on every site — it will not ask again."
+  },
+  "opt_all_sites_done": {
+    "message": "Done, it now runs on every site."
+  },
+  "opt_all_sites_removed": {
+    "message": "Revoked. You will have to grant permission per site again."
+  },
+  "opt_auto_track": {
+    "message": "Turn the subtitle track on automatically"
+  },
+  "opt_auto_track_hint": {
+    "message": "If the video has a subtitle track that is switched off, the extension enables it in hidden mode: it receives the text, but no subtitle appears on the video. It restores the original state when you stop."
+  },
+  "opt_auto_start": {
+    "message": "Start automatically when subtitles are found"
+  },
+  "opt_auto_start_hint": {
+    "message": "On a playing video with subtitles the window opens and translation starts by itself. Once per page load — if you stop it, it will not restart on its own."
+  },
+  "opt_auto_quota": {
+    "message": "Note: this also spends your DeepL quota on every subtitled video, even ones you are not watching. Turn it off if the quota runs low."
+  },
+  "pop_all_sites": {
+    "message": "Allow on every site"
+  },
+  "ov_auto_started": {
+    "message": "Subtitles found — started automatically."
   }
 }

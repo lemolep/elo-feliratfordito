@@ -697,5 +697,47 @@
   },
   "dl_err_empty": {
     "message": "A DeepL üres fordítást adott vissza."
+  },
+  "opt_auto_title": {
+    "message": "Automatikus működés"
+  },
+  "opt_auto_hint": {
+    "message": "Így nem kell oldalanként engedélyt adni és nem kell a célzóval bajlódni: a bővítmény magától megkeresi a feliratot."
+  },
+  "opt_all_sites": {
+    "message": "Engedélyezem minden oldalon"
+  },
+  "opt_all_sites_off": {
+    "message": "Visszavonom"
+  },
+  "opt_all_sites_on": {
+    "message": "Minden oldalon engedélyezve — nem fog többé engedélyt kérni."
+  },
+  "opt_all_sites_done": {
+    "message": "Kész, mostantól minden oldalon fut."
+  },
+  "opt_all_sites_removed": {
+    "message": "Visszavontam. Ezután megint oldalanként kell engedélyt adni."
+  },
+  "opt_auto_track": {
+    "message": "Feliratsáv magától bekapcsolva"
+  },
+  "opt_auto_track_hint": {
+    "message": "Ha a videónak van feliratsávja, de ki van kapcsolva, a bővítmény rejtett módban bekapcsolja: a szöveget megkapja, de a videó képén nem jelenik meg felirat. Leállításkor visszaállítja."
+  },
+  "opt_auto_start": {
+    "message": "Automatikus indítás, ha van felirat"
+  },
+  "opt_auto_start_hint": {
+    "message": "Elinduló videón felirat esetén magától megnyílik az ablak és elkezd fordítani. Oldalbetöltésenként egyszer — ha leállítod, nem indul újra magától."
+  },
+  "opt_auto_quota": {
+    "message": "Figyelem: ez a DeepL keretedet is fogyasztja minden feliratos videónál, akkor is, ha nem figyeled. Ha fogy a keret, kapcsold ki."
+  },
+  "pop_all_sites": {
+    "message": "Engedélyezem minden oldalon"
+  },
+  "ov_auto_started": {
+    "message": "Feliratot találtam — magától elindult."
   }
 }

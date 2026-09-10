@@ -23,6 +23,12 @@ globalThis.LFT = globalThis.LFT || {};
   let noTextTimer = null;
   let gotAnyText = false;
   const boundTracks = new WeakSet();
+  const forcedTracks = new Set();   // amiket mi kapcsoltunk be — leállításkor visszaállítjuk
+  let autoTrack = true;             // szabad-e magunktól bekapcsolni a feliratsávot
+  let autoAdopted = false;          // magunktól választott DOM-forrást használunk
+  let userTarget = false;           // a felhasználó célzott ki elemet — azt nem írjuk felül
+  let modeSince = 0;                // mióta próbálkozunk az aktuális forrással
+  let missingSince = 0;             // mióta nincs meg a kijelölt elem
 
   /* ---------------- kimenet ---------------- */
 
@@ -78,11 +84,29 @@ globalThis.LFT = globalThis.LFT || {};
     return parts.join(' ');
   }
 
+  function isCaptionTrack(tr) {
+    const kind = tr && tr.kind;
+    return !kind || kind === 'subtitles' || kind === 'captions';
+  }
+
+  /* Videónként EGY sávot kötünk be. Ha egyszerre kettő menne (mondjuk angol
+     és spanyol), a mondataik összekeverednének a fordításban. */
+  function pickTrack(list) {
+    let showing = null, hidden = null, first = null;
+    for (let i = 0; i < list.length; i++) {
+      const tr = list[i];
+      if (!isCaptionTrack(tr)) continue;
+      if (!first) first = tr;
+      if (tr.mode === 'showing' && !showing) showing = tr;
+      if (tr.mode === 'hidden' && !hidden) hidden = tr;
+    }
+    return showing || hidden || first;
+  }
+
   function bindTrack(track) {
     if (!track || boundTracks.has(track)) return;
-    const kind = track.kind;
-    if (kind && kind !== 'subtitles' && kind !== 'captions') return;
-    if (track.mode === 'disabled') return;   // a lejátszó kikapcsolta — nem nyúlunk hozzá
+    if (!isCaptionTrack(track)) return;
+    if (track.mode === 'disabled') return;
     boundTracks.add(track);
     track.addEventListener('cuechange', () => {
       if (!running || mode !== 'texttrack') return;
@@ -91,22 +115,35 @@ globalThis.LFT = globalThis.LFT || {};
     });
   }
 
-  function scanTextTracks() {
+  /* force = magunktól bekapcsoljuk a kikapcsolt feliratsávot. A "hidden" mód
+     azt jelenti, hogy a cue-k megérkeznek hozzánk, de a lejátszó képén NEM
+     jelenik meg semmi — a felhasználó képe tehát változatlan marad. */
+  function scanTextTracks(force) {
     let active = 0;
     for (const v of document.querySelectorAll('video')) {
       const list = v.textTracks;
-      if (!list) continue;
-      for (let i = 0; i < list.length; i++) {
-        const tr = list[i];
-        if (tr.mode !== 'disabled') active++;
-        bindTrack(tr);
+      if (!list || !list.length) continue;
+      const tr = pickTrack(list);
+      if (tr) {
+        if (tr.mode === 'disabled' && force) {
+          try { tr.mode = 'hidden'; forcedTracks.add(tr); } catch (e) { /* nem engedi */ }
+        }
+        if (tr.mode !== 'disabled') { active++; bindTrack(tr); }
       }
       if (!v.__lftTrackHook && list.addEventListener) {
         v.__lftTrackHook = true;
-        list.addEventListener('addtrack', ev => bindTrack(ev.track));
+        // új sáv később is érkezhet (a lejátszó lazyn tölti be)
+        list.addEventListener('addtrack', () => { scanTextTracks(autoTrack); });
       }
     }
     return active;
+  }
+
+  /* Amit mi kapcsoltunk be, azt le is kapcsoljuk — ne maradjon utánunk
+     megváltoztatott állapot a lejátszóban. */
+  function restoreTracks() {
+    forcedTracks.forEach(tr => { try { tr.mode = 'disabled'; } catch (e) {} });
+    forcedTracks.clear();
   }
 
   /* ---------------- 2. forrás: kijelölt DOM elem ---------------- */
@@ -135,22 +172,87 @@ globalThis.LFT = globalThis.LFT || {};
   }
 
   /* A lejátszó újrarajzoláskor kicserélheti az elemet — fél másodpercenként visszakeressük. */
+  /* Forráskeresés kattintás nélkül, ebben a sorrendben:
+       1. a videó saját feliratsávja (ha kell, magunktól bekapcsolva),
+       2. ismert lejátszók felirat-konténere (YouTube, Video.js, JW, ...),
+       3. találgatás a "caption"/"subtitle" osztálynevek alapján.
+     Amíg tényleg nem jön szöveg, újra és újra próbálkozik: a lejátszók
+     gyakran csak jóval a betöltés után építik fel a felirat elemét. */
+  function hunt() {
+    /* A felhasználó saját szabályát hagyjuk dolgozni. De ha 8 másodperc alatt
+       egy szó sem jött belőle, keresünk helyette mást — egy elavult szabály
+       ne tegye használhatatlanná az egészet. */
+    if (userTarget && targetEl && targetEl.isConnected) {
+      if (Date.now() - modeSince < 8000) return;
+      userTarget = false;
+      status(LFT.t('cap_switched_to_track'), 'warn');
+    }
+
+    const active = scanTextTracks(autoTrack);
+    if (active) {
+      if (mode !== 'texttrack') {
+        detachObserver();
+        mode = 'texttrack';
+        targetSelector = null;
+        modeSince = Date.now();
+      }
+      // ha a sáv 6 mp alatt sem adott szöveget, azért nézzünk körül a DOM-ban is
+      if (Date.now() - modeSince < 6000) return;
+    }
+
+    if (mode === 'dom' && targetEl && targetEl.isConnected &&
+        Date.now() - modeSince < 6000) return;
+
+    const known = findKnownCaptionEl();
+    if (known) { adopt(known.selector, known.el); return; }
+
+    const guess = guessCaptionEl();
+    if (guess) {
+      const el = LFT.selector.find(guess.selector);
+      if (el) adopt(guess.selector, el);
+    }
+  }
+
+  function adopt(sel, el) {
+    if (mode === 'dom' && targetSelector === sel && targetEl === el) return;
+    mode = 'dom';
+    autoAdopted = true;
+    userTarget = false;      // innentől a mi választásunk, nem a felhasználóé
+    targetSelector = sel;
+    modeSince = Date.now();
+    attachObserver(el);
+  }
+
+  /* Fél másodpercenként: karbantartja a kijelölt elemet, és amíg nem jön
+     szöveg, keresi tovább a forrást. */
   function keepTargetAlive() {
     clearInterval(rescanTimer);
-    let missingSince = 0;
+    missingSince = 0;
     rescanTimer = setInterval(() => {
-      if (!running || mode !== 'dom') return;
-      if (targetEl && targetEl.isConnected) { missingSince = 0; return; }
-      const el = LFT.selector.find(targetSelector);
-      if (el) {
+      if (!running) return;
+
+      if (mode === 'dom' && !(targetEl && targetEl.isConnected)) {
+        const el = targetSelector ? LFT.selector.find(targetSelector) : null;
+        if (el) {
+          missingSince = 0;
+          attachObserver(el);
+        } else if (userTarget) {
+          if (!missingSince) missingSince = Date.now();
+          else if (Date.now() - missingSince > 10000) {
+            missingSince = Date.now();
+            status(LFT.t('cap_target_lost'), 'warn');
+          }
+        } else {
+          // magunktól választottuk, és eltűnt — keressünk másikat
+          detachObserver();
+          mode = null;
+          targetSelector = null;
+        }
+      } else if (mode === 'dom') {
         missingSince = 0;
-        attachObserver(el);
-      } else if (!missingSince) {
-        missingSince = Date.now();
-      } else if (Date.now() - missingSince > 10000) {
-        missingSince = Date.now();
-        status(LFT.t('cap_target_lost'), 'warn');
       }
+
+      if (!gotAnyText) hunt();
     }, 500);
   }
 
@@ -176,49 +278,44 @@ globalThis.LFT = globalThis.LFT || {};
 
     running = true;
     gotAnyText = false;
+    autoAdopted = false;
+    modeSince = Date.now();
+
+    const s = await LFT.store.getSettings();
+    autoTrack = s.autoTrack !== false;
 
     const target = await LFT.store.getTarget(ORIGIN);
     if (target && target.selector) {
+      userTarget = true;
       mode = 'dom';
       targetSelector = target.selector;
       const el = LFT.selector.find(targetSelector);
       if (el) attachObserver(el);
-      keepTargetAlive();
     } else {
-      mode = 'texttrack';
-      const active = scanTextTracks();
-      clearInterval(rescanTimer);
-      rescanTimer = setInterval(() => { if (running && mode === 'texttrack') scanTextTracks(); }, 1000);
-      if (IS_TOP && !active) status(noSourceHint(), 'warn');
+      userTarget = false;
+      mode = null;
+      hunt();                       // azonnal próbálkozunk, nem várunk fél másodpercet
     }
+    keepTargetAlive();              // innentől ez tartja karban és keres tovább
 
     clearTimeout(noTextTimer);
     noTextTimer = setTimeout(() => {
-      if (!running || gotAnyText) return;
-
-      /* Biztonsági háló: ha a kijelölt elemből nem jön semmi, de a videónak van
-         saját feliratsávja, magunktól átváltunk arra — egy rossz szabály így nem
-         teszi használhatatlanná az egészet. */
-      if (mode === 'dom' && scanTextTracks() > 0) {
-        mode = 'texttrack';
-        detachObserver();
-        clearInterval(rescanTimer);
-        rescanTimer = setInterval(() => { if (running && mode === 'texttrack') scanTextTracks(); }, 1000);
-        status(LFT.t('cap_switched_to_track'), 'warn');
-        return;
-      }
-
-      if (IS_TOP) status(noSourceHint(), 'warn');
-    }, 6000);
+      if (!running || gotAnyText || !IS_TOP) return;
+      status(noSourceHint(), 'warn');
+    }, 8000);
   }
 
   function stop() {
     running = false;
     mode = null;
+    userTarget = false;
+    autoAdopted = false;
     clearTimeout(noTextTimer);
     clearInterval(rescanTimer);
     detachObserver();
+    restoreTracks();
     if (seg) { seg.commit(); seg.reset(); }
+    stopWatching();   // leállítás után nem indulunk újra magunktól — az a felhasználó dolga
   }
 
   /* Ha a bővítményt újratöltötték vagy kikapcsolták, ez a példány árván marad.
@@ -443,6 +540,29 @@ globalThis.LFT = globalThis.LFT || {};
     return '';
   }
 
+  /* Ismert lejátszók felirat-konténerei. Ezeken a helyeken nem kell találgatni:
+     ha megvan az elem, rögtön az lesz a forrás, célzás nélkül. */
+  const KNOWN_SELECTORS = [
+    '.ytp-caption-window-container',   // YouTube
+    '.vjs-text-track-display',         // Video.js
+    '.jw-captions',                    // JW Player
+    '.shaka-text-container',           // Shaka Player
+    '.plyr__captions',                 // Plyr
+    '.bmpui-ui-subtitle-overlay',      // Bitmovin
+    '.vp-captions',                    // Vimeo
+    '.libassjs-canvas-parent',         // ASS/SSA renderelő
+    '[data-purpose="captions-cue-text"]'
+  ];
+
+  function findKnownCaptionEl() {
+    for (const sel of KNOWN_SELECTORS) {
+      let el = null;
+      try { el = document.querySelector(sel); } catch (e) { continue; }
+      if (el) return { el: el, selector: sel };
+    }
+    return null;
+  }
+
   /* Tippet ad arra, melyik elem lehet a felirat, ha a felhasználó még nem célzott. */
   const GUESS_SEL = [
     '[class*="caption" i]', '[class*="subtitle" i]', '[class*="cue" i]',
@@ -526,12 +646,54 @@ globalThis.LFT = globalThis.LFT || {};
     };
   }
 
+  /* ---------------- automatikus indítás ---------------- */
+
+  /* Indítás előtti figyelés: ha egy MÁR JÁTSZÓ videón felirat bukkan fel,
+     szólunk a lebegő ablaknak, hogy magától induljon el. Oldalanként egyszer
+     sül el — ha a felhasználó leállítja, nem kezdjük újra a háta mögött. */
+  let watchTimer = null;
+  let watchFired = false;
+
+  function sourceLooksReady() {
+    for (const v of document.querySelectorAll('video')) {
+      if (v.paused || !isFinite(v.currentTime) || v.currentTime <= 0) continue;
+      const list = v.textTracks;
+      if (list) {
+        for (let i = 0; i < list.length; i++) if (isCaptionTrack(list[i])) return true;
+      }
+      const known = findKnownCaptionEl();
+      if (known && LFT.normalizeText(known.el.innerText || '')) return true;
+    }
+    return false;
+  }
+
+  function stopWatching() {
+    clearInterval(watchTimer);
+    watchTimer = null;
+  }
+
+  function watchForSource() {
+    stopWatching();
+    watchTimer = setInterval(() => {
+      if (running || watchFired) return;
+      if (!sourceLooksReady()) return;
+      watchFired = true;
+      stopWatching();
+      if (IS_TOP && LFT.overlay && LFT.overlay.autoStart) LFT.overlay.autoStart();
+      else send({ type: 'relay:sourcefound' });
+    }, 2000);
+  }
+
+  LFT.store.getSettings().then(s => {
+    if (s && s.autoStart !== false) watchForSource();
+  }).catch(() => {});
+
   /* ---------------- üzenetek ---------------- */
 
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (!msg || !msg.type) return;
     switch (msg.type) {
-      case 'capture:start': start(msg.flushDelay); return;
+      case 'capture:start': stopWatching(); start(msg.flushDelay); return;
       case 'capture:stop': stop(); return;
       case 'audio:duck': duckStart(msg.level); return;
       case 'audio:unduck': duckEnd(); return;
