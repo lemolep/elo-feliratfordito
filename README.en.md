@@ -227,6 +227,12 @@ The delay is adjustable between 300 and 3000 ms.
 one arrives at the bottom, exactly how YouTube's automatic captions behave. The extension
 detects the overlap between the old and new state, so text is neither duplicated nor lost.
 
+It also **strips timecodes** out of the subtitle text. Transcript panels (YouTube's
+"Transcript" view, for example) prefix every line with `0:12` — that is not part of the
+subtitle and would only corrupt the translation. A clock time spoken in the dialogue
+(`we meet at 3:30`, `3:30 PM`) is kept. This is unrelated to the `[00:01:23]` stamps in
+the saved file, which come from the video's playback position.
+
 ## 8. Troubleshooting
 
 | Symptom | What to do |

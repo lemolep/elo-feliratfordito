@@ -231,6 +231,12 @@ Kezeli a **gördülő feliratot** is (amikor a régi sor felül kicsúszik, mik�
 érkezik — a YouTube automatikus felirata pontosan így működik): felismeri a régi és az új
 állapot közötti átfedést, így a szöveg se nem duplázódik, se nem vész el belőle rész.
 
+Az **időkódokat kiszűri** a felirat szövegéből. Az átirat-panelek (például a YouTube
+„Átirat" nézete) minden sor elé odaírják, hogy `0:12` — ez nem a felirat része, csak
+elrontaná a fordítást. A beszédben elhangzó időpont (`we meet at 3:30`, `3:30 PM`)
+viszont megmarad. A mentett fájl saját `[00:01:23]` időbélyege ettől független, azt a
+videó lejátszási idejéből írjuk.
+
 ## 8. Ha nem működik
 
 | Tünet | Mit tegyél |
