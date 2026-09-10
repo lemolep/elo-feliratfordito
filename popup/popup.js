@@ -96,7 +96,7 @@ $('pick').addEventListener('click', async () => { await send('overlay:pick'); wi
 $('save').addEventListener('click', async () => { await send('overlay:save'); window.close(); });
 /* ---------------- diagnosztika ---------------- */
 
-function frameCard(f) {
+function frameCard(f, skipHosts) {
   const div = document.createElement('div');
   div.className = 'frame';
 
@@ -172,9 +172,10 @@ function frameCard(f) {
   }
 
   const ifr = f.iframes || { list: [], unknown: 0 };
-  if (ifr.list.length) {
+  const offer = ifr.list.filter(it => !skipHosts.has(it.host.toLowerCase()));
+  if (offer.length) {
     line('bad', LFT.t('pop_iframes_intro'));
-    ifr.list.forEach(it => {
+    offer.forEach(it => {
       const b = document.createElement('button');
       b.className = 'primary';
       b.textContent = LFT.t('pop_iframe_allow', [it.host]);
@@ -187,6 +188,29 @@ function frameCard(f) {
   }
 
   return div;
+}
+
+/* Azok a hostok, amikre már nem kell engedélyt kérni: vagy saját
+   diagnosztikai kártyát küldtek (tehát fut bennük a bővítmény), vagy
+   a Chrome szerint már megvan rájuk a jogosultság. Enélkül a beágyazott
+   keretek gombjai minden futtatásnál újra megjelentek. */
+async function alreadyAllowed(frames) {
+  const skip = new Set();
+  frames.forEach(f => { if (f.frame) skip.add(String(f.frame).toLowerCase()); });
+
+  const hosts = new Set();
+  frames.forEach(f => (((f.iframes || {}).list) || []).forEach(it => {
+    const h = String(it.host).toLowerCase();
+    if (!skip.has(h)) hosts.add(h);
+  }));
+
+  for (const h of hosts) {
+    let has = false;
+    try { has = await chrome.permissions.contains({ origins: [patternFor(h)] }); }
+    catch (e) { has = false; }
+    if (has) skip.add(h);
+  }
+  return skip;
 }
 
 /* Domain engedélyezése a diagnosztikából. A permissions.request csak
@@ -227,7 +251,8 @@ $('diag').addEventListener('click', async () => {
     note(LFT.t('pop_diag_noframes'));
     return;
   }
-  res.frames.forEach(f => box.appendChild(frameCard(f)));
+  const skipHosts = await alreadyAllowed(res.frames);
+  res.frames.forEach(f => box.appendChild(frameCard(f, skipHosts)));
 });
 
 $('opts').addEventListener('click', () => { chrome.runtime.openOptionsPage(); window.close(); });

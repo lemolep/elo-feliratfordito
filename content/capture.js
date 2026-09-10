@@ -470,20 +470,27 @@ globalThis.LFT = globalThis.LFT || {};
   /* A beágyazott kereteket a szülő oldal fel tudja sorolni (a src attribútum
      olvasható), még ha a tartalmukba nem is lát bele. Így ki tudjuk írni, melyik
      domaint kell még engedélyezni ahhoz, hogy a lejátszóba is belássunk. */
+  /* Egy lejátszókeret sosem pár képpont nagy: a láthatatlan segédkeretek
+     (fizetés, analitika, reklám) így kimaradnak a felajánlott listából. */
+  const MIN_FRAME_AREA = 2500;
+
   function listIframes() {
-    const seen = new Set();
-    const list = [];
+    const byHost = new Map();
     let unknown = 0;
     for (const f of document.querySelectorAll('iframe')) {
       const raw = f.getAttribute('src') || '';
       let host = '';
       try { host = raw ? new URL(raw, location.href).hostname : ''; } catch (e) { host = ''; }
       if (!host) { unknown++; continue; }
-      if (seen.has(host)) continue;
-      seen.add(host);
       const r = f.getBoundingClientRect();
-      list.push({ host: host, area: Math.round(r.width * r.height) });
+      const area = Math.round(r.width * r.height);
+      // ugyanaz a host több keretben is lehet — a legnagyobb számít
+      if (!byHost.has(host) || byHost.get(host) < area) byHost.set(host, area);
     }
+    const list = [];
+    byHost.forEach((area, host) => {
+      if (area >= MIN_FRAME_AREA) list.push({ host: host, area: area });
+    });
     list.sort((a, b) => b.area - a.area);   // a legnagyobb keret a legvalószínűbb lejátszó
     return { list: list, unknown: unknown };
   }
