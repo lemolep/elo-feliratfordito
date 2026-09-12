@@ -739,5 +739,17 @@
   },
   "ov_auto_started": {
     "message": "Feliratot találtam — magától elindult."
+  },
+  "dl_err_keychars": {
+    "message": "A DeepL kulcs érvénytelen karaktert tartalmaz — valószínűleg láthatatlan szemét került bele másoláskor. Töröld a mezőt, és írd be újra kézzel."
+  },
+  "dl_err_blocked": {
+    "message": "A DeepL nem válaszolt. Nézd meg az internetkapcsolatot, és hogy nem blokkolja-e VPN, tűzfal vagy tartalomblokkoló."
+  },
+  "tts_err_keychars": {
+    "message": "A Google kulcs érvénytelen karaktert tartalmaz — valószínűleg láthatatlan szemét került bele másoláskor. Töröld a mezőt, és írd be újra kézzel."
+  },
+  "tts_err_blocked": {
+    "message": "A Google TTS nem válaszolt. Nézd meg az internetkapcsolatot, és hogy nem blokkolja-e VPN, tűzfal vagy tartalomblokkoló."
   }
 }

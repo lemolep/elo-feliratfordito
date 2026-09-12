@@ -739,5 +739,17 @@
   },
   "ov_auto_started": {
     "message": "Subtitles found — started automatically."
+  },
+  "dl_err_keychars": {
+    "message": "The DeepL key contains an invalid character — most likely invisible junk picked up while copying. Clear the field and type it in again."
+  },
+  "dl_err_blocked": {
+    "message": "DeepL did not respond. Check your internet connection, and whether a VPN, firewall or content blocker is in the way."
+  },
+  "tts_err_keychars": {
+    "message": "The Google key contains an invalid character — most likely invisible junk picked up while copying. Clear the field and type it in again."
+  },
+  "tts_err_blocked": {
+    "message": "Google TTS did not respond. Check your internet connection, and whether a VPN, firewall or content blocker is in the way."
   }
 }
