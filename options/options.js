@@ -525,7 +525,7 @@ $('clearAll').addEventListener('click', async () => {
 /* ---------------- indulás ---------------- */
 
 async function fillForm() {
-  settings = await LFT.store.getSettings();
+  settings = await LFT.store.getSettingsWithKeys();
 
   $('key').value = settings.deeplKey || '';
   $('delay').value = settings.flushDelay;
@@ -616,9 +616,11 @@ $('autoStart').addEventListener('change', () => {
 const BACKUP_APP = 'elo-feliratfordito';
 
 $('exportBtn').addEventListener('click', async () => {
-  const s = await LFT.store.getSettings();
+  const s = await LFT.store.getSettingsWithKeys();
   const withKeys = $('exportKeys').checked;
   if (!withKeys) { s.deeplKey = ''; s.googleKey = ''; }
+  delete s.hasDeeplKey;               // belső jelzés, a fájlba nem kell
+  delete s.hasGoogleKey;
 
   const data = {
     app: BACKUP_APP,

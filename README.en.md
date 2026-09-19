@@ -223,8 +223,8 @@ selected subtitle elements and speech settings into a single JSON file; **Restor
 reads it back on the other machine. Recorded transcripts are not included — download those
 separately under recordings.
 
-The **Include the API keys** checkbox can be turned off. If you leave it on, the file contains
-your DeepL and Google keys in readable form — treat it like a password.
+The **Include the API keys** checkbox is off by default, so no key goes into the file.
+If you tick it, the file contains your DeepL and Google keys in readable form — treat it like a password.
 
 After restoring, the sites appear in the list, but the browser only grants permission on a
 click: press **Allow** next to each of them.
@@ -304,15 +304,19 @@ options/                       settings and history
 - **There is no server behind this extension.** No telemetry, nothing is sent to the author.
 - **Outbound connections exist only for translation and speech:** finished subtitle sentences
   go to the DeepL API using *your own* key, and if you enable speech, the translated sentences
-  go to Google Cloud TTS using *your own* Google key. That is governed by DeepL's privacy policy —
-  <https://www.deepl.com/privacy>. If that is not acceptable for a given piece of content,
-  do not use the extension there.
-- **Everything else stays local:** the DeepL key, allowed domains, picked subtitle elements,
-  window settings and recorded transcripts live in the browser's own storage
-  (`chrome.storage.local`) on that machine. Removing the extension removes them too.
+  go to Google Cloud TTS using *your own* Google key. Translation is governed by DeepL's privacy
+  policy (<https://www.deepl.com/privacy>), speech by Google Cloud's privacy notice
+  (<https://cloud.google.com/terms/cloud-privacy-notice>). If that is not acceptable for a given
+  piece of content, do not use the extension there.
+- **Everything else stays local:** allowed domains, picked subtitle elements, window settings
+  and recorded transcripts live in the browser's own storage (`chrome.storage.local`) on that
+  machine. The DeepL and Google keys are kept separately, in the extension's own IndexedDB
+  database: only the settings page, the popup and the background worker can read it; the
+  script injected into web pages cannot, it only knows whether a key exists. Removing the
+  extension removes all of this too.
 - **It only runs on sites you allow.** No host access is requested at install time; you grant
   each domain explicitly and can revoke it at any time (Settings → *Allowed sites*).
-- The DeepL key is stored unencrypted. Do not use it on a shared machine.
+- The keys are stored unencrypted. Do not use it on a shared machine.
 
 ## 11. License
 

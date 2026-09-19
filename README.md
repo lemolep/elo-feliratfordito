@@ -230,8 +230,8 @@ teszi a kulcsokat, az engedélyezett oldalakat, a kijelölt feliratelemeket és 
 hangbeállításokat; a másik gépen a **Visszatöltés fájlból** olvassa be. A rögzített
 átiratok nincsenek benne — azokat a felvételeknél töltheted le külön.
 
-Az **API kulcsokat is mentse** jelölő kikapcsolható. Ha bent hagyod, a fájl olvasható
-formában tartalmazza a DeepL és a Google kulcsodat — kezeld úgy, mint egy jelszót.
+Az **API kulcsokat is mentse** jelölő alapból ki van kapcsolva, így a fájlba nem kerül kulcs.
+Ha bepipálod, a fájl olvasható formában tartalmazza a DeepL és a Google kulcsodat — kezeld úgy, mint egy jelszót.
 
 Visszatöltés után az oldalak megjelennek a listán, de a böngésző az engedélyt csak
 kattintásra adja meg: nyomd meg mellettük az **Engedélyezem** gombot.
@@ -312,15 +312,20 @@ options/                       beállítások és előzmények
 - **Nincs szerver a bővítmény mögött.** Nem gyűjt telemetriát, nem küld semmit a szerzőnek.
 - **Kimenő kapcsolat csak a fordításhoz és a felolvasáshoz van:** a lezárt feliratmondatok a
   te saját DeepL kulcsoddal mennek a DeepL API-ra, és ha bekapcsolod a felolvasást, a
-  lefordított mondatok a te saját Google kulcsoddal a Google Cloud TTS-re. Ezt a DeepL adatkezelése szabályozza —
-  <https://www.deepl.com/privacy>. Ha ez nem elfogadható egy adott tartalomnál, ne használd ott.
-- **Minden más helyben marad:** a DeepL kulcs, az engedélyezett domainek, a kijelölt
-  feliratelemek, az ablakbeállítások és a rögzített átiratok a böngésző saját tárolójában
-  (`chrome.storage.local`) vannak, azon a gépen. A bővítmény törlésével ezek is törlődnek.
+  lefordított mondatok a te saját Google kulcsoddal a Google Cloud TTS-re. A fordítást a DeepL
+  adatkezelése szabályozza (<https://www.deepl.com/privacy>), a felolvasást a Google Cloud
+  adatkezelése (<https://cloud.google.com/terms/cloud-privacy-notice>). Ha ez nem elfogadható
+  egy adott tartalomnál, ne használd ott.
+- **Minden más helyben marad:** az engedélyezett domainek, a kijelölt feliratelemek, az
+  ablakbeállítások és a rögzített átiratok a böngésző saját tárolójában
+  (`chrome.storage.local`) vannak, azon a gépen. A DeepL és a Google kulcs ettől külön, a
+  bővítmény saját IndexedDB adatbázisában van: ezt csak a beállítások oldal, a popup és a
+  háttérfolyamat éri el, a weboldalakba betöltött szkript nem, az csak azt tudja, hogy van e
+  kulcs. A bővítmény törlésével ezek is törlődnek.
 - **A bővítmény csak azokon az oldalakon fut, amelyeket te engedélyezel.** Telepítéskor nem
   kér hozzáférést egyetlen weboldalhoz sem; minden domaint külön, kattintással engedélyezel,
   és bármikor visszavonhatod (Beállítások → *Engedélyezett oldalak* → Törlés).
-- A DeepL kulcs titkosítatlanul van tárolva. Közös gépen ne használd.
+- A kulcsok titkosítatlanul vannak tárolva. Közös gépen ne használd.
 
 ## 11. Licenc
 
