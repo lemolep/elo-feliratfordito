@@ -61,7 +61,7 @@ async function init() {
   $('host').textContent = host || LFT.t('pop_bad_page');
 
   const settings = await LFT.store.getSettings();
-  if (!settings.deeplKey) {
+  if (!settings.hasDeeplKey) {
     note(LFT.t('pop_note_nokey'));
   }
 

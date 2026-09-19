@@ -33,7 +33,7 @@ function hostMatches(host, domain) {
 }
 
 async function grantedDomains() {
-  const s = await LFT.store.getSettings();
+  const s = await LFT.store.getSettingsWithKeys();
   const out = [];
   for (const d of s.domains) {
     try {
@@ -87,6 +87,9 @@ async function injectExisting() {
   return n;
 }
 
+/* Régi tárolásból a kulcsok átköltöztetése (minden indulásnál, olcsó ha már kész). */
+LFT.store.migrateSecrets().catch(e => console.warn('[LFT] migrateSecrets', e));
+
 chrome.runtime.onInstalled.addListener(() => { syncScripts(); });
 chrome.runtime.onStartup.addListener(() => { syncScripts(); });
 chrome.permissions.onRemoved.addListener(() => { syncScripts(); });
@@ -138,7 +141,7 @@ async function runBatch() {
   const batch = queue.splice(0, 20);
   if (!batch.length) return;
 
-  const s = await LFT.store.getSettings();
+  const s = await LFT.store.getSettingsWithKeys();
   if (!s.deeplKey) {
     batch.forEach(b => b.resolve({ error: LFT.t('dl_err_nokey') }));
     return;
@@ -333,7 +336,7 @@ async function handle(msg, sender) {
 
     /* beállítások oldal */
     case 'deepl:usage': {
-      const s = await LFT.store.getSettings();
+      const s = await LFT.store.getSettingsWithKeys();
       const key = msg.key || s.deeplKey;
       try {
         const u = await LFT.deepl.usage(key);
@@ -344,7 +347,7 @@ async function handle(msg, sender) {
     }
     /* szakszótár állapota és feltöltése */
     case 'deepl:glossary': {
-      const s = await LFT.store.getSettings();
+      const s = await LFT.store.getSettingsWithKeys();
       const parsed = parseGlossary(s.glossary);
       const st = (await chrome.storage.local.get('glossaryState')).glossaryState || {};
       if (msg.force) { glossaryFailed = false; glossaryError = ''; }
@@ -366,7 +369,7 @@ async function handle(msg, sender) {
 
     /* célnyelvek lekérése a DeepL-től (a beállítások oldalnak) */
     case 'deepl:languages': {
-      const s = await LFT.store.getSettings();
+      const s = await LFT.store.getSettingsWithKeys();
       const key = msg.key || s.deeplKey;
       try {
         const list = await LFT.deepl.languages(key, 'target');
@@ -384,7 +387,7 @@ async function handle(msg, sender) {
     }
     /* felolvasás: egy szövegdarab hanggá alakítása (a kulcs itt marad, nem megy a lapba) */
     case 'tts': {
-      const s = await LFT.store.getSettings();
+      const s = await LFT.store.getSettingsWithKeys();
       if (!s.ttsEnabled) return { skip: true };
       if (!s.googleKey) return { error: LFT.t('tts_err_nokey') };
       if (!s.ttsVoice) return { error: LFT.t('tts_err_novoice') };
@@ -398,7 +401,7 @@ async function handle(msg, sender) {
 
     /* hangminta a beállítások oldalnak — a megadott kulccsal és hanggal */
     case 'tts:sample': {
-      const s = await LFT.store.getSettings();
+      const s = await LFT.store.getSettingsWithKeys();
       /* A mintamondatot előbb a célnyelvre fordítjuk, hogy a hang a saját
          nyelvén szólaljon meg. Ha nincs DeepL kulcs vagy hibázik, marad az eredeti. */
       let text = msg.text;
@@ -419,7 +422,7 @@ async function handle(msg, sender) {
 
     /* elérhető hangok egy nyelvhez */
     case 'tts:voices': {
-      const s = await LFT.store.getSettings();
+      const s = await LFT.store.getSettingsWithKeys();
       try {
         const list = await LFT.tts.voices(msg.key || s.googleKey, msg.lang);
         return { ok: true, voices: list };

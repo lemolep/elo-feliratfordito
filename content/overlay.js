@@ -215,7 +215,7 @@ globalThis.LFT = globalThis.LFT || {};
     if (persist) {
       settings.ttsEnabled = ttsOn;
       LFT.store.saveSettings({ ttsEnabled: ttsOn });
-      if (ttsOn && !settings.googleKey) setStatus(LFT.t('ov_tts_nokey'), 'warn');
+      if (ttsOn && !settings.hasGoogleKey) setStatus(LFT.t('ov_tts_nokey'), 'warn');
     }
   }
 
@@ -497,7 +497,7 @@ globalThis.LFT = globalThis.LFT || {};
   async function startRec() {
     settings = await LFT.store.getSettings();
     applyTargetLang();
-    if (!settings.deeplKey) {
+    if (!settings.hasDeeplKey) {
       setStatus(LFT.t('ov_warn_nokey'), 'warn');
     } else {
       setStatus(LFT.t('ov_starting'), '');
@@ -530,7 +530,7 @@ globalThis.LFT = globalThis.LFT || {};
     if (autoStarted || recording) return;
     const s = settings || await LFT.store.getSettings();   // jöhet az init előtt is
     if (!s || s.autoStart === false) return;
-    if (!s.deeplKey) return;          // kulcs nélkül nincs mit fordítani
+    if (!s.hasDeeplKey) return;          // kulcs nélkül nincs mit fordítani
     autoStarted = true;
     setVisible(true, true);
     await startRec();
@@ -756,7 +756,7 @@ globalThis.LFT = globalThis.LFT || {};
     updateCount();
 
     const target = await LFT.store.getTarget(ORIGIN);
-    if (!settings.deeplKey) {
+    if (!settings.hasDeeplKey) {
       showEmptyHint(LFT.t('ov_hint_nokey'));
     } else if (target) {
       showEmptyHint(LFT.t('ov_hint_ready'));
