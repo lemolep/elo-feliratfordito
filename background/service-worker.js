@@ -104,7 +104,7 @@ let chain = Promise.resolve();
 let quotaBlocked = false;
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && changes.settings) {
+  if (area === 'local' && (changes.settings || changes.keysRev)) {
     quotaBlocked = false;
     glossaryFailed = false;
     glossaryError = '';
