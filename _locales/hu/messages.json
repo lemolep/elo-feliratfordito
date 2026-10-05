@@ -751,5 +751,23 @@
   },
   "tts_err_blocked": {
     "message": "A Google TTS nem válaszolt. Nézd meg az internetkapcsolatot, és hogy nem blokkolja-e VPN, tűzfal vagy tartalomblokkoló."
+  },
+  "ov_tip_audio": {
+    "message": "A lap hangjának felvétele (próba)"
+  },
+  "ov_audio_starting": {
+    "message": "A lap hangjának kérése…"
+  },
+  "ov_audio_on": {
+    "message": "A lap hangja a bővítményen megy át. Szól a videó?"
+  },
+  "ov_audio_off": {
+    "message": "A hangfelvétel leállt."
+  },
+  "ov_audio_failed": {
+    "message": "Nem sikerült a lap hangját megkapni: $1"
+  },
+  "ov_audio_level": {
+    "message": "Hang rögzítve · szint: $1 · lejátszás: $2"
   }
 }

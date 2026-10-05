@@ -284,12 +284,74 @@ async function ensureGlossaryInner(s, srcLang, tgtLang) {
   }
 }
 
+/* ---------------- a lap hangja (tabCapture + offscreen) ---------------- */
+
+/* A lebegő ablak gombjából indítható: 2026-10-05-én mérve a "minden oldalon"
+   host engedély elég a getMediaStreamId-hoz, nem kell hozzá ikonkattintás.
+   A hangot az offscreen dokumentum kezeli, mert a service workerben nincs
+   AudioContext és getUserMedia. Egyszerre egy lap hangját vesszük. */
+const OFFSCREEN_URL = 'offscreen/offscreen.html';
+let audioTab = null;
+
+async function ensureOffscreen() {
+  const url = chrome.runtime.getURL(OFFSCREEN_URL);
+  const has = await chrome.runtime.getContexts({
+    contextTypes: ['OFFSCREEN_DOCUMENT'], documentUrls: [url]
+  });
+  if (has.length) return;
+  await chrome.offscreen.createDocument({
+    url: OFFSCREEN_URL,
+    reasons: ['USER_MEDIA'],
+    justification: 'A lap hangjának felvétele beszédfelismeréshez.'
+  });
+}
+
+async function tabAudioStart(tabId) {
+  if (tabId == null) throw new Error('nincs lapazonosító');
+  if (audioTab != null) await tabAudioStop();
+  const streamId = await chrome.tabCapture.getMediaStreamId({ targetTabId: tabId });
+  await ensureOffscreen();
+  const r = await chrome.runtime.sendMessage({ target: 'offscreen', type: 'start', streamId: streamId, tabId: tabId });
+  if (!r || !r.ok) throw new Error((r && r.error) || 'az offscreen dokumentum nem válaszolt');
+  audioTab = tabId;
+  return r;
+}
+
+async function tabAudioStop() {
+  const was = audioTab;
+  audioTab = null;
+  try { await chrome.runtime.sendMessage({ target: 'offscreen', type: 'stop' }); } catch (e) { /* nincs nyitva */ }
+  try { await chrome.offscreen.closeDocument(); } catch (e) { /* nincs nyitva */ }
+  return was;
+}
+
+// a lap bezárásakor vagy újratöltésekor ne maradjon nyitva a hangfolyam
+chrome.tabs.onRemoved.addListener(id => { if (id === audioTab) tabAudioStop(); });
+chrome.tabs.onUpdated.addListener((id, info) => {
+  if (id === audioTab && info.status === 'loading') tabAudioStop();
+});
+
 /* ---------------- üzenetek ---------------- */
 
 async function handle(msg, sender) {
   const tabId = sender && sender.tab ? sender.tab.id : null;
 
   switch (msg.type) {
+
+    /* a lap hangja */
+    case 'tabaudio:start':
+      try { return Object.assign({ ok: true }, await tabAudioStart(tabId)); }
+      catch (e) { return { ok: false, error: (e && e.message) || String(e) }; }
+    case 'tabaudio:stop':
+      await tabAudioStop();
+      return { ok: true };
+    case 'tabaudio:level':     // az offscreen dokumentumtól jön
+    case 'tabaudio:ended':
+      if (msg.tabId != null) {
+        if (msg.type === 'tabaudio:ended' && msg.tabId === audioTab) audioTab = null;
+        chrome.tabs.sendMessage(msg.tabId, msg, { frameId: 0 }).catch(() => {});
+      }
+      return { ok: true };
 
     /* fordítás */
     case 'translate':
@@ -453,6 +515,7 @@ async function handle(msg, sender) {
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!msg || !msg.type) return;
+  if (msg.target === 'offscreen') return;   // azt az offscreen dokumentum válaszolja meg
   handle(msg, sender)
     .then(sendResponse)
     .catch(e => sendResponse({ error: String((e && e.message) || e) }));

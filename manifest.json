@@ -7,7 +7,9 @@
     "storage",
     "unlimitedStorage",
     "scripting",
-    "activeTab"
+    "activeTab",
+    "tabCapture",
+    "offscreen"
   ],
   "host_permissions": [
     "https://api-free.deepl.com/*",

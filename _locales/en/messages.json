@@ -751,5 +751,23 @@
   },
   "tts_err_blocked": {
     "message": "Google TTS did not respond. Check your internet connection, and whether a VPN, firewall or content blocker is in the way."
+  },
+  "ov_tip_audio": {
+    "message": "Capture the tab audio (test)"
+  },
+  "ov_audio_starting": {
+    "message": "Requesting the tab audio…"
+  },
+  "ov_audio_on": {
+    "message": "The tab audio now passes through the extension. Can you hear the video?"
+  },
+  "ov_audio_off": {
+    "message": "Audio capture stopped."
+  },
+  "ov_audio_failed": {
+    "message": "Could not get the tab audio: $1"
+  },
+  "ov_audio_level": {
+    "message": "Audio captured · level: $1 · playback: $2"
   }
 }

@@ -109,6 +109,7 @@ globalThis.LFT = globalThis.LFT || {};
         '<button class="icon" data-a="fsup" data-i18n-title="ov_tip_fsup">A+</button>',
         '<input type="range" data-a="op" min="30" max="100" step="5" data-i18n-title="ov_tip_opacity">',
         '<button class="icon" data-a="pick" data-i18n-title="ov_tip_pick">◎</button>',
+        '<button class="icon" data-a="audio" data-i18n-title="ov_tip_audio">🎤</button>',
         '<button class="icon" data-a="tts">🔊</button>',
         '<button data-a="save" data-i18n="ov_save" data-i18n-title="ov_tip_save"></button>',
         '<button class="icon" data-a="opts" data-i18n-title="ov_tip_opts">⚙</button>',
@@ -649,6 +650,37 @@ globalThis.LFT = globalThis.LFT || {};
     window.addEventListener('pointerup', up, true);
   }
 
+  /* ---------------- a lap hangja ---------------- */
+
+  /* 2. lépés: még csak azt nézzük, hogy a hang megszólal-e továbbra is, és
+     jön-e adat. Fordítás ebből még nem lesz. A gomb kattintás nélkül soha
+     nem indul — a hangfelismerés percdíjas lesz. */
+  let tabAudioOn = false;
+
+  function setTabAudioUi(on) {
+    tabAudioOn = on;
+    const b = panel && panel.querySelector('[data-a=audio]');
+    if (b) b.classList.toggle('on', on);   // zöld, mint a bekapcsolt 🔊
+  }
+
+  async function toggleTabAudio() {
+    if (tabAudioOn) {
+      await bg({ type: 'tabaudio:stop' });
+      setTabAudioUi(false);
+      setStatus(LFT.t('ov_audio_off'), '');
+      return;
+    }
+    setStatus(LFT.t('ov_audio_starting'), '');
+    const r = await bg({ type: 'tabaudio:start' });
+    if (r && r.ok) {
+      setTabAudioUi(true);
+      setStatus(LFT.t('ov_audio_on'), 'ok');
+    } else {
+      setTabAudioUi(false);
+      setStatus(LFT.t('ov_audio_failed', [(r && r.error) || '?']), 'warn');
+    }
+  }
+
   /* ---------------- gombok ---------------- */
 
   function onClick(e) {
@@ -660,6 +692,7 @@ globalThis.LFT = globalThis.LFT || {};
       case 'fsup': setFontSize((ui.fontSize || 20) + 2, true); break;
       case 'fsdown': setFontSize((ui.fontSize || 20) - 2, true); break;
       case 'pick': startPicking(); break;
+      case 'audio': toggleTabAudio(); break;
       case 'tts': setTts(!ttsOn, true); break;
       case 'save': openSaveDialog(); break;
       case 'opts': bg({ type: 'openOptions' }); break;
@@ -678,6 +711,13 @@ globalThis.LFT = globalThis.LFT || {};
       case 'segment': onSegment(msg.seg); return;
       case 'status': setStatus(msg.text, msg.kind); return;
       case 'picked': endPicking(); return;
+      case 'tabaudio:level':
+        if (tabAudioOn) setStatus(LFT.t('ov_audio_level', [String(msg.level), msg.state || '?']), msg.level > 0 ? 'ok' : 'warn');
+        return;
+      case 'tabaudio:ended':
+        setTabAudioUi(false);
+        setStatus(LFT.t('ov_audio_off'), '');
+        return;
       case 'sourcefound': autoStart(); return;
       case 'overlay:toggle': setVisible(!ui.visible, true); return;
       case 'overlay:show': setVisible(true, true); return;
