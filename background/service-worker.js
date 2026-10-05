@@ -8,6 +8,7 @@ const CS_FILES = [
   'lib/selector.js',
   'lib/segmenter.js',
   'lib/sentences.js',
+  'lib/srt.js',
   'content/overlay-css.js',
   'content/capture.js',
   'content/vimeo.js',

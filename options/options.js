@@ -469,15 +469,18 @@ function buildTxt(s) {
   return out.join('\r\n');
 }
 
-async function downloadSession(id, title, startedAt) {
+/* fmt: 'txt' (átirat) vagy 'srt' (felirat a fordítással, lib/srt.js) */
+async function downloadSession(id, title, startedAt, fmt) {
   const res = await chrome.runtime.sendMessage({ type: 'session:get', id: id });
   const s = res && res.session;
   if (!s) return;
   const d = new Date(startedAt);
   const stamp = d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) +
     '_' + pad2(d.getHours()) + '-' + pad2(d.getMinutes());
-  const name = safeFileName(title || s.origin) + '_' + stamp + '.txt';
-  const blob = new Blob(['﻿' + buildTxt(s)], { type: 'text/plain;charset=utf-8' });
+  const srt = fmt === 'srt';
+  const name = safeFileName(title || s.origin) + '_' + stamp + (srt ? '.srt' : '.txt');
+  const body = srt ? LFT.srt.build(s.lines || [], { mode: 'target' }) : buildTxt(s);
+  const blob = new Blob(['﻿' + body], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -526,7 +529,12 @@ async function renderSessions() {
     const dl = document.createElement('button');
     dl.className = 'small primary';
     dl.textContent = LFT.t('opt_download');
-    dl.addEventListener('click', () => downloadSession(r.id, r.title, r.startedAt));
+    dl.addEventListener('click', () => downloadSession(r.id, r.title, r.startedAt, 'txt'));
+    const dlSrt = document.createElement('button');
+    dlSrt.className = 'small';
+    dlSrt.textContent = LFT.t('opt_download_srt');
+    dlSrt.title = LFT.t('opt_download_srt_tip');
+    dlSrt.addEventListener('click', () => downloadSession(r.id, r.title, r.startedAt, 'srt'));
     const del = document.createElement('button');
     del.className = 'small danger';
     del.textContent = LFT.t('opt_delete');
@@ -535,6 +543,7 @@ async function renderSessions() {
       renderSessions();
     });
     td5.appendChild(dl);
+    td5.appendChild(dlSrt);
     td5.appendChild(del);
 
     tr.append(td1, td2, td3, td4, td5);

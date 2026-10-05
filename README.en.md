@@ -6,7 +6,7 @@ Reads live subtitles from any web page, translates them instantly with DeepL int
 **language of your choice**, and shows them in a draggable, resizable floating window.
 DeepL detects the source language on its own, so the same setup works for English, German,
 Spanish and the rest. The full transcript (original + translation) is saved continuously and
-can be exported to a `.txt` file.
+can be saved as a `.txt` transcript or an `.srt` subtitle file.
 
 If a video has **no subtitles at all**, **audio mode** works from its sound instead: Deepgram's
 speech recognition turns it into English text, and everything else works the same.
@@ -272,7 +272,7 @@ the video image.
 | **◎** | picker — select the subtitle element on the page |
 | **🎤** | audio mode on and off (see section 5) |
 | **🔊 / 🔇** | turn speech on and off |
-| **Save** | download the transcript as `.txt` |
+| **Save** | download the transcript (`.txt`) or a subtitle file (`.srt`) |
 | **⚙** | settings and history |
 | **✕** | hide the window |
 
@@ -305,6 +305,36 @@ Both can be rebound at `chrome://extensions/shortcuts`.
 ORIGINAL: Hallo zusammen, willkommen zurück.
 EN-GB: Hello everyone, welcome back.
 ```
+
+### Subtitle file (.srt)
+
+The save dialog also lets you choose the format:
+
+| Format | Good for |
+|---|---|
+| **Transcript (.txt)** | reading, note-taking — both languages, with timestamps |
+| **Subtitles — translation (.srt)** | the video: load it into a player (VLC, mpv), a video editor, or upload it alongside the video |
+| **Subtitles — bilingual (.srt)** | the translation on top, the original in italics below — good for language learning |
+| **Subtitles — original (.srt)** | the original-language text as subtitles |
+
+The extension remembers your last choice. In the history, every recording also has a
+**Subtitles (.srt)** button (with the translation).
+
+```
+1
+00:00:19,000 --> 00:00:21,933
+Digital delivery of SSP
+consists of two parts.
+```
+
+Timing comes from **the video's own time** (in audio mode, Vimeo-framed players included). A
+subtitle stays until the next one starts, but at least 1.2 and at most 7 seconds, depending on
+its length. A line is at most 42 characters, a cue at most two lines; a longer sentence is split
+into consecutive cues. If you rewound and re-watched a part, cues are sorted by video time.
+
+> In subtitle mode a line's time is when the sentence was closed (the subtitle had already been
+> on screen for a while), so cues may start slightly later than the original subtitle. In audio
+> mode we count back to the start of the sentence, so it is more accurate there.
 
 ### Moving your settings to another machine
 
@@ -433,7 +463,6 @@ Not affiliated with DeepL SE or with any video provider.
 
 ## 13. Deliberately not supported (yet)
 
-- `.srt` export with timecodes
 - OCR (burned-in subtitles)
 - Free, locally running speech recognition (e.g. Whisper) — the layer is built to be swappable
 - Translation engines other than DeepL

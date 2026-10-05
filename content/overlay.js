@@ -121,7 +121,13 @@ globalThis.LFT = globalThis.LFT || {};
       '<div class="grip" data-resize></div>',
       '<div class="dlg" hidden>',
         '<h3 data-i18n="ov_dlg_title"></h3>',
-        '<p data-i18n="ov_dlg_hint"></p>',
+        '<select data-a="fmt">',
+          '<option value="txt" data-i18n="ov_fmt_txt"></option>',
+          '<option value="srt-target" data-i18n="ov_fmt_srt_target"></option>',
+          '<option value="srt-both" data-i18n="ov_fmt_srt_both"></option>',
+          '<option value="srt-source" data-i18n="ov_fmt_srt_source"></option>',
+        '</select>',
+        '<p class="fmthint"></p>',
         '<input type="text" data-a="fname">',
         '<div class="row">',
           '<button data-a="dlgcancel" data-i18n="ov_cancel"></button>',
@@ -147,12 +153,15 @@ globalThis.LFT = globalThis.LFT || {};
     el.tts = panel.querySelector('[data-a=tts]');
     el.dlg = panel.querySelector('.dlg');
     el.fname = panel.querySelector('[data-a=fname]');
+    el.fmt = panel.querySelector('[data-a=fmt]');
+    el.fmtHint = panel.querySelector('.fmthint');
 
     panel.addEventListener('click', onClick);
     el.op.addEventListener('input', () => setOpacity(+el.op.value, true));
     el.body.addEventListener('scroll', onScroll);
     panel.querySelector('[data-drag]').addEventListener('pointerdown', onDragStart);
     panel.querySelector('[data-resize]').addEventListener('pointerdown', onResizeStart);
+    el.fmt.addEventListener('change', onFormatChange);
     el.fname.addEventListener('keydown', e => {
       if (e.key === 'Enter') { e.preventDefault(); doDownload(); }
       if (e.key === 'Escape') { e.preventDefault(); closeDialog(); }
@@ -618,9 +627,35 @@ globalThis.LFT = globalThis.LFT || {};
     return out.join('\r\n');
   }
 
+  /* Formátumok: átirat (.txt), vagy felirat (.srt) a fordítással, kétnyelvűen
+     vagy az eredetivel. Az .srt bármelyik lejátszóba betölthető. */
+  const FORMATS = {
+    'txt':        { ext: '.txt', hint: 'ov_dlg_hint' },
+    'srt-target': { ext: '.srt', hint: 'ov_dlg_hint_srt', mode: 'target' },
+    'srt-both':   { ext: '.srt', hint: 'ov_dlg_hint_srt_both', mode: 'both' },
+    'srt-source': { ext: '.srt', hint: 'ov_dlg_hint_srt', mode: 'source' }
+  };
+
+  function currentFormat() {
+    return FORMATS[el.fmt.value] ? el.fmt.value : 'txt';
+  }
+
+  function baseName(v) { return String(v || '').replace(/\.(txt|srt)$/i, ''); }
+
+  function onFormatChange() {
+    const f = FORMATS[currentFormat()];
+    el.fname.value = baseName(el.fname.value) + f.ext;
+    el.fmtHint.textContent = LFT.t(f.hint);
+    if (settings) settings.exportFormat = currentFormat();
+    LFT.store.saveSettings({ exportFormat: currentFormat() });   // a következő mentésnél ez legyen az alap
+  }
+
   function openSaveDialog() {
     if (!lines.length) { setStatus(LFT.t('ov_nothing_to_save'), 'warn'); return; }
-    el.fname.value = safeFileName(document.title || location.host) + '_' + stamp() + '.txt';
+    const fmt = settings && FORMATS[settings.exportFormat] ? settings.exportFormat : 'txt';
+    el.fmt.value = fmt;
+    el.fmtHint.textContent = LFT.t(FORMATS[fmt].hint);
+    el.fname.value = safeFileName(document.title || location.host) + '_' + stamp() + FORMATS[fmt].ext;
     el.dlg.hidden = false;
     el.fname.focus();
     el.fname.select();
@@ -629,9 +664,12 @@ globalThis.LFT = globalThis.LFT || {};
   function closeDialog() { el.dlg.hidden = true; }
 
   function doDownload() {
-    let name = safeFileName(el.fname.value.replace(/\.txt$/i, ''));
-    name = name + '.txt';
-    const blob = new Blob(['﻿' + buildTxt()], { type: 'text/plain;charset=utf-8' });
+    const f = FORMATS[currentFormat()];
+    const name = safeFileName(baseName(el.fname.value)) + f.ext;
+    const body = f.mode
+      ? LFT.srt.build(lines, { mode: f.mode })
+      : buildTxt();
+    const blob = new Blob(['﻿' + body], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;

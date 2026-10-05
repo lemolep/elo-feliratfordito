@@ -832,5 +832,29 @@
   },
   "stt_err_closed": {
     "message": "Megszakadt a kapcsolat a Deepgrammal."
+  },
+  "ov_fmt_txt": {
+    "message": "Átirat — eredeti és fordítás (.txt)"
+  },
+  "ov_fmt_srt_target": {
+    "message": "Felirat — fordítás (.srt)"
+  },
+  "ov_fmt_srt_both": {
+    "message": "Felirat — kétnyelvű (.srt)"
+  },
+  "ov_fmt_srt_source": {
+    "message": "Felirat — eredeti (.srt)"
+  },
+  "ov_dlg_hint_srt": {
+    "message": "Feliratfájl a videó idejével: betölthető a lejátszóba (VLC, mpv), videószerkesztőbe, vagy feltölthető a videó mellé."
+  },
+  "ov_dlg_hint_srt_both": {
+    "message": "Feliratfájl a videó idejével: felül a fordítás, alatta dőlten az eredeti."
+  },
+  "opt_download_srt": {
+    "message": "Felirat (.srt)"
+  },
+  "opt_download_srt_tip": {
+    "message": "Feliratfájl a fordítással, a videó idejével — betölthető lejátszóba vagy videószerkesztőbe."
   }
 }

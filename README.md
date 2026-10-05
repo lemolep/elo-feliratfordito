@@ -5,7 +5,8 @@
 Élő feliratot olvas ki a weboldalról, azonnal lefordítja DeepL-lel a **választott nyelvre**,
 és egy mozgatható, átméretezhető lebegő ablakban mutatja. A forrásnyelvet a DeepL magától
 felismeri, a célnyelv a beállításokban bármelyik DeepL-nyelv lehet. A teljes átirat
-(eredeti + fordítás) folyamatosan mentődik, és a végén `.txt` fájlba exportálható.
+(eredeti + fordítás) folyamatosan mentődik, és a végén `.txt` átiratként vagy `.srt`
+feliratfájlként menthető.
 
 Ha a videónak **nincs felirata**, a **hang módban** a hangjából dolgozik: a Deepgram
 beszédfelismerője angol szöveget készít belőle, és onnantól minden ugyanúgy megy.
@@ -276,7 +277,7 @@ videóképre van égetve.
 | **◎** | célzó — felirat kijelölése az oldalon |
 | **🎤** | hang mód be- és kikapcsolása (lásd az 5. fejezetet) |
 | **🔊 / 🔇** | felolvasás be- és kikapcsolása |
-| **Mentés** | átirat letöltése `.txt` fájlba |
+| **Mentés** | átirat (`.txt`) vagy feliratfájl (`.srt`) letöltése |
 | **⚙** | beállítások és előzmények |
 | **✕** | ablak elrejtése |
 
@@ -310,6 +311,37 @@ betűméretet, átlátszóságot és a nézetet **oldalanként megjegyzi**.
 EREDETI: Hello everyone, welcome back to the show.
 HU: Sziasztok, üdv újra a műsorban.
 ```
+
+### Feliratfájl (.srt)
+
+A mentési ablakban a formátum is választható:
+
+| Formátum | Mire jó |
+|---|---|
+| **Átirat (.txt)** | olvasásra, jegyzetelésre — mindkét nyelv, időbélyeggel |
+| **Felirat — fordítás (.srt)** | a videóhoz: betölthető lejátszóba (VLC, mpv), videószerkesztőbe, vagy feltölthető a videó mellé |
+| **Felirat — kétnyelvű (.srt)** | felül a fordítás, alatta dőlten az eredeti — nyelvtanuláshoz jó |
+| **Felirat — eredeti (.srt)** | az eredeti nyelvű szöveg feliratként |
+
+A bővítmény megjegyzi, melyiket választottad legutóbb. Az előzményekben minden felvétel
+mellett van egy **Felirat (.srt)** gomb is (a fordítással).
+
+```
+1
+00:00:19,000 --> 00:00:21,933
+Az SSP digitális szállítása
+két részből áll.
+```
+
+Az időzítés a **videó saját idejéből** jön (hang módban Vimeo-keretnél is). Egy felirat a
+következő kezdetéig látszik, de legalább 1,2 és legfeljebb 7 másodpercig, a szöveg hosszához
+igazítva. Egy sor legfeljebb 42 karakter, egy kocka legfeljebb két sor; a hosszabb mondat
+több egymást követő kockára bomlik. Ha visszatekertél és újranéztél egy részt, a kockák a
+videóidő szerint kerülnek sorba.
+
+> Felirat módban a sor ideje az, amikor a mondat lezárult (a felirat már egy ideje a képen
+> volt), ezért ott a kockák kicsit később indulhatnak, mint az eredeti felirat. Hang módban a
+> mondat kezdetére számolunk vissza, ott pontosabb.
 
 ### Beállítások átvitele másik gépre
 
@@ -440,7 +472,6 @@ A bővítmény nem áll kapcsolatban a DeepL SE-vel, és semmilyen videószolgá
 
 ## 13. Amit szándékosan nem tud (még)
 
-- `.srt` export időkódokkal
 - OCR (ráégetett felirat)
 - Ingyenes, helyben futó beszédfelismerés (pl. Whisper) — a réteg cserélhetőre készült, előkészítve
 - DeepL-en kívüli fordítómotor

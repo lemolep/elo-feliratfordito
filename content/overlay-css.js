@@ -197,6 +197,17 @@ input[type=range] {
   width: 100%;
 }
 .dlg input[type=text]:focus { outline: 2px solid #4b84f0; outline-offset: 1px; }
+.dlg select {
+  font: 13px system-ui, sans-serif;
+  color: #fff;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 7px;
+  padding: 8px 9px;
+  width: 100%;
+}
+.dlg select:focus { outline: 2px solid #4b84f0; outline-offset: 1px; }
+.dlg select option { background: #171b22; color: #fff; }
 .dlg .row { display: flex; gap: 8px; justify-content: flex-end; }
 .dlg button { padding: 8px 14px; font-size: 12px; }
 `;
