@@ -1,0 +1,4 @@
+# A tesztek a tárolóban vannak, de a kiadott zipbe (git archive) nem kerülnek:
+# a bővítménynek nincs rájuk szüksége, a felhasználónak csak zaj lennének.
+tests/ export-ignore
+.gitattributes export-ignore
