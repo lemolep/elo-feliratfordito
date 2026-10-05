@@ -7,6 +7,9 @@
 felismeri, a célnyelv a beállításokban bármelyik DeepL-nyelv lehet. A teljes átirat
 (eredeti + fordítás) folyamatosan mentődik, és a végén `.txt` fájlba exportálható.
 
+Ha a videónak **nincs felirata**, a **hang módban** a hangjából dolgozik: a Deepgram
+beszédfelismerője angol szöveget készít belőle, és onnantól minden ugyanúgy megy.
+
 A felület nyelve a böngésző nyelvét követi: **magyar** és **angol** van beépítve.
 
 Manifest V3, tiszta JavaScript — **nincs build lépés, nincs npm**.
@@ -159,7 +162,90 @@ Az automatikus indításhoz kell a DeepL kulcs — anélkül nem indul el magát
 > a DeepL karakterkeretedet, akkor is, ha közben mást csinálsz. Ha fogyóban a keret,
 > kapcsold ki, és indítsd kézzel a **Start** gombbal.
 
-## 5. Használat
+## 5. Hang mód — felirat nélküli videókhoz
+
+Sok videónak nincs felirata: nincs CC gomb, nincs feliratsáv, amiből olvasni lehetne. Ilyenkor
+a bővítmény a **lap hangjából** is tud dolgozni. A hangot a [Deepgram](https://deepgram.com)
+beszédfelismerője élőben angol szöveggé alakítja, azt fordítja a DeepL, és onnantól minden
+ugyanúgy megy, mint felirattal: kétnyelvű sorok, szakszótár, mentés, felolvasás.
+
+Ez akkor is működik, ha a lejátszó idegen domainről betöltött keretben van (pl. Vimeo):
+a lap **teljes hangját** veszi, a keretekhez nem kell engedély.
+
+### Deepgram kulcs
+
+1. Regisztrálj: <https://console.deepgram.com/signup> (Google- vagy GitHub-fiókkal is lehet).
+   Az új fiók **200 dollár ingyenes kreditet** kap, **bankkártya nélkül** (2026 októberi állapot).
+2. A konzolban: **API Keys** → **Create a New API Key**. Szerepnek a **Default** maradjon:
+   az csak a használatot engedi, fiókkezelést nem — ha a kulcs valaha kiszivárogna, ez okozza
+   a legkisebb kárt. Lejáratnak a leghosszabbat vagy a „never"-t válaszd.
+3. Bővítmény → Beállítások → **Hangfelismerés (Deepgram)** → írd be a kulcsot → **Teszt**.
+   A teszt egy másodpercnyi csendet küld; a díja egy töredék cent.
+
+A kulcs ugyanúgy a bővítmény saját titkos tárolójába kerül, mint a DeepL és a Google kulcs.
+
+### Indítás
+
+- Bővítmény **ikonja** → **🎤 Hang mód indítása**, vagy
+- **`Alt` + `Shift` + `A`**
+
+A 🎤 a rögzítést is elindítja, a **Stop** pedig a hang módot is leállítja.
+
+> **Miért nem elég elsőre a lebegő ablak 🎤 gombja?** A Chrome csak akkor adja ki egy lap
+> hangját, ha a bővítményt **azon a lapon meghívtad**: az ikonjára kattintottál, vagy
+> megnyomtad a gyorsbillentyűjét. Ez a Chrome biztonsági szabálya, a „minden oldalon" engedély
+> sem váltja ki. Egy meghívás után viszont a lap bezárásáig a lebegő ablak 🎤 gombja is működik.
+> Ha mégis elsőre azt nyomod meg, megmondja, mit kell tenned.
+
+Amíg a hang mód fut, a feliratkeresés szünetel — különben egy feliratos oldalon minden mondat
+kétszer jönne, egyszer a feliratból, egyszer a hangból.
+
+### Mit látsz közben
+
+- Az ablak alján egy **halvány, dőlt sor**: amit a Deepgram épp hall, még alakul. Ezt nem
+  fordítjuk és nem mentjük — másodpercenként többször változik, és felélné a DeepL keretet.
+- Amint egy **mondat** elkészül, a helyén megjelenik a rendes, kétnyelvű sor.
+
+A Deepgram ott zár le egy szakaszt, ahol a beszélő levegőt vesz — ez sokszor mondat közben
+van. A bővítmény ezért **mondatvégig gyűjt**, és csak kész mondatot fordít; a fél mondat
+rosszul fordulna. Ha 2,5 másodpercig nem jön mondatvég, a szöveg akkor is továbbmegy.
+Háttérzene mellett (ahol nincs csend, amiből a Deepgram a szakasz végét felismerné) 7
+másodperc után maga kéri a lezárást.
+
+### Pontosság: a szakszótár itt is segít
+
+A szakszótár angol oldalai **kulcskifejezésként** a Deepgramhoz is eljutnak, így a márka- és
+szakneveket már a felismerés is jól írja le, nem csak a fordítás. Például:
+
+```
+Unyte = Unyte
+MyUnyte = MyUnyte
+Safe and Sound Protocol = Safe and Sound Protocol
+SSP = SSP
+```
+
+A mentett átirat **időbélyegei a videó idejét** mutatják: ha a lejátszó a lapon van, onnan;
+ha Vimeo-keretben, a Vimeo saját jelzéseiből. Mivel a mondat a végén érkezik, a bővítmény a
+**mondat kezdetére** számol vissza — a bélyegre visszatekerve onnan hallod.
+
+### Felolvasás és halkítás hang módban
+
+Hang módban a felolvasás **nem a lapon szól**, hanem a bővítmény saját, láthatatlan oldalán.
+Ha a lapon szólna, a felvétel a saját magyar hangunkat is hallaná, és megpróbálná angolként
+felismerni. A halkítás is ott történik, és **csak a hangszóróra menő hangot** halkítja: a
+felismerés közben is a teljes hangerejű eredetit kapja.
+
+### Költség
+
+> A Deepgram **percdíjas**: élő angol felismerés nagyságrendileg **0,0077 dollár/perc**
+> (2026 októberi ár; nézd meg az aktuálisat a <https://deepgram.com/pricing> oldalon). Egy órás
+> videó kb. **fél dollár**, a 200 dolláros kezdő kredit **több száz óra**.
+>
+> Ezért a hang mód **soha nem indul magától**, csak kattintásra. **Amíg a 🎤 zöld, a díj
+> számol — akkor is, ha a videó áll.** Ha nem adtál meg bankkártyát, a kredit elfogyásakor a
+> szolgáltatás egyszerűen leáll, számlát nem kapsz.
+
+## 6. Használat
 
 1. Menj az oldalra, indítsd el a videót, és **kapcsold be a feliratot (CC)** a lejátszóban
 2. Nyomd meg a lebegő ablakon a **Start** gombot
@@ -188,6 +274,7 @@ videóképre van égetve.
 | **A− / A+** | betűméret 12 és 48 px között |
 | csúszka | a háttér átlátszatlansága (30–100%) |
 | **◎** | célzó — felirat kijelölése az oldalon |
+| **🎤** | hang mód be- és kikapcsolása (lásd az 5. fejezetet) |
 | **🔊 / 🔇** | felolvasás be- és kikapcsolása |
 | **Mentés** | átirat letöltése `.txt` fájlba |
 | **⚙** | beállítások és előzmények |
@@ -200,10 +287,11 @@ betűméretet, átlátszóságot és a nézetet **oldalanként megjegyzi**.
 
 - `Alt` + `Shift` + `T` — ablak mutatása / elrejtése
 - `Alt` + `Shift` + `S` — rögzítés indítása / leállítása
+- `Alt` + `Shift` + `A` — hang mód be / ki
 
 Átírhatók a `chrome://extensions/shortcuts` oldalon.
 
-## 6. Mentés és előzmények
+## 7. Mentés és előzmények
 
 - **Élő biztonsági mentés:** minden sor 3 másodpercen belül a tárolóba kerül, tehát ha
   összeomlik vagy véletlenül bezárul a fül, az anyag megmarad
@@ -236,7 +324,9 @@ Ha bepipálod, a fájl olvasható formában tartalmazza a DeepL és a Google kul
 Visszatöltés után az oldalak megjelennek a listán, de a böngésző az engedélyt csak
 kattintásra adja meg: nyomd meg mellettük az **Engedélyezem** gombot.
 
-## 7. Hogyan találja meg a feliratot?
+## 8. Hogyan találja meg a feliratot?
+
+*(Ez a felirat mód. Felirat nélküli videóhoz lásd az 5. fejezetet: hang mód.)*
 
 **Magától keres**, kattintás nélkül, ebben a sorrendben:
 
@@ -272,14 +362,20 @@ elrontaná a fordítást. A beszédben elhangzó időpont (`we meet at 3:30`, `3
 viszont megmarad. A mentett fájl saját `[00:01:23]` időbélyege ettől független, azt a
 videó lejátszási idejéből írjuk.
 
-## 8. Ha nem működik
+## 9. Ha nem működik
 
 | Tünet | Mit tegyél |
 |---|---|
 | Nem jelenik meg az ablak | Engedélyezted a domaint? Utána töltsd újra az oldalt (F5). |
 | `Extension context invalidated` a konzolban | Ez akkor jön, ha a `chrome://extensions` oldalon frissítetted a bővítményt, miközben az oldal nyitva volt: a régi példány árván marad. Az ablak ilyenkor elhalványul és kiírja, hogy töltsd újra az oldalt — **F5** megoldja. Fejlesztés közben ez normális. |
 | „Nem találtam feliratsávot" | Kapcsold be a CC-t a lejátszóban, majd nyomd meg a ◎ célzót és kattints a feliratra. |
-| A kijelölt elemben nincs szöveg | Előbb ellenőrizd, hogy be van-e kapcsolva a felirat. Ha be van és látszik is, de a **Diagnosztika** sem talál szöveget, akkor a felirat a **videóképre van égetve** — DOM-ból nem olvasható. Ezt a bővítmény nem tudja kezelni, OCR vagy beszédfelismerés kellene hozzá. |
+| A kijelölt elemben nincs szöveg | Előbb ellenőrizd, hogy be van-e kapcsolva a felirat. Ha be van és látszik is, de a **Diagnosztika** sem talál szöveget, akkor a felirat a **videóképre van égetve** — DOM-ból nem olvasható. Használd a **hang módot** (5. fejezet). |
+| A videónak egyáltalán nincs felirata | **Hang mód** (5. fejezet). |
+| 🎤: *„A Chrome csak akkor adja ki a lap hangját…"* | Kattints a bővítmény ikonjára → **🎤 Hang mód indítása**, vagy `Alt`+`Shift`+`A`. Utána a lebegő ablak 🎤 gombja is működik. |
+| *„A Deepgram nem fogadta el a kapcsolatot"* | Szinte mindig a kulcs. Beállítások → Hangfelismerés → **Teszt**. |
+| *„Nincs Deepgram kulcs"* | A hang szól, de felismerés nincs: add meg a kulcsot a beállításokban. |
+| *„A Deepgram nem kapott hangot"* | Szól a videó? Lehet, hogy le van némítva, vagy áll. |
+| Márkanevet rosszul ír (pl. *Unite* az *Unyte* helyett) | Vedd fel a szakszótárba (`Unyte = Unyte`): a felismerés is megkapja kulcskifejezésként. |
 | A Diagnosztika `videó: 0`-t ír, pedig fut a videó | A lejátszó másik domainről betöltött iframe-ben van. A Diagnosztika felsorolja a beágyazott kereteket (a legnagyobbat elöl) — nyomd meg mellette az *Engedélyezem* gombot, majd F5. Ilyenkor a célzó sem működik a videó fölött: a kattintás az iframe-en belül marad, a főoldal nem kapja meg. |
 | „(nincs fordítás)" a sorok mellett | Nézd meg az ablak alsó sávjában a hibaüzenetet: rossz kulcs (403) vagy elfogyott keret (456). Az eredeti szöveg ilyenkor is rögzül. |
 | Elveszik a felirat menet közben | A lejátszó kicserélte az elemet. Célozz újra, vagy töröld a szabályt: Beállítások → *Kijelölt feliratelemek*, illetve a **Diagnosztika** kártyáján a *Szabály törlése* gombbal. |
@@ -288,7 +384,7 @@ videó lejátszási idejéből írjuk.
 Hibák keresésekor: `chrome://extensions` → a bővítménynél **service worker** link (háttér
 naplója), illetve az oldalon F12 → Console (a content script üzenetei `[LFT]` előtaggal).
 
-## 9. Fájlszerkezet
+## 10. Fájlszerkezet
 
 ```
 manifest.json
@@ -297,17 +393,22 @@ background/service-worker.js   DeepL hívások, felvételek, üzenettovábbítá
 content/capture.js             felirat kiolvasása, célzó, minden frame-ben fut
 content/overlay.js             a lebegő ablak (csak a legfelső frame-ben)
 content/overlay-css.js         az ablak stílusa (Shadow DOM-ba, CSP-biztosan)
+content/vimeo.js               a Vimeo-keretes lejátszó ideje (hang mód időbélyegeihez)
+offscreen/                     láthatatlan oldal: a lap hangja, felolvasás és halkítás hang módban
 lib/i18n.js                    nyelvi réteg (chrome.i18n + DOM feliratozás)
 lib/tts.js                     Google Cloud TTS kliens (hangok, szintézis)
 lib/store.js                   chrome.storage réteg
 lib/deepl.js                   DeepL kliens (endpoint, hibakezelés)
 lib/segmenter.js               felirat -> lezárt mondatok, ismétlésszűrés
+lib/stt.js                     beszédfelismerés, cserélhető szolgáltatóval (most: Deepgram)
+lib/sentences.js               hang mód: a felismert szakaszokból kész mondatok
 lib/selector.js                stabil CSS-szelektor a kijelölt elemhez
 popup/                         gyorsvezérlő
 options/                       beállítások és előzmények
+tests/                         tesztek (node tests/run-all.js) — a kiadott zipben nincsenek
 ```
 
-## 10. Adatvédelem
+## 11. Adatvédelem
 
 - **Nincs szerver a bővítmény mögött.** Nem gyűjt telemetriát, nem küld semmit a szerzőnek.
 - **Kimenő kapcsolat csak a fordításhoz és a felolvasáshoz van:** a lezárt feliratmondatok a
@@ -316,9 +417,13 @@ options/                       beállítások és előzmények
   adatkezelése szabályozza (<https://www.deepl.com/privacy>), a felolvasást a Google Cloud
   adatkezelése (<https://cloud.google.com/terms/cloud-privacy-notice>). Ha ez nem elfogadható
   egy adott tartalomnál, ne használd ott.
+- **Hang módban a lap hangja a Deepgramhoz megy**, a te saját Deepgram kulcsoddal — de csak
+  amíg a 🎤 zöld, és csak annak a lapnak a hangja, amelyiken elindítottad. Ezt a Deepgram
+  adatkezelése szabályozza (<https://deepgram.com/privacy>). A lap hangját a bővítmény csak
+  kattintásra kapja meg: a Chrome magától nem engedi.
 - **Minden más helyben marad:** az engedélyezett domainek, a kijelölt feliratelemek, az
   ablakbeállítások és a rögzített átiratok a böngésző saját tárolójában
-  (`chrome.storage.local`) vannak, azon a gépen. A DeepL és a Google kulcs ettől külön, a
+  (`chrome.storage.local`) vannak, azon a gépen. A DeepL, a Google és a Deepgram kulcs ettől külön, a
   bővítmény saját IndexedDB adatbázisában van: ezt csak a beállítások oldal, a popup és a
   háttérfolyamat éri el, a weboldalakba betöltött szkript nem, az csak azt tudja, hogy van e
   kulcs. A bővítmény törlésével ezek is törlődnek.
@@ -327,15 +432,16 @@ options/                       beállítások és előzmények
   és bármikor visszavonhatod (Beállítások → *Engedélyezett oldalak* → Törlés).
 - A kulcsok titkosítatlanul vannak tárolva. Közös gépen ne használd.
 
-## 11. Licenc
+## 12. Licenc
 
 MIT — lásd a [LICENSE](LICENSE) fájlt. Használd, módosítsd, terjeszd szabadon.
 
 A bővítmény nem áll kapcsolatban a DeepL SE-vel, és semmilyen videószolgáltatóval sem.
 
-## 12. Amit szándékosan nem tud (még)
+## 13. Amit szándékosan nem tud (még)
 
 - `.srt` export időkódokkal
-- OCR (ráégetett felirat) és beszédfelismerés (STT)
+- OCR (ráégetett felirat)
+- Ingyenes, helyben futó beszédfelismerés (pl. Whisper) — a réteg cserélhetőre készült, előkészítve
 - DeepL-en kívüli fordítómotor
 - További felületi nyelvek a magyaron és angolon túl

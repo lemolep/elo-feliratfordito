@@ -8,6 +8,9 @@ DeepL detects the source language on its own, so the same setup works for Englis
 Spanish and the rest. The full transcript (original + translation) is saved continuously and
 can be exported to a `.txt` file.
 
+If a video has **no subtitles at all**, **audio mode** works from its sound instead: Deepgram's
+speech recognition turns it into English text, and everything else works the same.
+
 Manifest V3, plain JavaScript — **no build step, no npm**.
 
 > The interface follows your browser language: **English** and **Hungarian** are included.
@@ -153,7 +156,92 @@ Automatic start needs the DeepL key — without one it will not start by itself.
 > video, even while you are doing something else. If the quota runs low, switch it off and
 > start manually with **Start**.
 
-## 5. Usage
+## 5. Audio mode — for videos without subtitles
+
+Many videos have no subtitles: no CC button, no text track to read from. In that case the
+extension can work from the **tab's audio**. [Deepgram](https://deepgram.com)'s speech
+recognition turns it into English text live, DeepL translates that, and from there everything
+works as with subtitles: bilingual lines, glossary, saving, speech.
+
+This also works when the player sits in a cross-origin frame (e.g. Vimeo): it takes the tab's
+**entire audio**, so no permission for the frame is needed.
+
+### Deepgram key
+
+1. Sign up: <https://console.deepgram.com/signup> (Google or GitHub accounts work too).
+   New accounts get **$200 of free credit**, **no card required** (as of October 2026).
+2. In the console: **API Keys** → **Create a New API Key**. Keep the role at **Default**: it
+   only allows usage, not account management — if the key ever leaked, that limits the damage.
+   For expiration pick the longest option or "never".
+3. Extension → Settings → **Speech recognition (Deepgram)** → paste the key → **Test**.
+   The test sends one second of silence; it costs a fraction of a cent.
+
+The key goes into the extension's own secret store, just like the DeepL and Google keys.
+
+### Starting it
+
+- Click the extension **icon** → **🎤 Start audio mode**, or
+- **`Alt` + `Shift` + `A`**
+
+🎤 also starts recording, and **Stop** also stops audio mode.
+
+> **Why doesn't the floating window's 🎤 work the first time?** Chrome only hands over a tab's
+> audio after you **invoke the extension on that tab**: click its icon or press its shortcut.
+> This is Chrome's security rule; even the "allow on every site" permission does not replace it.
+> After one invocation, the floating window's 🎤 works until the tab is closed. If you press it
+> first anyway, it tells you what to do.
+
+While audio mode runs, subtitle capture is paused — otherwise on a page that has subtitles too,
+every sentence would arrive twice.
+
+### What you see
+
+- A **faint italic line** at the bottom: what Deepgram is hearing right now, still forming.
+  It is neither translated nor saved — it changes several times a second and would burn
+  through the DeepL quota.
+- As soon as a **sentence** is complete, the regular bilingual line appears in its place.
+
+Deepgram closes a segment wherever the speaker takes a breath — often mid-sentence. So the
+extension **collects up to the end of the sentence** and only translates complete sentences;
+half a sentence translates badly. If no sentence end arrives for 2.5 seconds, the text moves on
+anyway. With background music (no silence for Deepgram to detect the end of a segment) it
+requests finalisation itself after 7 seconds.
+
+### Accuracy: the glossary helps here too
+
+The source side of your glossary is also sent to Deepgram as **key terms**, so brand and
+technical names are recognised correctly, not only translated correctly. For example:
+
+```
+Unyte = Unyte
+MyUnyte = MyUnyte
+Safe and Sound Protocol = Safe and Sound Protocol
+SSP = SSP
+```
+
+The saved transcript's **timestamps follow the video's own time**: from the player if it is on
+the page, from Vimeo's own messages if it is in a Vimeo frame. Since a sentence arrives at its
+end, the extension counts back to the **start of the sentence** — seek to the timestamp and you
+hear it from the beginning.
+
+### Speech and ducking in audio mode
+
+In audio mode, speech does **not play in the tab** but in the extension's own invisible page.
+If it played in the tab, the capture would hear our own translated voice and try to recognise
+it as English. Ducking happens there too, and only lowers **the audio going to the speakers**:
+recognition still gets the original at full volume.
+
+### Cost
+
+> Deepgram is **billed per minute**: live English recognition is roughly **$0.0077/minute**
+> (October 2026 price; check the current one at <https://deepgram.com/pricing>). A one-hour
+> video is about **half a dollar**; the $200 starting credit is **hundreds of hours**.
+>
+> That is why audio mode **never starts on its own**, only on a click. **While 🎤 is green, the
+> meter is running — even if the video is paused.** If you have not added a card, the service
+> simply stops when the credit runs out; you will not be billed.
+
+## 6. Usage
 
 1. Open the page, start the video and **turn on subtitles (CC)** in the player
 2. Press **Start** in the floating window
@@ -182,6 +270,7 @@ the video image.
 | **A− / A+** | font size between 12 and 48 px |
 | slider | background opacity (30–100%) |
 | **◎** | picker — select the subtitle element on the page |
+| **🎤** | audio mode on and off (see section 5) |
 | **🔊 / 🔇** | turn speech on and off |
 | **Save** | download the transcript as `.txt` |
 | **⚙** | settings and history |
@@ -194,10 +283,11 @@ opacity and view mode are remembered **per site**.
 
 - `Alt` + `Shift` + `T` — show / hide the window
 - `Alt` + `Shift` + `S` — start / stop capturing
+- `Alt` + `Shift` + `A` — audio mode on / off
 
 Both can be rebound at `chrome://extensions/shortcuts`.
 
-## 6. Saving and history
+## 7. Saving and history
 
 - **Live backup:** every line reaches storage within 3 seconds, so nothing is lost if the tab
   crashes or you close it by accident
@@ -229,7 +319,9 @@ If you tick it, the file contains your DeepL and Google keys in readable form �
 After restoring, the sites appear in the list, but the browser only grants permission on a
 click: press **Allow** next to each of them.
 
-## 7. How it finds the subtitles
+## 8. How it finds the subtitles
+
+*(This is subtitle mode. For videos without subtitles see section 5: audio mode.)*
 
 It **hunts on its own**, with no clicking, in this order:
 
@@ -264,14 +356,20 @@ subtitle and would only corrupt the translation. A clock time spoken in the dial
 (`we meet at 3:30`, `3:30 PM`) is kept. This is unrelated to the `[00:01:23]` stamps in
 the saved file, which come from the video's playback position.
 
-## 8. Troubleshooting
+## 9. Troubleshooting
 
 | Symptom | What to do |
 |---|---|
 | The window does not appear | Did you allow the domain? Reload the page afterwards (F5). |
 | `Extension context invalidated` in the console | Happens when you reload the extension at `chrome://extensions` while the page is open: the old instance is orphaned. The window dims and tells you to reload — **F5** fixes it. Normal during development. |
 | "No subtitle track found" | Turn on CC in the player, then use the ◎ picker and click the subtitle. |
-| The picked element has no text | First check that subtitles are on. If they are visible but **Diagnostics** still finds no text, the subtitle is **burned into the video image** and cannot be read from the DOM. This extension cannot handle that — it would need OCR or speech recognition. |
+| The picked element has no text | First check that subtitles are on. If they are visible but **Diagnostics** still finds no text, the subtitle is **burned into the video image** and cannot be read from the DOM. Use **audio mode** (section 5). |
+| The video has no subtitles at all | **Audio mode** (section 5). |
+| 🎤: *"Chrome only hands over the tab audio…"* | Click the extension icon → **🎤 Start audio mode**, or `Alt`+`Shift`+`A`. After that the floating window's 🎤 works too. |
+| *"Deepgram refused the connection"* | Almost always the key. Settings → Speech recognition → **Test**. |
+| *"No Deepgram key"* | The audio plays but nothing is recognised: add the key in the settings. |
+| *"Deepgram received no audio"* | Is the video playing? It may be muted or paused. |
+| A brand name is misspelled (e.g. *Unite* instead of *Unyte*) | Add it to the glossary (`Unyte = Unyte`): recognition gets it as a key term too. |
 | Diagnostics reports `videó: 0` while a video is playing | The player is in a cross-origin iframe. Diagnostics lists the embedded frames (largest first) — press *Allow* next to it, then F5. In this case the picker does not work over the video either: the click stays inside the iframe. |
 | "(not translated)" next to the lines | Check the message in the window's status bar: bad key (403) or exhausted quota (456). The original text is still recorded. |
 | Subtitles are lost mid-session | The player replaced the element. Pick again, or delete the rule: Settings → *Selected subtitle elements*, or the *Delete rule* button on the Diagnostics card. |
@@ -280,7 +378,7 @@ the saved file, which come from the video's playback position.
 For debugging: `chrome://extensions` → the **service worker** link under the extension (background
 log), and F12 → Console on the page itself.
 
-## 9. Project layout
+## 10. Project layout
 
 ```
 manifest.json
@@ -289,17 +387,22 @@ background/service-worker.js   DeepL calls, recordings, message relay, script re
 content/capture.js             subtitle capture and picker, runs in every frame
 content/overlay.js             the floating window (top frame only)
 content/overlay-css.js         window styling (injected into Shadow DOM, CSP-safe)
+content/vimeo.js               the time of a Vimeo-framed player (audio mode timestamps)
+offscreen/                     invisible page: tab audio, speech and ducking in audio mode
 lib/i18n.js                    translation layer (chrome.i18n + DOM labelling)
 lib/tts.js                     Google Cloud TTS client (voices, synthesis)
 lib/store.js                   chrome.storage layer
 lib/deepl.js                   DeepL client (endpoint, languages, error handling)
 lib/segmenter.js               raw subtitles -> finished sentences, dedup, rolling captions
+lib/stt.js                     speech recognition with a swappable provider (now: Deepgram)
+lib/sentences.js               audio mode: recognised segments -> complete sentences
 lib/selector.js                stable CSS selector for the picked element
 popup/                         quick controls and diagnostics
 options/                       settings and history
+tests/                         tests (node tests/run-all.js) — not included in the release zip
 ```
 
-## 10. Privacy
+## 11. Privacy
 
 - **There is no server behind this extension.** No telemetry, nothing is sent to the author.
 - **Outbound connections exist only for translation and speech:** finished subtitle sentences
@@ -308,9 +411,13 @@ options/                       settings and history
   policy (<https://www.deepl.com/privacy>), speech by Google Cloud's privacy notice
   (<https://cloud.google.com/terms/cloud-privacy-notice>). If that is not acceptable for a given
   piece of content, do not use the extension there.
+- **In audio mode the tab's audio goes to Deepgram**, using *your own* Deepgram key — but only
+  while 🎤 is green, and only the audio of the tab you started it on. This is governed by
+  Deepgram's privacy policy (<https://deepgram.com/privacy>). The extension only gets the tab
+  audio on a click: Chrome does not allow it otherwise.
 - **Everything else stays local:** allowed domains, picked subtitle elements, window settings
   and recorded transcripts live in the browser's own storage (`chrome.storage.local`) on that
-  machine. The DeepL and Google keys are kept separately, in the extension's own IndexedDB
+  machine. The DeepL, Google and Deepgram keys are kept separately, in the extension's own IndexedDB
   database: only the settings page, the popup and the background worker can read it; the
   script injected into web pages cannot, it only knows whether a key exists. Removing the
   extension removes all of this too.
@@ -318,15 +425,16 @@ options/                       settings and history
   each domain explicitly and can revoke it at any time (Settings → *Allowed sites*).
 - The keys are stored unencrypted. Do not use it on a shared machine.
 
-## 11. License
+## 12. License
 
 MIT — see [LICENSE](LICENSE). Use it, modify it, redistribute it freely.
 
 Not affiliated with DeepL SE or with any video provider.
 
-## 12. Deliberately not supported (yet)
+## 13. Deliberately not supported (yet)
 
 - `.srt` export with timecodes
-- OCR (burned-in subtitles) and speech recognition (STT)
+- OCR (burned-in subtitles)
+- Free, locally running speech recognition (e.g. Whisper) — the layer is built to be swappable
 - Translation engines other than DeepL
 - Interface languages beyond Hungarian and English
