@@ -283,6 +283,71 @@ $('dgkeyTest').addEventListener('click', async () => {
   else result('sttResult', (res && res.error) || LFT.t('stt_err_other'), 'err');
 });
 
+/* ---------------- fogyasztásmérő (hang mód) ---------------- */
+
+/* A hang mód idejét az offscreen dokumentum méri, a service worker összesíti
+   (lib/store.js mergeUsage). Itt csak megjelenítjük, becsült dollárban. */
+function fmtMinutes(sec) {
+  const m = (sec || 0) / 60;
+  const loc = LFT.i18n.uiLang();
+  if (m > 0 && m < 1) return LFT.t('opt_usage_lt_min');
+  return LFT.t('opt_usage_min', [m < 10 ? m.toLocaleString(loc, { maximumFractionDigits: 1 }) : Math.round(m).toLocaleString(loc)]);
+}
+
+function fmtCost(sec) {
+  const usd = (sec || 0) / 60 * LFT.stt.PROVIDERS.deepgram.pricePerMin;
+  if (usd > 0 && usd < 0.01) return LFT.t('opt_usage_lt_cent');
+  return new Intl.NumberFormat(LFT.i18n.uiLang(), { style: 'currency', currency: 'USD' }).format(usd);
+}
+
+async function renderUsage() {
+  const box = $('sttUsage');
+  const u = await LFT.store.getUsage();
+  if (!u || !u.total) {
+    box.innerHTML = '<span class="muted"></span>';
+    box.firstChild.textContent = LFT.t('opt_usage_none');
+    $('usageReset').hidden = true;
+    return;
+  }
+  const month = (u.months || {})[LFT.store.monthKey(Date.now())] || 0;
+  const rows = [
+    [LFT.t('opt_usage_total'), fmtMinutes(u.total) + ' ≈ ' + fmtCost(u.total)],
+    [LFT.t('opt_usage_month'), fmtMinutes(month) + ' ≈ ' + fmtCost(month)],
+    [LFT.t('opt_usage_since'), clockOf(u.since).slice(0, 10)]
+  ];
+  box.textContent = '';
+  for (const [k, v] of rows) {
+    const line = document.createElement('div');
+    const b = document.createElement('b');
+    line.textContent = k + ': ';
+    b.textContent = v;
+    line.appendChild(b);
+    box.appendChild(line);
+  }
+  $('usageReset').hidden = false;
+}
+
+/* Nullázás két kattintással, felugró ablak nélkül: az első csak megkérdezi. */
+let resetArmed = null;
+$('usageReset').addEventListener('click', async () => {
+  const b = $('usageReset');
+  if (!resetArmed) {
+    b.textContent = LFT.t('opt_usage_reset_confirm');
+    resetArmed = setTimeout(() => { resetArmed = null; b.textContent = LFT.t('opt_usage_reset'); }, 4000);
+    return;
+  }
+  clearTimeout(resetArmed);
+  resetArmed = null;
+  b.textContent = LFT.t('opt_usage_reset');
+  await LFT.store.resetUsage();
+  renderUsage();
+});
+
+// ha közben fut a hang mód egy másik lapon, a mérő élőben frissül
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.sttUsage) renderUsage();
+});
+
 /* ---------------- hallásjavítás ---------------- */
 
 /* Gépelés közben azonnal megmondja, hány szabály érvényes, és melyik sor hibás. */
@@ -593,6 +658,7 @@ async function fillForm() {
   $('glossary').value = settings.glossary || '';
   $('corrections').value = settings.corrections || '';
   showCorrections();
+  renderUsage();
 
   // előbb a gyorsítótárazott (vagy a beépített) lista, hogy azonnal legyen mit választani
   fillLangs((await LFT.store.getLangs()) || LFT.deepl.FALLBACK_TARGETS, settings.targetLang);

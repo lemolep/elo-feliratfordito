@@ -28,6 +28,9 @@ let speaking = null;          // { src, done } — épp szóló felolvasás
 let rec = null;               // MediaRecorder — a lap hangja webm/opus darabokban
 let stt = null;               // élő beszédfelismerő kapcsolat (lib/stt.js)
 let recStart = 0;             // mikor indult a felvétel — a Deepgram ideje ehhez képest számol
+let usageMark = 0;            // fogyasztásmérő: eddig az időpontig már jelentettük az időt
+let usageTimer = null;
+const USAGE_EVERY_MS = 10000; // ennyi időnként jelentünk — váratlan bezáráskor legfeljebb ennyi vész el
 
 const CHUNK_MS = 250;         // ilyen darabokban megy a hang a felismerőnek
 
@@ -91,7 +94,13 @@ function startStt(cfg) {
   }
   const forTab = tabId;
   stt = LFT.stt.open(cfg.provider, cfg, {
-    onOpen: () => send({ type: 'stt:status', tabId: forTab, state: 'open' }),
+    onOpen: () => {
+      // a Deepgram a nyitott kapcsolaton átmenő hang idejét számlázza — ezt mérjük
+      usageMark = Date.now();
+      clearInterval(usageTimer);
+      usageTimer = setInterval(reportUsage, USAGE_EVERY_MS);
+      send({ type: 'stt:status', tabId: forTab, state: 'open' });
+    },
     onResult: r => {
       if (!r.text) return;
       /* at: mikor KEZDŐDÖTT a mondat (falióra). A végleges találat a mondat
@@ -101,6 +110,7 @@ function startStt(cfg) {
              speechFinal: r.speechFinal, start: r.start, duration: r.duration, at: at });
     },
     onClose: ev => {
+      endUsage();
       const code = LFT.stt.closeToCode(ev);
       send({ type: 'stt:status', tabId: forTab, state: 'closed', code: code, wsCode: ev.code });
       stt = null;
@@ -119,6 +129,23 @@ function startStt(cfg) {
   return true;
 }
 
+/* A legutóbbi jelentés óta eltelt időt elküldi a service workernek, ami
+   összesíti (lib/store.js mergeUsage). */
+function reportUsage() {
+  if (!usageMark) return;
+  const now = Date.now();
+  const seconds = (now - usageMark) / 1000;
+  usageMark = now;
+  if (seconds > 0) send({ type: 'stt:usage', seconds: seconds });
+}
+
+function endUsage() {
+  reportUsage();
+  clearInterval(usageTimer);
+  usageTimer = null;
+  usageMark = 0;
+}
+
 async function stopStt() {
   if (rec) { try { rec.stop(); } catch (e) {} }
   rec = null;
@@ -126,6 +153,7 @@ async function stopStt() {
     const s = stt;
     await s.close();          // megvárja a függőben lévő utolsó végleges találatot
   }
+  endUsage();                 // ha a kapcsolat bezárása nem jelentette volna
   stt = null;
 }
 

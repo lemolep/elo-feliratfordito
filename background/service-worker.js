@@ -299,6 +299,7 @@ async function ensureGlossaryInner(s, srcLang, tgtLang) {
    AudioContext és getUserMedia. Egyszerre egy lap hangját vesszük. */
 const OFFSCREEN_URL = 'offscreen/offscreen.html';
 let audioTab = null;
+let usageChain = Promise.resolve();
 
 async function ensureOffscreen() {
   const url = chrome.runtime.getURL(OFFSCREEN_URL);
@@ -422,6 +423,13 @@ async function handle(msg, sender) {
         chrome.tabs.sendMessage(msg.tabId, out, { frameId: 0 }).catch(() => {});
       }
       return { ok: true };
+    /* Fogyasztásmérő: az offscreen 10 mp-enként és lezáráskor jelenti az időt.
+       Az írásokat sorba fűzzük, hogy két egymás utáni jelentés ne írja felül
+       egymást (olvasás–módosítás–írás). */
+    case 'stt:usage':
+      usageChain = usageChain.then(() => LFT.store.addUsage(msg.seconds)).catch(() => {});
+      return { ok: true };
+
     case 'stt:result':
       if (msg.tabId != null) chrome.tabs.sendMessage(msg.tabId, msg, { frameId: 0 }).catch(() => {});
       return { ok: true };

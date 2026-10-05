@@ -874,5 +874,38 @@
   },
   "opt_corr_bad": {
     "message": "Hibás sorok (nincs bennük elválasztó vagy üres az egyik oldal): $1"
+  },
+  "opt_usage_title": {
+    "message": "Fogyasztásmérő"
+  },
+  "opt_usage_none": {
+    "message": "Még nem használtad a hang módot."
+  },
+  "opt_usage_total": {
+    "message": "Összesen"
+  },
+  "opt_usage_month": {
+    "message": "Ebben a hónapban"
+  },
+  "opt_usage_since": {
+    "message": "Mérés kezdete"
+  },
+  "opt_usage_min": {
+    "message": "$1 perc"
+  },
+  "opt_usage_lt_min": {
+    "message": "kevesebb mint 1 perc"
+  },
+  "opt_usage_lt_cent": {
+    "message": "kevesebb mint 1 cent"
+  },
+  "opt_usage_note": {
+    "message": "Becslés, kb. 0,0077 $/perc áron: azt az időt méri, amíg a hang mód fut (a csendet is, mert a Deepgram azt is számolja). A pontos egyenleget a <a href=\"https://console.deepgram.com\" target=\"_blank\" rel=\"noopener\">Deepgram konzolon</a> látod — a bővítmény kulcsa ezt szándékosan nem tudja lekérdezni."
+  },
+  "opt_usage_reset": {
+    "message": "Nullázás"
+  },
+  "opt_usage_reset_confirm": {
+    "message": "Biztosan? Kattints újra"
   }
 }

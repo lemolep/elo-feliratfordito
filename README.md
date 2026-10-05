@@ -271,6 +271,12 @@ felismerés közben is a teljes hangerejű eredetit kapja.
 > számol — akkor is, ha a videó áll.** Ha nem adtál meg bankkártyát, a kredit elfogyásakor a
 > szolgáltatás egyszerűen leáll, számlát nem kapsz.
 
+**Fogyasztásmérő:** Beállítások → Hangfelismerés alatt látod, mennyi ideig futott a hang mód
+összesen és ebben a hónapban, becsült dollárban. Azt az időt méri, amíg a 🎤 zöld volt (a
+csendet is, mert a Deepgram azt is számolja). Ez becslés; a pontos egyenleg a
+[Deepgram konzolon](https://console.deepgram.com) van — a bővítmény kulcsa szándékosan nem
+tudja lekérdezni. A mérő gépenként számol, és nullázható.
+
 ## 6. Használat
 
 1. Menj az oldalra, indítsd el a videót, és **kapcsold be a feliratot (CC)** a lejátszóban

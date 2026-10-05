@@ -265,6 +265,12 @@ recognition still gets the original at full volume.
 > meter is running — even if the video is paused.** If you have not added a card, the service
 > simply stops when the credit runs out; you will not be billed.
 
+**Usage meter:** under Settings → Speech recognition you can see how long audio mode has run in
+total and this month, with an estimated dollar cost. It measures the time 🎤 was green (silence
+included, since Deepgram bills for it too). It is an estimate; your exact balance is on the
+[Deepgram console](https://console.deepgram.com) — the extension's key deliberately cannot read
+it. The meter counts per machine and can be reset.
+
 ## 6. Usage
 
 1. Open the page, start the video and **turn on subtitles (CC)** in the player

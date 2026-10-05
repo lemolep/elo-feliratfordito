@@ -112,6 +112,12 @@ button.ghost { background: transparent; }
 button.small { padding: 5px 10px; font-size: 11px; }
 
 .result { font-size: 12px; margin-top: 9px; min-height: 16px; }
+
+h3.sub3 { font-size: 13px; margin: 16px 0 6px; color: #c3cbd6; }
+.usage { font-size: 13px; line-height: 1.7; margin-bottom: 4px; }
+.usage b { color: #fff; font-variant-numeric: tabular-nums; }
+.usage .muted { color: #8b95a3; }
+a { color: #6ea8ff; }
 .result.ok { color: #6fd8a8; }
 .result.err { color: #ef8b80; }
 .result.info { color: #8b95a3; }

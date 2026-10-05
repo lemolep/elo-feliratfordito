@@ -874,5 +874,38 @@
   },
   "opt_corr_bad": {
     "message": "Invalid lines (no separator, or one side is empty): $1"
+  },
+  "opt_usage_title": {
+    "message": "Usage meter"
+  },
+  "opt_usage_none": {
+    "message": "You have not used audio mode yet."
+  },
+  "opt_usage_total": {
+    "message": "Total"
+  },
+  "opt_usage_month": {
+    "message": "This month"
+  },
+  "opt_usage_since": {
+    "message": "Measuring since"
+  },
+  "opt_usage_min": {
+    "message": "$1 min"
+  },
+  "opt_usage_lt_min": {
+    "message": "less than 1 minute"
+  },
+  "opt_usage_lt_cent": {
+    "message": "less than 1 cent"
+  },
+  "opt_usage_note": {
+    "message": "An estimate at about $0.0077/minute: it measures the time audio mode runs (silence included, since Deepgram bills for it too). Your exact balance is on the <a href=\"https://console.deepgram.com\" target=\"_blank\" rel=\"noopener\">Deepgram console</a> — the extension's key deliberately cannot read it."
+  },
+  "opt_usage_reset": {
+    "message": "Reset"
+  },
+  "opt_usage_reset_confirm": {
+    "message": "Sure? Click again"
   }
 }
