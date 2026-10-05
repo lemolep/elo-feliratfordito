@@ -257,6 +257,32 @@ $('gkeyTest').addEventListener('click', async () => {
   }
 });
 
+/* ---------------- hangfelismerés (Deepgram) ---------------- */
+
+$('dgkeyShow').addEventListener('click', () => {
+  const f = $('dgkey');
+  const shown = f.type === 'text';
+  f.type = shown ? 'password' : 'text';
+  $('dgkeyShow').textContent = LFT.t(shown ? 'opt_show' : 'opt_hide');
+});
+
+$('dgkey').addEventListener('input', () => {
+  queueSave({ deepgramKey: $('dgkey').value.trim() });
+  result('sttResult', LFT.t('opt_key_saved'), 'info');
+});
+
+/* Egy másodpercnyi csendet küld a Deepgramnak: ez igazolja a kulcsot és
+   a "használat" jogosultságot is. Díja egy töredék cent. */
+$('dgkeyTest').addEventListener('click', async () => {
+  const key = $('dgkey').value.trim();
+  if (!key) { result('sttResult', LFT.t('stt_err_nokey'), 'err'); return; }
+  await LFT.store.saveSettings({ deepgramKey: key });
+  result('sttResult', LFT.t('opt_key_checking'), 'info');
+  const res = await chrome.runtime.sendMessage({ type: 'stt:test', key: key });
+  if (res && res.ok) result('sttResult', LFT.t('opt_stt_ok'), 'ok');
+  else result('sttResult', (res && res.error) || LFT.t('stt_err_other'), 'err');
+});
+
 /* ---------------- szakszótár ---------------- */
 
 $('glossary').addEventListener('input', () => {
@@ -542,6 +568,7 @@ async function fillForm() {
   if (settings.deeplKey) refreshLangs(true);   // majd csendben frissítjük a DeepL-től
 
   $('gkey').value = settings.googleKey || '';
+  $('dgkey').value = settings.deepgramKey || '';
   $('ttsEnabled').checked = !!settings.ttsEnabled;
   $('duck').value = settings.ttsDuck == null ? 20 : settings.ttsDuck;
   $('duckVal').textContent = duckLabel(Number($('duck').value));
@@ -618,9 +645,10 @@ const BACKUP_APP = 'elo-feliratfordito';
 $('exportBtn').addEventListener('click', async () => {
   const s = await LFT.store.getSettingsWithKeys();
   const withKeys = $('exportKeys').checked;
-  if (!withKeys) { s.deeplKey = ''; s.googleKey = ''; }
+  if (!withKeys) { s.deeplKey = ''; s.googleKey = ''; s.deepgramKey = ''; }
   delete s.hasDeeplKey;               // belső jelzés, a fájlba nem kell
   delete s.hasGoogleKey;
+  delete s.hasDeepgramKey;
 
   const data = {
     app: BACKUP_APP,
@@ -670,7 +698,7 @@ $('importFile').addEventListener('change', async () => {
   for (const k of Object.keys(LFT.store.DEFAULT_SETTINGS)) {
     if (!(k in data.settings)) continue;
     const v = data.settings[k];
-    if ((k === 'deeplKey' || k === 'googleKey') && !v) continue;
+    if ((k === 'deeplKey' || k === 'googleKey' || k === 'deepgramKey') && !v) continue;
     patch[k] = v;
   }
   await LFT.store.saveSettings(patch);

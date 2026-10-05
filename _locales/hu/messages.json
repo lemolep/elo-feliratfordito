@@ -781,5 +781,56 @@
   },
   "pop_audio_stop": {
     "message": "🎤 Hang mód leállítása"
+  },
+  "opt_stt_title": {
+    "message": "Hangfelismerés (Deepgram) — felirat nélküli videókhoz"
+  },
+  "opt_stt_hint": {
+    "message": "Ha egy videónak nincs felirata, a bővítmény a <b>hangjából</b> készít angol szöveget, és azt fordítja. Kulcs: <code>console.deepgram.com</code> → API Keys → Create a New API Key, a <b>Default</b> szereppel."
+  },
+  "opt_stt_key_ph": {
+    "message": "Deepgram API kulcs"
+  },
+  "opt_stt_cost": {
+    "message": "A Deepgram percdíjas. Az új fiók 200 dollár ingyenes kreditet kap, kártya nélkül — ez nagyjából 400 óra élő felismerés. A hang mód ezért soha nem indul magától, csak kattintásra."
+  },
+  "opt_stt_ok": {
+    "message": "Működik: a Deepgram elfogadta a kulcsot."
+  },
+  "ov_stt_listening": {
+    "message": "Hallgatom… (Deepgram)"
+  },
+  "stt_err_nokey": {
+    "message": "Nincs Deepgram kulcs — a hang megy, de felismerés nincs. Add meg a beállításokban."
+  },
+  "stt_err_keychars": {
+    "message": "A Deepgram kulcs érvénytelen karaktert tartalmaz — valószínűleg láthatatlan szemét került bele másoláskor. Töröld a mezőt, és írd be újra."
+  },
+  "stt_err_key": {
+    "message": "A Deepgram nem fogadta el a kapcsolatot — szinte mindig a kulcs a hibás. Nézd meg a beállításokban a Teszt gombbal."
+  },
+  "stt_err_credit": {
+    "message": "Elfogyott a Deepgram kredit."
+  },
+  "stt_err_rate": {
+    "message": "Túl sok kérés a Deepgram felé — próbáld újra pár másodperc múlva."
+  },
+  "stt_err_server": {
+    "message": "A Deepgram szervere hibát adott — próbáld újra később."
+  },
+  "stt_err_offline": {
+    "message": "Nincs hálózati kapcsolat."
+  },
+  "stt_err_blocked": {
+    "message": "A Deepgram nem válaszolt. Nézd meg az internetkapcsolatot, és hogy nem blokkolja-e VPN, tűzfal vagy tartalomblokkoló."
+  },
+  "stt_err_other": {
+    "message": "Deepgram hiba."
+  },
+  "stt_err_noaudio": {
+    "message": "A Deepgram nem kapott hangot — szól a videó?"
+  },
+  "stt_err_closed": {
+    "message": "Megszakadt a kapcsolat a Deepgrammal."
   }
 }

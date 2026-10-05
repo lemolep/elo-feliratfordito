@@ -14,7 +14,8 @@
   "host_permissions": [
     "https://api-free.deepl.com/*",
     "https://api.deepl.com/*",
-    "https://texttospeech.googleapis.com/*"
+    "https://texttospeech.googleapis.com/*",
+    "https://api.deepgram.com/*"
   ],
   "optional_host_permissions": [
     "*://*/*"

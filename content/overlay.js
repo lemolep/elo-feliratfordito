@@ -688,9 +688,11 @@ globalThis.LFT = globalThis.LFT || {};
      jön-e adat. Fordítás ebből még nem lesz. A gomb kattintás nélkül soha
      nem indul — a hangfelismerés percdíjas lesz. */
   let tabAudioOn = false;
+  let sttLive = false;        // él-e a kapcsolat a beszédfelismerővel
 
   function setTabAudioUi(on) {
     tabAudioOn = on;
+    if (!on) sttLive = false;
     const b = panel && panel.querySelector('[data-a=audio]');
     if (b) b.classList.toggle('on', on);   // zöld, mint a bekapcsolt 🔊
   }
@@ -747,8 +749,19 @@ globalThis.LFT = globalThis.LFT || {};
       case 'segment': onSegment(msg.seg); return;
       case 'status': setStatus(msg.text, msg.kind); return;
       case 'picked': endPicking(); return;
+      /* 4. lépés: a felismert angol szöveg még csak az állapotsorba megy,
+         fordításra nem — azt az 5. lépés köti be. */
+      case 'stt:status':
+        sttLive = msg.state === 'open';
+        if (sttLive) setStatus(LFT.t('ov_stt_listening'), 'ok');
+        else if (msg.text) setStatus(msg.text, 'warn');
+        return;
+      case 'stt:result':
+        if (!msg.text) return;
+        setStatus((msg.final ? 'EN ✓ ' : 'EN … ') + msg.text, msg.final ? 'ok' : '');
+        return;
       case 'tabaudio:level':
-        if (tabAudioOn) setStatus(LFT.t('ov_audio_level', [String(msg.level), msg.state || '?']), msg.level > 0 ? 'ok' : 'warn');
+        if (tabAudioOn && !sttLive) setStatus(LFT.t('ov_audio_level', [String(msg.level), msg.state || '?']), msg.level > 0 ? 'ok' : 'warn');
         return;
       case 'tabaudio:ended':
         setTabAudioUi(false);

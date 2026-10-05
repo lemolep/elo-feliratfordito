@@ -781,5 +781,56 @@
   },
   "pop_audio_stop": {
     "message": "🎤 Stop audio mode"
+  },
+  "opt_stt_title": {
+    "message": "Speech recognition (Deepgram) — for videos without subtitles"
+  },
+  "opt_stt_hint": {
+    "message": "If a video has no subtitles, the extension turns its <b>audio</b> into English text and translates that. Key: <code>console.deepgram.com</code> → API Keys → Create a New API Key, with the <b>Default</b> role."
+  },
+  "opt_stt_key_ph": {
+    "message": "Deepgram API key"
+  },
+  "opt_stt_cost": {
+    "message": "Deepgram is billed per minute. New accounts get $200 of free credit without a card — roughly 400 hours of live recognition. That is why audio mode never starts on its own, only on a click."
+  },
+  "opt_stt_ok": {
+    "message": "Works: Deepgram accepted the key."
+  },
+  "ov_stt_listening": {
+    "message": "Listening… (Deepgram)"
+  },
+  "stt_err_nokey": {
+    "message": "No Deepgram key — the audio plays, but nothing is recognised. Add it in the settings."
+  },
+  "stt_err_keychars": {
+    "message": "The Deepgram key contains an invalid character — most likely invisible junk picked up while copying. Clear the field and type it again."
+  },
+  "stt_err_key": {
+    "message": "Deepgram refused the connection — this is almost always the key. Check it in the settings with the Test button."
+  },
+  "stt_err_credit": {
+    "message": "The Deepgram credit has run out."
+  },
+  "stt_err_rate": {
+    "message": "Too many requests to Deepgram — try again in a few seconds."
+  },
+  "stt_err_server": {
+    "message": "The Deepgram server returned an error — try again later."
+  },
+  "stt_err_offline": {
+    "message": "No network connection."
+  },
+  "stt_err_blocked": {
+    "message": "Deepgram did not respond. Check your internet connection, and whether a VPN, firewall or content blocker is in the way."
+  },
+  "stt_err_other": {
+    "message": "Deepgram error."
+  },
+  "stt_err_noaudio": {
+    "message": "Deepgram received no audio — is the video playing?"
+  },
+  "stt_err_closed": {
+    "message": "The connection to Deepgram dropped."
   }
 }

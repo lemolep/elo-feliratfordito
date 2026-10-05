@@ -25,6 +25,10 @@ let duckGain = null;
 let levelTimer = null;
 let tabId = null;
 let speaking = null;          // { src, done } — épp szóló felolvasás
+let rec = null;               // MediaRecorder — a lap hangja webm/opus darabokban
+let stt = null;               // élő beszédfelismerő kapcsolat (lib/stt.js)
+
+const CHUNK_MS = 250;         // ilyen darabokban megy a hang a felismerőnek
 
 const DUCK_FADE_S = 0.12;     // rövid átmenet, hogy ne kattanjon
 
@@ -32,7 +36,7 @@ function send(msg) {
   try { chrome.runtime.sendMessage(msg).catch(() => {}); } catch (e) { /* nincs fogadó */ }
 }
 
-async function start(streamId, forTab) {
+async function start(streamId, forTab, sttCfg) {
   await stop(false);
   tabId = forTab;
 
@@ -70,11 +74,59 @@ async function start(streamId, forTab) {
   // ha a lap újratölt vagy bezárul, a sáv véget ér — ilyenkor mi is leállunk
   stream.getAudioTracks().forEach(t => t.addEventListener('ended', () => stop(true)));
 
-  return { ok: true, state: ctx.state };
+  const sttOn = startStt(sttCfg);
+  return { ok: true, state: ctx.state, stt: sttOn };
+}
+
+/* ---------------- beszédfelismerés ---------------- */
+
+/* A felvétel a NYERS lap-hangból megy (a MediaRecorder magát a streamet
+   kapja, nem a mi hangláncunkat), tehát a halkítás nem érinti, és a
+   felolvasás sincs benne — az offscreenben szól, nem a lapon. */
+function startStt(cfg) {
+  if (!cfg || !cfg.key) {
+    send({ type: 'stt:status', tabId: tabId, state: 'off', code: 'nokey' });
+    return false;
+  }
+  const forTab = tabId;
+  stt = LFT.stt.open(cfg.provider, cfg, {
+    onOpen: () => send({ type: 'stt:status', tabId: forTab, state: 'open' }),
+    onResult: r => {
+      if (!r.text) return;
+      send({ type: 'stt:result', tabId: forTab, text: r.text, final: r.final,
+             speechFinal: r.speechFinal, start: r.start, duration: r.duration });
+    },
+    onClose: ev => {
+      const code = LFT.stt.closeToCode(ev);
+      send({ type: 'stt:status', tabId: forTab, state: 'closed', code: code, wsCode: ev.code });
+      stt = null;
+    },
+    onError: code => {
+      send({ type: 'stt:status', tabId: forTab, state: 'error', code: code });
+      stt = null;
+    }
+  });
+  if (!stt) return false;
+
+  rec = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+  rec.ondataavailable = e => { if (stt) stt.send(e.data); };
+  rec.start(CHUNK_MS);
+  return true;
+}
+
+async function stopStt() {
+  if (rec) { try { rec.stop(); } catch (e) {} }
+  rec = null;
+  if (stt) {
+    const s = stt;
+    await s.close();          // megvárja a függőben lévő utolsó végleges találatot
+  }
+  stt = null;
 }
 
 async function stop(notify) {
   hush();
+  await stopStt();
   clearInterval(levelTimer);
   levelTimer = null;
   if (stream) stream.getTracks().forEach(t => t.stop());
@@ -148,7 +200,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!msg || msg.target !== 'offscreen') return;
   switch (msg.type) {
     case 'start':
-      start(msg.streamId, msg.tabId)
+      start(msg.streamId, msg.tabId, msg.stt)
         .then(sendResponse)
         .catch(e => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
       return true;

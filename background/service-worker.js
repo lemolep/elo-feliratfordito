@@ -1,6 +1,6 @@
 /* Háttérszolgáltatás: DeepL hívások, felvételek tárolása, üzenettovábbítás
    a frame-ek között, content scriptek futásidejű regisztrációja. */
-importScripts('/lib/i18n.js', '/lib/store.js', '/lib/deepl.js', '/lib/tts.js');
+importScripts('/lib/i18n.js', '/lib/store.js', '/lib/deepl.js', '/lib/tts.js', '/lib/stt.js');
 
 const CS_FILES = [
   'lib/i18n.js',
@@ -314,7 +314,9 @@ async function tabAudioStart(tabId) {
   if (audioTab != null) await tabAudioStop();
   const streamId = await chrome.tabCapture.getMediaStreamId({ targetTabId: tabId });
   await ensureOffscreen();
-  const r = await chrome.runtime.sendMessage({ target: 'offscreen', type: 'start', streamId: streamId, tabId: tabId });
+  const r = await chrome.runtime.sendMessage({
+    target: 'offscreen', type: 'start', streamId: streamId, tabId: tabId, stt: await sttConfig()
+  });
   if (!r || !r.ok) throw new Error((r && r.error) || 'az offscreen dokumentum nem válaszolt');
   audioTab = tabId;
   notifyTabAudio(tabId, true);
@@ -328,6 +330,18 @@ async function tabAudioStop() {
   try { await chrome.offscreen.closeDocument(); } catch (e) { /* nincs nyitva */ }
   if (was != null) notifyTabAudio(was, false);
   return was;
+}
+
+/* A beszédfelismerés beállításai az offscreen dokumentumnak. A kulcs csak a
+   bővítményen belül mozog (service worker → offscreen), a lapra nem jut el.
+   Kulcs nélkül null: ilyenkor a hang megy, csak felismerés nincs.
+   A szakszótár angol oldalai kulcskifejezésként mennek a Deepgramnak, hogy a
+   márka- és szakneveket már a felismerés is jól írja le. */
+async function sttConfig() {
+  const s = await LFT.store.getSettingsWithKeys();
+  if (!s.deepgramKey) return null;
+  const terms = parseGlossary(s.glossary).entries.map(e => e.a);
+  return { provider: 'deepgram', key: s.deepgramKey, model: 'nova-3', language: 'en', keyterms: terms };
 }
 
 /* A lebegő ablak akkor is tudjon róla, ha a popupból vagy gyorsbillentyűről indult. */
@@ -385,6 +399,24 @@ async function handle(msg, sender) {
         return { ok: false, reason: 'off', error: (e && e.message) || String(e) };
       }
     }
+    /* beszédfelismerés */
+    case 'stt:test': {
+      const r = await LFT.stt.test('deepgram', msg.key);
+      if (r.ok) return { ok: true };
+      const text = LFT.t(LFT.stt.codeToKey(r.code)) + (r.detail ? ' — ' + r.detail : '');
+      return { ok: false, error: text };
+    }
+    case 'stt:status':         // az offscreen dokumentumtól jön; itt fordítjuk szövegre
+      if (msg.tabId != null) {
+        const out = Object.assign({}, msg);
+        if (msg.code) out.text = LFT.t(LFT.stt.codeToKey(msg.code));
+        chrome.tabs.sendMessage(msg.tabId, out, { frameId: 0 }).catch(() => {});
+      }
+      return { ok: true };
+    case 'stt:result':
+      if (msg.tabId != null) chrome.tabs.sendMessage(msg.tabId, msg, { frameId: 0 }).catch(() => {});
+      return { ok: true };
+
     case 'tabaudio:level':     // az offscreen dokumentumtól jön
     case 'tabaudio:ended':
       if (msg.tabId != null) {
