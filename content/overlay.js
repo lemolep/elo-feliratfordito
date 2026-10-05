@@ -677,7 +677,11 @@ globalThis.LFT = globalThis.LFT || {};
       setStatus(LFT.t('ov_audio_on'), 'ok');
     } else {
       setTabAudioUi(false);
-      setStatus(LFT.t('ov_audio_failed', [(r && r.error) || '?']), 'warn');
+      const err = (r && r.error) || '?';
+      /* A Chrome csak akkor adja ki a lap hangját, ha a bővítményt ezen a lapon
+         ikonnal vagy gyorsbillentyűvel meghívták. Ezt mondjuk meg, ne a nyers hibát. */
+      if (/not been invoked|activeTab/i.test(err)) setStatus(LFT.t('ov_audio_need_invoke'), 'warn');
+      else setStatus(LFT.t('ov_audio_failed', [err]), 'warn');
     }
   }
 
@@ -717,6 +721,12 @@ globalThis.LFT = globalThis.LFT || {};
       case 'tabaudio:ended':
         setTabAudioUi(false);
         setStatus(LFT.t('ov_audio_off'), '');
+        return;
+      case 'tabaudio:state':      // a popupból vagy gyorsbillentyűről indult / állt le
+        if (msg.on === tabAudioOn) return;
+        setTabAudioUi(!!msg.on);
+        if (msg.on) setVisible(true, true);
+        setStatus(LFT.t(msg.on ? 'ov_audio_on' : 'ov_audio_off'), msg.on ? 'ok' : '');
         return;
       case 'sourcefound': autoStart(); return;
       case 'overlay:toggle': setVisible(!ui.visible, true); return;

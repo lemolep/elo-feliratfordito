@@ -66,6 +66,7 @@ async function init() {
   }
 
   await refresh();
+  await refreshAudioBtn();
 }
 
 $('enable').addEventListener('click', async () => {
@@ -115,6 +116,37 @@ $('allSites').addEventListener('click', async () => {
   await new Promise(r => setTimeout(r, 300));
   await refresh();
   if (!injected) note(LFT.t('pop_enabled_reload'));
+});
+
+/* Hang mód. A popup megnyitása ikonkattintás, ami "meghívja" a bővítményt a
+   lapon — ezért innen a Chrome kiadja a lap hangját. A lebegő ablak 🎤 gombja
+   ezután a lap bezárásáig magában is működik. */
+async function refreshAudioBtn() {
+  const b = $('audio');
+  if (!tab || !host) { b.hidden = true; return; }
+  let on = false;
+  try {
+    const r = await chrome.runtime.sendMessage({ type: 'tabaudio:status', tabId: tab.id });
+    on = !!(r && r.on);
+  } catch (e) { /* a service worker épp ébred */ }
+  b.hidden = false;
+  b.textContent = LFT.t(on ? 'pop_audio_stop' : 'pop_audio_start');
+  b.className = on ? 'danger' : '';
+  b.dataset.on = on ? '1' : '';
+}
+
+$('audio').addEventListener('click', async () => {
+  const b = $('audio');
+  b.disabled = true;
+  const type = b.dataset.on ? 'tabaudio:stop' : 'tabaudio:start';
+  const r = await chrome.runtime.sendMessage({ type: type, tabId: tab.id });
+  b.disabled = false;
+  if (r && r.ok) {
+    if (type === 'tabaudio:start') { await send('overlay:show'); window.close(); return; }
+    await refreshAudioBtn();
+  } else {
+    note(LFT.t('ov_audio_failed', [(r && r.error) || '?']));
+  }
 });
 
 $('rec').addEventListener('click', async () => {

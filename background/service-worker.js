@@ -286,8 +286,11 @@ async function ensureGlossaryInner(s, srcLang, tgtLang) {
 
 /* ---------------- a lap hangja (tabCapture + offscreen) ---------------- */
 
-/* A lebegő ablak gombjából indítható: 2026-10-05-én mérve a "minden oldalon"
-   host engedély elég a getMediaStreamId-hoz, nem kell hozzá ikonkattintás.
+/* A getMediaStreamId csak akkor ad azonosítót, ha a bővítményt az adott lapon
+   MEGHÍVTÁK: ikonkattintással (popup) vagy gyorsbillentyűvel. A host engedély
+   ezt NEM váltja ki — 2026-10-05-én a bővítmény újratöltése utáni tiszta
+   mérésen a lebegő ablak gombja "has not been invoked" hibát kapott. Egy
+   meghívás után viszont a lap bezárásáig a lebegő ablak gombja is működik.
    A hangot az offscreen dokumentum kezeli, mert a service workerben nincs
    AudioContext és getUserMedia. Egyszerre egy lap hangját vesszük. */
 const OFFSCREEN_URL = 'offscreen/offscreen.html';
@@ -314,6 +317,7 @@ async function tabAudioStart(tabId) {
   const r = await chrome.runtime.sendMessage({ target: 'offscreen', type: 'start', streamId: streamId, tabId: tabId });
   if (!r || !r.ok) throw new Error((r && r.error) || 'az offscreen dokumentum nem válaszolt');
   audioTab = tabId;
+  notifyTabAudio(tabId, true);
   return r;
 }
 
@@ -322,7 +326,19 @@ async function tabAudioStop() {
   audioTab = null;
   try { await chrome.runtime.sendMessage({ target: 'offscreen', type: 'stop' }); } catch (e) { /* nincs nyitva */ }
   try { await chrome.offscreen.closeDocument(); } catch (e) { /* nincs nyitva */ }
+  if (was != null) notifyTabAudio(was, false);
   return was;
+}
+
+/* A lebegő ablak akkor is tudjon róla, ha a popupból vagy gyorsbillentyűről indult. */
+function notifyTabAudio(tabId, on) {
+  chrome.tabs.sendMessage(tabId, { type: 'tabaudio:state', on: on }, { frameId: 0 }).catch(() => {});
+}
+
+async function tabAudioToggle(tabId) {
+  if (audioTab === tabId) { await tabAudioStop(); return { ok: true, on: false }; }
+  await tabAudioStart(tabId);
+  return { ok: true, on: true };
 }
 
 // a lap bezárásakor vagy újratöltésekor ne maradjon nyitva a hangfolyam
@@ -339,12 +355,18 @@ async function handle(msg, sender) {
   switch (msg.type) {
 
     /* a lap hangja */
-    case 'tabaudio:start':
-      try { return Object.assign({ ok: true }, await tabAudioStart(tabId)); }
+    /* A popup nem lapból üzen, ezért megadja a lapazonosítót. Lapból (content
+       scriptből) érkező üzenetnél csak a saját lapját fogadjuk el. */
+    case 'tabaudio:start': {
+      const target = tabId != null ? tabId : msg.tabId;
+      try { return Object.assign({ ok: true }, await tabAudioStart(target)); }
       catch (e) { return { ok: false, error: (e && e.message) || String(e) }; }
+    }
     case 'tabaudio:stop':
       await tabAudioStop();
       return { ok: true };
+    case 'tabaudio:status':
+      return { ok: true, on: audioTab != null && audioTab === (tabId != null ? tabId : msg.tabId) };
     case 'tabaudio:level':     // az offscreen dokumentumtól jön
     case 'tabaudio:ended':
       if (msg.tabId != null) {
@@ -527,6 +549,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 chrome.commands.onCommand.addListener(async command => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab) return;
+  if (command === 'toggle-audio') {
+    // a gyorsbillentyű "meghívja" a bővítményt a lapon, tehát itt a tabCapture működik
+    try { await tabAudioToggle(tab.id); }
+    catch (e) {
+      chrome.tabs.sendMessage(tab.id, {
+        type: 'status', text: LFT.t('ov_audio_failed', [(e && e.message) || String(e)]), kind: 'warn'
+      }, { frameId: 0 }).catch(() => {});
+    }
+    return;
+  }
   const type = command === 'toggle-capture' ? 'overlay:toggleCapture' : 'overlay:toggle';
   chrome.tabs.sendMessage(tab.id, { type: type }, { frameId: 0 }).catch(() => {});
 });

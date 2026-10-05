@@ -769,5 +769,17 @@
   },
   "ov_audio_level": {
     "message": "Audio captured · level: $1 · playback: $2"
+  },
+  "cmdToggleAudio": {
+    "message": "Audio mode on/off (capture the tab audio)"
+  },
+  "ov_audio_need_invoke": {
+    "message": "Chrome only hands over the tab audio after you invoke the extension on this tab: click its icon → 🎤 Audio mode, or press Alt+Shift+A. After that this button works too."
+  },
+  "pop_audio_start": {
+    "message": "🎤 Start audio mode"
+  },
+  "pop_audio_stop": {
+    "message": "🎤 Stop audio mode"
   }
 }

@@ -769,5 +769,17 @@
   },
   "ov_audio_level": {
     "message": "Hang rögzítve · szint: $1 · lejátszás: $2"
+  },
+  "cmdToggleAudio": {
+    "message": "Hang mód be/ki (a lap hangjának felvétele)"
+  },
+  "ov_audio_need_invoke": {
+    "message": "A Chrome csak akkor adja ki a lap hangját, ha ezen a lapon meghívod a bővítményt: kattints az ikonjára → 🎤 Hang mód, vagy nyomd meg az Alt+Shift+A-t. Utána ez a gomb is működik."
+  },
+  "pop_audio_start": {
+    "message": "🎤 Hang mód indítása"
+  },
+  "pop_audio_stop": {
+    "message": "🎤 Hang mód leállítása"
   }
 }

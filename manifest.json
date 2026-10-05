@@ -49,6 +49,12 @@
         "default": "Alt+Shift+S"
       },
       "description": "__MSG_cmdToggleCapture__"
+    },
+    "toggle-audio": {
+      "suggested_key": {
+        "default": "Alt+Shift+A"
+      },
+      "description": "__MSG_cmdToggleAudio__"
     }
   },
   "default_locale": "hu"
