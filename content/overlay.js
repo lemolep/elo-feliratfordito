@@ -663,23 +663,61 @@ globalThis.LFT = globalThis.LFT || {};
 
   /* ---------------- egér: húzás és átméretezés ---------------- */
 
+  /* Húzás és átméretezés közös követése.
+
+     A hiba, amit kezel: ha az egér egy beágyazott keret (pl. a Vimeo-lejátszó)
+     fölé ér, az egéresemények oda mennek, nem a mi lapunkra. A mozgás megakad,
+     és ha ott engeded fel a gombot, azt sem látjuk — utána az ablak gomb nélkül
+     is tovább méreteződik ("beragad"). Három védelem, mert egyik sem elég magában:
+       1. setPointerCapture: a böngésző minden egéreseményt a mi elemünknek küld;
+       2. átlátszó takaró az egész lapon a húzás idejére, ami a kereteket is fedi;
+       3. ha gomb nélküli mozgás jön (a felengedést nem láttuk), azonnal vége. */
+  function trackPointer(e, onMove, onEnd) {
+    const target = e.currentTarget;
+    const id = e.pointerId;
+    try { target.setPointerCapture(id); } catch (x) { /* nem támogatott */ }
+
+    const shield = document.createElement('div');
+    shield.style.cssText = 'all:initial;position:fixed;inset:0;z-index:2147483647;' +
+      'background:transparent;cursor:' + getComputedStyle(target).cursor + ';';
+    document.documentElement.appendChild(shield);
+
+    let done = false;
+    const move = ev => {
+      if (ev.pointerId !== id) return;
+      if (ev.buttons === 0) { end(); return; }    // a felengedés elveszett valahol
+      onMove(ev);
+    };
+    const up = ev => { if (ev.pointerId === id) end(); };
+    const end = () => {
+      if (done) return;
+      done = true;
+      window.removeEventListener('pointermove', move, true);
+      window.removeEventListener('pointerup', up, true);
+      window.removeEventListener('pointercancel', end, true);
+      window.removeEventListener('blur', end);
+      target.removeEventListener('lostpointercapture', end);
+      try { target.releasePointerCapture(id); } catch (x) { /* már elengedte */ }
+      shield.remove();
+      onEnd();
+    };
+    window.addEventListener('pointermove', move, true);
+    window.addEventListener('pointerup', up, true);
+    window.addEventListener('pointercancel', end, true);
+    window.addEventListener('blur', end);                // pl. Alt+Tab húzás közben
+    target.addEventListener('lostpointercapture', end);
+  }
+
   function onDragStart(e) {
     if (e.target.closest('button, input')) return;
     e.preventDefault();
     const sx = e.clientX, sy = e.clientY;
     const ox = parseInt(host.style.left, 10) || 0;
     const oy = parseInt(host.style.top, 10) || 0;
-    const move = ev => {
+    trackPointer(e, ev => {
       host.style.left = Math.max(0, Math.min(window.innerWidth - 60, ox + ev.clientX - sx)) + 'px';
       host.style.top = Math.max(0, Math.min(window.innerHeight - 30, oy + ev.clientY - sy)) + 'px';
-    };
-    const up = () => {
-      window.removeEventListener('pointermove', move, true);
-      window.removeEventListener('pointerup', up, true);
-      queueUiSave();
-    };
-    window.addEventListener('pointermove', move, true);
-    window.addEventListener('pointerup', up, true);
+    }, queueUiSave);
   }
 
   function onResizeStart(e) {
@@ -687,18 +725,11 @@ globalThis.LFT = globalThis.LFT || {};
     e.stopPropagation();
     const sx = e.clientX, sy = e.clientY;
     const ow = host.offsetWidth, oh = host.offsetHeight;
-    const move = ev => {
+    trackPointer(e, ev => {
       host.style.width = Math.max(220, ow + ev.clientX - sx) + 'px';
       host.style.height = Math.max(120, oh + ev.clientY - sy) + 'px';
       scrollIfStuck();
-    };
-    const up = () => {
-      window.removeEventListener('pointermove', move, true);
-      window.removeEventListener('pointerup', up, true);
-      queueUiSave();
-    };
-    window.addEventListener('pointermove', move, true);
-    window.addEventListener('pointerup', up, true);
+    }, queueUiSave);
   }
 
   /* ---------------- a lap hangja ---------------- */
