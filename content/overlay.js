@@ -115,7 +115,7 @@ globalThis.LFT = globalThis.LFT || {};
         '<button class="icon" data-a="opts" data-i18n-title="ov_tip_opts">⚙</button>',
         '<button class="icon" data-a="close" data-i18n-title="ov_tip_close">✕</button>',
       '</div>',
-      '<div class="body"><div class="lines"></div></div>',
+      '<div class="body"><div class="lines"></div><div class="interim" hidden></div></div>',
       '<button class="jump" data-a="jump" data-i18n="ov_jump"></button>',
       '<div class="bar"><span class="msg"></span><span class="cnt"></span></div>',
       '<div class="grip" data-resize></div>',
@@ -138,6 +138,7 @@ globalThis.LFT = globalThis.LFT || {};
     el.dot = panel.querySelector('.dot');
     el.body = panel.querySelector('.body');
     el.lines = panel.querySelector('.lines');
+    el.interim = panel.querySelector('.interim');
     el.msg = panel.querySelector('.msg');
     el.cnt = panel.querySelector('.cnt');
     el.rec = panel.querySelector('[data-a=rec]');
@@ -553,7 +554,11 @@ globalThis.LFT = globalThis.LFT || {};
     sessionId = res && res.id ? res.id : null;
 
     setRecUi(true);
-    await bg({ type: 'relay:frames', payload: { type: 'capture:start', flushDelay: settings.flushDelay } });
+    /* Hang módban a mondatok a felismerőtől jönnek; a feliratkeresés ilyenkor
+       szünetel, különben egy feliratos oldalon minden mondat kétszer jönne. */
+    if (!tabAudioOn) {
+      await bg({ type: 'relay:frames', payload: { type: 'capture:start', flushDelay: settings.flushDelay } });
+    }
   }
 
   /* Magától indulás: a felirat megvan, a kulcs megvan, és a felhasználó nem
@@ -573,6 +578,12 @@ globalThis.LFT = globalThis.LFT || {};
   async function stopRec(openDialog) {
     setRecUi(false);
     ttsStop();
+    /* A rögzítés leállítása a hang módot is leállítja: a Deepgram percdíjas,
+       és rögzítés nélkül a felismert mondatok úgyis elvesznének. */
+    if (tabAudioOn) {
+      await bg({ type: 'tabaudio:stop' });
+      onTabAudioChanged(false);
+    }
     await bg({ type: 'relay:frames', payload: { type: 'capture:stop' } });
     await flushSave(Date.now());
     setStatus(lines.length ? LFT.tn('ov_stopped_lines', lines.length, [String(lines.length)]) : LFT.t('ov_stopped'), 'ok');
@@ -697,18 +708,61 @@ globalThis.LFT = globalThis.LFT || {};
     if (b) b.classList.toggle('on', on);   // zöld, mint a bekapcsolt 🔊
   }
 
+  /* A hang mód be- és kikapcsolásának közös útja — bárhonnan indult (lebegő
+     ablak, popup, gyorsbillentyű, vagy a lap hangja magától véget ért).
+       be: rögzítés indítása, ha még nem fut, és a feliratkeresés szüneteltetése,
+           különben egy feliratos oldalon minden mondat kétszer jönne;
+       ki: a feliratkeresés folytatása, ha a rögzítés tovább megy. */
+  async function onTabAudioChanged(on) {
+    if (on === tabAudioOn) return;
+    setTabAudioUi(on);
+    if (on) {
+      setVisible(true, true);
+      if (!recording) await startRec();      // a startRec hang módban nem indít feliratkeresést
+      else bg({ type: 'relay:frames', payload: { type: 'capture:stop' } });
+    } else {
+      showInterim('');
+      if (recording) {
+        bg({ type: 'relay:frames', payload: { type: 'capture:start', flushDelay: settings.flushDelay } });
+      }
+    }
+  }
+
+  /* A felismerő eredménye. A végleges mondat ugyanabba a csőbe megy, mint egy
+     feliratsor: fordítás, szakszótár, megjelenítés, mentés, felolvasás.
+     A köztes találat csak a halvány sorba kerül — nem fordítjuk és nem mentjük,
+     mert másodpercenként többször jön, és felélné a DeepL keretet. */
+  function onSttResult(r) {
+    if (!r || !r.text) return;
+    if (!r.final) { showInterim(r.text); return; }
+    showInterim('');
+    const v = document.querySelector('video');   // ha a lejátszó a felső keretben van
+    onSegment({
+      text: r.text,
+      t: Date.now(),
+      videoTime: v && isFinite(v.currentTime) ? v.currentTime : null
+    });
+  }
+
+  function showInterim(text) {
+    if (!el.interim) return;
+    el.interim.textContent = text || '';
+    el.interim.hidden = !text;
+    scrollIfStuck();
+  }
+
   async function toggleTabAudio() {
     if (tabAudioOn) {
       await bg({ type: 'tabaudio:stop' });
-      setTabAudioUi(false);
+      onTabAudioChanged(false);
       setStatus(LFT.t('ov_audio_off'), '');
       return;
     }
     setStatus(LFT.t('ov_audio_starting'), '');
     const r = await bg({ type: 'tabaudio:start' });
     if (r && r.ok) {
-      setTabAudioUi(true);
-      setStatus(LFT.t('ov_audio_on'), 'ok');
+      await onTabAudioChanged(true);
+      if (!sttLive) setStatus(LFT.t('ov_audio_on'), 'ok');
     } else {
       setTabAudioUi(false);
       const err = (r && r.error) || '?';
@@ -749,28 +803,24 @@ globalThis.LFT = globalThis.LFT || {};
       case 'segment': onSegment(msg.seg); return;
       case 'status': setStatus(msg.text, msg.kind); return;
       case 'picked': endPicking(); return;
-      /* 4. lépés: a felismert angol szöveg még csak az állapotsorba megy,
-         fordításra nem — azt az 5. lépés köti be. */
       case 'stt:status':
         sttLive = msg.state === 'open';
         if (sttLive) setStatus(LFT.t('ov_stt_listening'), 'ok');
-        else if (msg.text) setStatus(msg.text, 'warn');
+        else { showInterim(''); if (msg.text) setStatus(msg.text, 'warn'); }
         return;
       case 'stt:result':
-        if (!msg.text) return;
-        setStatus((msg.final ? 'EN ✓ ' : 'EN … ') + msg.text, msg.final ? 'ok' : '');
+        onSttResult(msg);
         return;
       case 'tabaudio:level':
         if (tabAudioOn && !sttLive) setStatus(LFT.t('ov_audio_level', [String(msg.level), msg.state || '?']), msg.level > 0 ? 'ok' : 'warn');
         return;
       case 'tabaudio:ended':
-        setTabAudioUi(false);
+        onTabAudioChanged(false);
         setStatus(LFT.t('ov_audio_off'), '');
         return;
       case 'tabaudio:state':      // a popupból vagy gyorsbillentyűről indult / állt le
-        if (msg.on === tabAudioOn) return;
-        setTabAudioUi(!!msg.on);
-        if (msg.on) setVisible(true, true);
+        if (!!msg.on === tabAudioOn) return;
+        onTabAudioChanged(!!msg.on);
         setStatus(LFT.t(msg.on ? 'ov_audio_on' : 'ov_audio_off'), msg.on ? 'ok' : '');
         return;
       case 'sourcefound': autoStart(); return;

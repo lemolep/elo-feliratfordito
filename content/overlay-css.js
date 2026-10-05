@@ -116,6 +116,19 @@ input[type=range] {
 .hu.failed { color: #ef8b80; }
 .panel.huonly .src { display: none; }
 
+/* Hang módban: a még alakuló (köztes) felismerés. Nem fordítjuk, nem mentjük,
+   csak jelzi, hogy hallja a beszédet — a végleges mondat a rendes sorok közé kerül. */
+.interim {
+  font-size: calc(var(--fs) * .72);
+  line-height: 1.35;
+  color: #93a1b3;
+  opacity: .6;
+  font-style: italic;
+  padding: 5px 0 0;
+  word-wrap: break-word;
+}
+.interim[hidden] { display: none; }
+
 .empty {
   color: #8b95a3;
   font-size: 13px;
