@@ -27,6 +27,7 @@ let tabId = null;
 let speaking = null;          // { src, done } — épp szóló felolvasás
 let rec = null;               // MediaRecorder — a lap hangja webm/opus darabokban
 let stt = null;               // élő beszédfelismerő kapcsolat (lib/stt.js)
+let recStart = 0;             // mikor indult a felvétel — a Deepgram ideje ehhez képest számol
 
 const CHUNK_MS = 250;         // ilyen darabokban megy a hang a felismerőnek
 
@@ -93,8 +94,11 @@ function startStt(cfg) {
     onOpen: () => send({ type: 'stt:status', tabId: forTab, state: 'open' }),
     onResult: r => {
       if (!r.text) return;
+      /* at: mikor KEZDŐDÖTT a mondat (falióra). A végleges találat a mondat
+         vége után érkezik; ebből tud a lebegő ablak visszaszámolni a videóidőre. */
+      const at = typeof r.start === 'number' ? recStart + r.start * 1000 : null;
       send({ type: 'stt:result', tabId: forTab, text: r.text, final: r.final,
-             speechFinal: r.speechFinal, start: r.start, duration: r.duration });
+             speechFinal: r.speechFinal, start: r.start, duration: r.duration, at: at });
     },
     onClose: ev => {
       const code = LFT.stt.closeToCode(ev);
@@ -110,6 +114,7 @@ function startStt(cfg) {
 
   rec = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
   rec.ondataavailable = e => { if (stt) stt.send(e.data); };
+  recStart = Date.now();
   rec.start(CHUNK_MS);
   return true;
 }

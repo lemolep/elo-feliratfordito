@@ -9,6 +9,7 @@ const CS_FILES = [
   'lib/segmenter.js',
   'content/overlay-css.js',
   'content/capture.js',
+  'content/vimeo.js',
   'content/overlay.js'
 ];
 

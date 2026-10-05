@@ -29,7 +29,8 @@ function is(nev, kapott, vart) {
   if (!ok) console.log('       kapott: ' + JSON.stringify(kapott) + '  várt: ' + JSON.stringify(vart));
 }
 
-function world(recordingAtStart, videoTime) {
+/* video: null (nincs a felső keretben) vagy { time, paused }; vimeo: amit a Vimeo-figyelő ad */
+function world(recordingAtStart, video, vimeo) {
   const code = `
     let tabAudioOn = false, sttLive = false, recording = ${recordingAtStart};
     const calls = [], segs = [];
@@ -41,11 +42,15 @@ function world(recordingAtStart, videoTime) {
     const el = { interim: { textContent: '', hidden: true } };
     function scrollIfStuck() {}
     function onSegment(p) { segs.push(p); }
-    const document = { querySelector: () => (${videoTime === null ? 'null' : '{ currentTime: ' + videoTime + ' }'}) };
+    const document = { querySelector: () => (${video ? '{ currentTime: ' + video.time + ', paused: ' + !!video.paused + ' }' : 'null'}) };
+    const watched = [];
+    const LFT = { vimeo: { now: () => (${JSON.stringify(vimeo || null)}), watch: on => watched.push(on) } };
     ${extract('onTabAudioChanged')}
     ${extract('onSttResult')}
     ${extract('showInterim')}
-    return { onTabAudioChanged, onSttResult, calls, segs, el, st: () => ({ tabAudioOn, recording }) };`;
+    ${extract('currentVideo')}
+    ${extract('speechVideoTime')}
+    return { onTabAudioChanged, onSttResult, calls, segs, el, watched, st: () => ({ tabAudioOn, recording }) };`;
   return new Function(code)();
 }
 
@@ -67,9 +72,38 @@ function world(recordingAtStart, videoTime) {
     is('üres végleges: nem megy fordításra', w.segs.length, 1);
   }
   {
-    const w = world(true, 83.4);
+    const w = world(true, { time: 83.4 });
     w.onSttResult({ text: 'Hello.', final: true });
     is('ha a videó a felső keretben van, az ideje bekerül', w.segs[0].videoTime, 83.4);
+  }
+
+  /* ---------- visszaszámolás a mondat kezdetére ---------- */
+  {
+    const w = world(true, { time: 100, paused: false });
+    const at = Date.now() - 3000;
+    w.onSttResult({ text: 'Hello.', final: true, at: at, duration: 2 });
+    is('játszás közben a mondat kezdetére számol vissza (≈97 mp)', Math.round(w.segs[0].videoTime), 97);
+    is('a sor ideje a mondat kezdete', w.segs[0].t, at);
+  }
+  {
+    const w = world(true, { time: 100, paused: true });
+    w.onSttResult({ text: 'Hello.', final: true, at: Date.now() - 9000, duration: 2 });
+    is('megállított videónál a mondat hosszával számol vissza', w.segs[0].videoTime, 98);
+  }
+  {
+    const w = world(true, { time: 100, paused: false });
+    w.onSttResult({ text: 'Hello.', final: true, at: Date.now() - 120000 });
+    is('legfeljebb 30 mp-et számol vissza', Math.round(w.segs[0].videoTime), 70);
+  }
+  {
+    const w = world(true, { time: 1, paused: false });
+    w.onSttResult({ text: 'Hello.', final: true, at: Date.now() - 5000 });
+    is('nem megy nulla alá', w.segs[0].videoTime, 0);
+  }
+  {
+    const w = world(true, null, { time: 42, playing: false });
+    w.onSttResult({ text: 'Hello.', final: true, duration: 2 });
+    is('Vimeo-keretes lejátszónál a Vimeo idejét használja', w.segs[0].videoTime, 40);
   }
 
   /* ---------- be- és kikapcsolás ---------- */
@@ -81,6 +115,7 @@ function world(recordingAtStart, videoTime) {
 
     await w.onTabAudioChanged(true);
     is('második bekapcsolás: nem indít újra semmit', w.calls, ['startRec']);
+    is('bekapcsoláskor a Vimeo-figyelő is indul', w.watched, [true]);
 
     w.calls.length = 0;
     await w.onTabAudioChanged(false);

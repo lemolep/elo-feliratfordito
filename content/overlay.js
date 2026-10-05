@@ -716,6 +716,7 @@ globalThis.LFT = globalThis.LFT || {};
   async function onTabAudioChanged(on) {
     if (on === tabAudioOn) return;
     setTabAudioUi(on);
+    if (LFT.vimeo) LFT.vimeo.watch(on);       // a Vimeo-keretes lejátszó idejéhez
     if (on) {
       setVisible(true, true);
       if (!recording) await startRec();      // a startRec hang módban nem indít feliratkeresést
@@ -736,12 +737,33 @@ globalThis.LFT = globalThis.LFT || {};
     if (!r || !r.text) return;
     if (!r.final) { showInterim(r.text); return; }
     showInterim('');
-    const v = document.querySelector('video');   // ha a lejátszó a felső keretben van
     onSegment({
       text: r.text,
-      t: Date.now(),
-      videoTime: v && isFinite(v.currentTime) ? v.currentTime : null
+      t: r.at || Date.now(),
+      videoTime: speechVideoTime(r)
     });
+  }
+
+  /* Hol tart a videó: ha a lejátszó a felső keretben van, onnan; ha
+     Vimeo-keretben, a Vimeo saját eseményeiből (content/vimeo.js). */
+  function currentVideo() {
+    const v = document.querySelector('video');
+    if (v && isFinite(v.currentTime)) return { time: v.currentTime, playing: !v.paused };
+    return LFT.vimeo ? LFT.vimeo.now() : null;
+  }
+
+  /* A végleges mondat a mondat VÉGE után érkezik. A mentett időbélyegnek a
+     mondat KEZDETÉT kell mutatnia, ezért visszaszámolunk: játszás közben
+     annyival, amennyi a kezdete óta eltelt; megállított videónál a mondat
+     hosszával. Legfeljebb 30 mp-et, hogy egy közbeni ugrás ne vigye el. */
+  function speechVideoTime(r) {
+    const cur = currentVideo();
+    if (!cur || cur.time == null) return null;
+    let back = 0;
+    if (cur.playing && r.at) back = (Date.now() - r.at) / 1000;
+    else if (r.duration) back = r.duration;
+    back = Math.max(0, Math.min(30, back));
+    return Math.max(0, cur.time - back);
   }
 
   function showInterim(text) {
