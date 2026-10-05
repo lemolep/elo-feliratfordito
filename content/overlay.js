@@ -221,15 +221,36 @@ globalThis.LFT = globalThis.LFT || {};
   }
 
   function ttsStop() {
-    bg({ type: 'relay:frames', payload: { type: 'audio:unduck' } });
+    outUnduck();
     clearTimeout(ttsMergeTimer);
     ttsMergeTimer = null;
     ttsPending = [];
     ttsNext = null;
+    if (tabAudioOn) bg({ type: 'tabaudio:hush' });
     if (ttsAudio) {
       try { ttsAudio.pause(); } catch (e) { /* már leállt */ }
       ttsAudio = null;
     }
+  }
+
+  /* ---- hová szól a felolvasás, és mit halkítunk ----
+     Felirat módban: a lapon szól, a halkítás a videó hangerejét veszi le.
+     Hang módban: az offscreen dokumentumban szól, és ott halkít, a lap
+     hangjának CSAK a hangszóróra menő ágán. Ha itt a videó hangerejét
+     vennénk le, a felvett hang is elhalkulna, és a felolvasást is
+     felvenné a tabCapture. */
+
+  function outDuck(level) {
+    if (tabAudioOn) bg({ type: 'tabaudio:duck', level: level });
+    else bg({ type: 'relay:frames', payload: { type: 'audio:duck', level: level } });
+  }
+
+  /* Visszaállításnál mindkét helyre szólunk: ha a halkítás alatt váltott a
+     mód, se a videó, se az offscreen ne maradjon lehalkítva. Mindkettő
+     ártalmatlan, ha nem volt halkítva. */
+  function outUnduck() {
+    bg({ type: 'relay:frames', payload: { type: 'audio:unduck' } });
+    if (tabAudioOn) bg({ type: 'tabaudio:unduck' });
   }
 
   /* A felirat sok rövid darabban érkezik. Ha mindegyik külön hangfájl lenne, a
@@ -300,18 +321,29 @@ globalThis.LFT = globalThis.LFT || {};
            A videó lehet másik keretben, ezért üzenetben megy. */
         if (!duckedNow) {
           duckedNow = true;
-          bg({ type: 'relay:frames',
-               payload: { type: 'audio:duck', level: settings && settings.ttsDuck } });
+          outDuck(settings && settings.ttsDuck);
         }
         await ttsPlay(res.audio);
       }
     } finally {
       ttsPumping = false;
-      if (duckedNow) bg({ type: 'relay:frames', payload: { type: 'audio:unduck' } });
+      if (duckedNow) outUnduck();
     }
   }
 
-  function ttsPlay(b64) {
+  /* Hang módban az offscreen dokumentum játssza le, és akkor válaszol, amikor
+     véget ért — így a sorrend ugyanúgy tartható. Ha közben leállt a hang mód
+     ("off"), a régi módon, a lapon játsszuk le. */
+  async function ttsPlay(b64) {
+    if (tabAudioOn) {
+      const r = await bg({ type: 'tabaudio:play', audio: b64 });
+      if (r && r.ok) return;
+      if (r && r.error && r.reason !== 'off') { setStatus(r.error, 'warn'); return; }
+    }
+    return ttsPlayLocal(b64);
+  }
+
+  function ttsPlayLocal(b64) {
     return new Promise(resolve => {
       let done = false;
       const finish = () => { if (!done) { done = true; ttsAudio = null; resolve(); } };

@@ -1,18 +1,32 @@
 /* Offscreen dokumentum: a lap hangfolyama itt él.
 
    A tabCapture a rögzítés idejére ELNÉMÍTJA a lapot — a hang onnantól a mi
-   folyamunkon megy. Ezért az első dolgunk visszakötni a hangszóróra
-   (ctx.destination), különben a felhasználó semmit nem hallana.
+   folyamunkon megy. Ezért az első dolgunk visszakötni a hangszóróra,
+   különben a felhasználó semmit nem hallana.
 
-   Mostani állapot (2. lépés): a hangot visszavezetjük, és másodpercenként
-   visszajelezzük a hangszintet — ebből látszik, hogy tényleg jön adat.
-   A Deepgram felé küldés a következő lépésekben kerül ide. */
+   A hanglánc:
+
+     lap hangja ─┬─ duckGain ──────────────┐
+                 └─ elemző (később: STT)   ├─→ hangszóró
+     felolvasás ───────────────────────────┘
+
+   - A halkítás (duckGain) CSAK a hangszóróra menő ágon van. A felismerés a
+     halkítás előtti ágról kapja a hangot, különben felolvasás közben egy
+     elhalkított angolt kellene felismernie.
+   - A felolvasás itt szól, NEM a lapon. Az offscreen dokumentum hangja nem
+     része a lapnak, tehát a tabCapture nem veszi fel — így a saját magyar
+     hangunk nem kerül vissza a felismerésbe. A felolvasás nem megy át a
+     halkításon sem. */
 'use strict';
 
 let stream = null;
 let ctx = null;
+let duckGain = null;
 let levelTimer = null;
 let tabId = null;
+let speaking = null;          // { src, done } — épp szóló felolvasás
+
+const DUCK_FADE_S = 0.12;     // rövid átmenet, hogy ne kattanjon
 
 function send(msg) {
   try { chrome.runtime.sendMessage(msg).catch(() => {}); } catch (e) { /* nincs fogadó */ }
@@ -31,8 +45,14 @@ async function start(streamId, forTab) {
   if (ctx.state === 'suspended') { try { await ctx.resume(); } catch (e) { /* jelentjük lent */ } }
 
   const src = ctx.createMediaStreamSource(stream);
-  src.connect(ctx.destination);               // vissza a hangszóróra — enélkül néma a lap
 
+  // 1. ág: vissza a hangszóróra, a halkításon át — enélkül néma a lap
+  duckGain = ctx.createGain();
+  duckGain.gain.value = 1;
+  src.connect(duckGain);
+  duckGain.connect(ctx.destination);
+
+  // 2. ág: a halkítás ELŐTTI hang — hangszint most, felismerés később
   const an = ctx.createAnalyser();
   an.fftSize = 2048;
   src.connect(an);
@@ -54,26 +74,103 @@ async function start(streamId, forTab) {
 }
 
 async function stop(notify) {
+  hush();
   clearInterval(levelTimer);
   levelTimer = null;
   if (stream) stream.getTracks().forEach(t => t.stop());
   stream = null;
   if (ctx) { try { await ctx.close(); } catch (e) {} }
   ctx = null;
+  duckGain = null;
   if (notify && tabId != null) send({ type: 'tabaudio:ended', tabId: tabId });
   tabId = null;
 }
 
+/* ---------------- halkítás ---------------- */
+
+function rampTo(value) {
+  if (!ctx || !duckGain) return;
+  const g = duckGain.gain;
+  const now = ctx.currentTime;
+  g.cancelScheduledValues(now);
+  g.setValueAtTime(g.value, now);
+  g.linearRampToValueAtTime(value, now + DUCK_FADE_S);
+}
+
+function duck(level) {
+  const v = Math.max(0, Math.min(100, level == null ? 20 : Number(level))) / 100;
+  rampTo(v);
+}
+
+function unduck() { rampTo(1); }
+
+/* ---------------- felolvasás ---------------- */
+
+function b64ToBuffer(b64) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+
+/* Lejátssza a felolvasott darabot, és akkor válaszol, amikor véget ért —
+   a lebegő ablak sorrendkezelése erre vár, mielőtt a következőt indítaná. */
+async function play(b64) {
+  if (!ctx) return { ok: false, reason: 'off' };
+  hush();
+  const audio = await ctx.decodeAudioData(b64ToBuffer(b64));
+  return new Promise(resolve => {
+    const src = ctx.createBufferSource();
+    src.buffer = audio;
+    src.connect(ctx.destination);         // közvetlenül, a halkítás nélkül
+    const done = () => {
+      if (speaking && speaking.src === src) speaking = null;
+      resolve({ ok: true });
+    };
+    speaking = { src: src, done: done };
+    src.onended = done;
+    src.start();
+  });
+}
+
+/* Félbeszakítja az épp szóló felolvasást (leállításkor). */
+function hush() {
+  if (!speaking) return;
+  const s = speaking;
+  speaking = null;
+  try { s.src.onended = null; s.src.stop(); } catch (e) { /* már leállt */ }
+  s.done();
+}
+
+/* ---------------- üzenetek ---------------- */
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!msg || msg.target !== 'offscreen') return;
-  if (msg.type === 'start') {
-    start(msg.streamId, msg.tabId)
-      .then(sendResponse)
-      .catch(e => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
-    return true;
-  }
-  if (msg.type === 'stop') {
-    stop(false).then(() => sendResponse({ ok: true }));
-    return true;
+  switch (msg.type) {
+    case 'start':
+      start(msg.streamId, msg.tabId)
+        .then(sendResponse)
+        .catch(e => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
+      return true;
+    case 'stop':
+      stop(false).then(() => sendResponse({ ok: true }));
+      return true;
+    case 'duck':
+      duck(msg.level);
+      sendResponse({ ok: true });
+      return;
+    case 'unduck':
+      unduck();
+      sendResponse({ ok: true });
+      return;
+    case 'play':
+      play(msg.audio)
+        .then(sendResponse)
+        .catch(e => sendResponse({ ok: false, error: (e && e.message) || String(e) }));
+      return true;
+    case 'hush':
+      hush();
+      sendResponse({ ok: true });
+      return;
   }
 });

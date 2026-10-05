@@ -367,6 +367,24 @@ async function handle(msg, sender) {
       return { ok: true };
     case 'tabaudio:status':
       return { ok: true, on: audioTab != null && audioTab === (tabId != null ? tabId : msg.tabId) };
+
+    /* Hang módban a felolvasás és a halkítás az offscreen dokumentumban
+       történik. Csak attól a laptól fogadjuk el, amelyiknek a hangját vesszük —
+       ha közben leállt a hang mód, "off" választ kap, és a lap a régi módon
+       (saját maga) játssza le. */
+    case 'tabaudio:play':
+    case 'tabaudio:duck':
+    case 'tabaudio:unduck':
+    case 'tabaudio:hush': {
+      if (audioTab == null || audioTab !== tabId) return { ok: false, reason: 'off' };
+      const sub = msg.type.slice('tabaudio:'.length);
+      try {
+        const r = await chrome.runtime.sendMessage({ target: 'offscreen', type: sub, audio: msg.audio, level: msg.level });
+        return r || { ok: false, reason: 'off' };
+      } catch (e) {
+        return { ok: false, reason: 'off', error: (e && e.message) || String(e) };
+      }
+    }
     case 'tabaudio:level':     // az offscreen dokumentumtól jön
     case 'tabaudio:ended':
       if (msg.tabId != null) {
