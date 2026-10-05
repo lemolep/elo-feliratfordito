@@ -8,6 +8,7 @@
 const fs = require('fs');
 const path = require('path');
 const src = fs.readFileSync(path.join(__dirname, '..', 'content', 'overlay.js'), 'utf8');
+const sentencesSrc = fs.readFileSync(path.join(__dirname, '..', 'lib', 'sentences.js'), 'utf8');
 
 function extract(name) {
   let start = src.indexOf('async function ' + name + '(');
@@ -32,7 +33,7 @@ function is(nev, kapott, vart) {
 /* video: null (nincs a felső keretben) vagy { time, paused }; vimeo: amit a Vimeo-figyelő ad */
 function world(recordingAtStart, video, vimeo) {
   const code = `
-    let tabAudioOn = false, sttLive = false, recording = ${recordingAtStart};
+    let tabAudioOn = false, sttLive = false, stopping = false, recording = ${recordingAtStart};
     const calls = [], segs = [];
     function setTabAudioUi(on) { tabAudioOn = on; if (!on) sttLive = false; }
     function setVisible() {}
@@ -45,12 +46,16 @@ function world(recordingAtStart, video, vimeo) {
     const document = { querySelector: () => (${video ? '{ currentTime: ' + video.time + ', paused: ' + !!video.paused + ' }' : 'null'}) };
     const watched = [];
     const LFT = { vimeo: { now: () => (${JSON.stringify(vimeo || null)}), watch: on => watched.push(on) } };
+    ${sentencesSrc}
+    let joiner = null;
+    ${extract('sttJoiner')}
+    ${extract('sttFlush')}
     ${extract('onTabAudioChanged')}
     ${extract('onSttResult')}
     ${extract('showInterim')}
     ${extract('currentVideo')}
     ${extract('speechVideoTime')}
-    return { onTabAudioChanged, onSttResult, calls, segs, el, watched, st: () => ({ tabAudioOn, recording }) };`;
+    return { onTabAudioChanged, onSttResult, sttFlush, calls, segs, el, watched, st: () => ({ tabAudioOn, recording }) };`;
   return new Function(code)();
 }
 
@@ -104,6 +109,27 @@ function world(recordingAtStart, video, vimeo) {
     const w = world(true, null, { time: 42, playing: false });
     w.onSttResult({ text: 'Hello.', final: true, duration: 2 });
     is('Vimeo-keretes lejátszónál a Vimeo idejét használja', w.segs[0].videoTime, 40);
+  }
+
+  /* ---------- mondatgyűjtés ---------- */
+  {
+    const w = world(true, null);
+    w.onSttResult({ text: "We've created this short intro video to help", final: true, at: 1000 });
+    is('fél mondat: még nem megy fordításra', w.segs.length, 0);
+    is('fél mondat: a halvány sorban látszik', w.el.interim.textContent, "We've created this short intro video to help");
+    w.onSttResult({ text: 'you get started', final: false });
+    is('köztes: a gyűjtött rész mögé kerül a halvány sorban', w.el.interim.textContent, "We've created this short intro video to help you get started");
+    w.onSttResult({ text: 'you get started offering the protocol.', final: true, at: 4000 });
+    is('mondatvégnél egy mondatként megy fordításra',
+      w.segs.map(x => x.text), ["We've created this short intro video to help you get started offering the protocol."]);
+    is('a sor ideje az első szakasz kezdete', w.segs[0].t, 1000);
+  }
+  {
+    const w = world(false, null);
+    await w.onTabAudioChanged(true);
+    w.onSttResult({ text: 'and assign programs to remote clients', final: true, at: 1 });
+    await w.onTabAudioChanged(false);
+    is('kikapcsoláskor a félkész mondat sem vész el', w.segs.map(x => x.text), ['and assign programs to remote clients']);
   }
 
   /* ---------- be- és kikapcsolás ---------- */

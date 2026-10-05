@@ -7,6 +7,7 @@ const CS_FILES = [
   'lib/store.js',
   'lib/selector.js',
   'lib/segmenter.js',
+  'lib/sentences.js',
   'content/overlay-css.js',
   'content/capture.js',
   'content/vimeo.js',

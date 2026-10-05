@@ -95,6 +95,31 @@ const blob = n => ({ size: n });
   is('a lezárás megvárja a kapcsolat végét', closes.length, 1);
   is('rendes lezárás: nincs hibakód', stt.closeToCode(closes[0]), null);
 
+  /* ---------- kényszerített lezárás (háttérzene) ---------- */
+  {
+    sockets = [];
+    const s2 = stt.open('deepgram', { key: KEY, forceFinalizeMs: 40 }, {});
+    const w2 = sockets[0];
+    w2._open();
+    const finals = () => w2.sent.filter(d => typeof d === 'string' && JSON.parse(d).type === 'Finalize').length;
+    await new Promise(r => setTimeout(r, 80));
+    is('köztes szöveg nélkül nem kér lezárást', finals(), 0);
+    w2._msg({ type: 'Results', is_final: false, channel: { alternatives: [{ transcript: 'music and talking' }] } });
+    await new Promise(r => setTimeout(r, 120));
+    is('ha sokáig nem jön lezárás, de hall valamit: Finalize', finals() >= 1, true);
+    w2._msg({ type: 'Results', is_final: true, channel: { alternatives: [{ transcript: 'music and talking.' }] } });
+    const after = finals();
+    await new Promise(r => setTimeout(r, 120));
+    is('a lezárt szakasz után nem kér újra', finals(), after);
+    w2._msg({ type: 'Results', is_final: false, channel: { alternatives: [{ transcript: 'next one' }] } });
+    w2._msg({ type: 'UtteranceEnd', last_word_end: 3.1 });
+    is('UtteranceEnd-re azonnal kér lezárást', finals(), after + 1);
+    w2._msg({ type: 'UtteranceEnd', last_word_end: 3.2 });
+    is('… de csak ha van lezáratlan szöveg', finals(), after + 1);
+    w2._drop(1000);
+    await s2.close();
+  }
+
   /* ---------- bezárási kódok ---------- */
   is('fel sem épült → kulcs', stt.closeToCode({ code: 1006, wasOpen: false }), 'key');
   is('1011 → nem kapott hangot', stt.closeToCode({ code: 1011, wasOpen: true }), 'noaudio');

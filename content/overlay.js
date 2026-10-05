@@ -576,13 +576,21 @@ globalThis.LFT = globalThis.LFT || {};
   }
 
   async function stopRec(openDialog) {
-    setRecUi(false);
-    ttsStop();
-    /* A rögzítés leállítása a hang módot is leállítja: a Deepgram percdíjas,
-       és rögzítés nélkül a felismert mondatok úgyis elvesznének. */
-    if (tabAudioOn) {
-      await bg({ type: 'tabaudio:stop' });
-      onTabAudioChanged(false);
+    stopping = true;
+    try {
+      /* A rögzítés leállítása a hang módot is leállítja: a Deepgram percdíjas.
+         Sorrend: ELŐBB a hang, és csak utána a rögzítés — a Deepgram a lezáráskor
+         küldi el az utolsó mondatot, aminek még a futó rögzítésbe kell érkeznie. */
+      if (tabAudioOn) {
+        await bg({ type: 'tabaudio:stop' });
+        await new Promise(r => setTimeout(r, 300));   // az utolsó találat még úton lehet
+        sttFlush();
+      }
+      setRecUi(false);
+      ttsStop();
+      if (tabAudioOn) onTabAudioChanged(false);
+    } finally {
+      stopping = false;
     }
     await bg({ type: 'relay:frames', payload: { type: 'capture:stop' } });
     await flushSave(Date.now());
@@ -700,6 +708,7 @@ globalThis.LFT = globalThis.LFT || {};
      nem indul — a hangfelismerés percdíjas lesz. */
   let tabAudioOn = false;
   let sttLive = false;        // él-e a kapcsolat a beszédfelismerővel
+  let stopping = false;       // épp leáll a rögzítés
 
   function setTabAudioUi(on) {
     tabAudioOn = on;
@@ -722,8 +731,8 @@ globalThis.LFT = globalThis.LFT || {};
       if (!recording) await startRec();      // a startRec hang módban nem indít feliratkeresést
       else bg({ type: 'relay:frames', payload: { type: 'capture:stop' } });
     } else {
-      showInterim('');
-      if (recording) {
+      sttFlush();
+      if (recording && !stopping) {   // leállítás közben ne induljon újra a feliratkeresés
         bg({ type: 'relay:frames', payload: { type: 'capture:start', flushDelay: settings.flushDelay } });
       }
     }
@@ -735,13 +744,38 @@ globalThis.LFT = globalThis.LFT || {};
      mert másodpercenként többször jön, és felélné a DeepL keretet. */
   function onSttResult(r) {
     if (!r || !r.text) return;
-    if (!r.final) { showInterim(r.text); return; }
+    const j = sttJoiner();
+    if (!r.final) {
+      // a halvány sorban a már gyűjtött, még befejezetlen mondat is látszik
+      showInterim((j.buf ? j.buf + ' ' : '') + r.text);
+      return;
+    }
+    j.push(r.text, { at: r.at, duration: r.duration });
+    showInterim(j.buf);
+  }
+
+  /* A Deepgram ott zár le egy szakaszt, ahol a beszélő levegőt vesz — sokszor
+     mondat közben. A fél mondat rosszul fordul, ezért mondatvégig gyűjtjük
+     (lib/sentences.js), és csak kész mondatot küldünk fordításra. */
+  let joiner = null;
+  function sttJoiner() {
+    if (!joiner) {
+      joiner = new LFT.SentenceJoiner({
+        onSentence: (text, meta) => onSegment({
+          text: text,
+          t: meta.at || Date.now(),
+          videoTime: speechVideoTime(meta)
+        })
+      });
+    }
+    return joiner;
+  }
+
+  /* A gyűjtőben maradt félkész mondatot is továbbadja — leállításkor, hogy
+     az utolsó mondat ne vesszen el. */
+  function sttFlush() {
+    if (joiner) joiner.flush();
     showInterim('');
-    onSegment({
-      text: r.text,
-      t: r.at || Date.now(),
-      videoTime: speechVideoTime(r)
-    });
   }
 
   /* Hol tart a videó: ha a lejátszó a felső keretben van, onnan; ha
