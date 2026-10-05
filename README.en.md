@@ -74,6 +74,28 @@ This uses DeepL's own glossary feature rather than a find-and-replace afterwards
 If the upload fails for any reason, translation **continues without the glossary** — nothing
 breaks — and the Check button reports the error.
 
+### Hearing fixes
+
+The glossary steers the **translation**, but if recognition (or an auto-generated subtitle)
+**wrote the word down wrong** in the first place, DeepL cannot fix it: it translates what it
+gets. That is what Settings → **Hearing fixes** is for — it replaces the word **before**
+translation:
+
+```
+Unite → Unyte
+MyUnite → MyUnyte
+safe and sound protocol → Safe and Sound Protocol
+```
+
+`→`, `->`, `=` and a tab all work as separators. While you type it shows how many rules are
+valid and which lines are not.
+
+- **Whole words only**, case-insensitive: the `Unite` rule leaves *United* alone. So a
+  compound word (`MyUnite`) needs its own line.
+- **Applies in both modes**: YouTube's auto-generated subtitles mishear the same way.
+- In audio mode the **correct forms** are also sent to Deepgram as key terms, so recognition
+  itself gets better at them.
+
 ## 3. Speech (Google Cloud TTS) — optional
 
 The translated lines can also be read aloud as they arrive.
@@ -207,10 +229,12 @@ half a sentence translates badly. If no sentence end arrives for 2.5 seconds, th
 anyway. With background music (no silence for Deepgram to detect the end of a segment) it
 requests finalisation itself after 7 seconds.
 
-### Accuracy: the glossary helps here too
+### Accuracy: the glossary and hearing fixes help here too
 
-The source side of your glossary is also sent to Deepgram as **key terms**, so brand and
-technical names are recognised correctly, not only translated correctly. For example:
+The source side of your glossary and the correct forms from your **hearing fixes** are sent to
+Deepgram as **key terms**, so brand and technical names are recognised correctly, not only
+translated correctly. If it still mishears a word (Deepgram heard "Unyte" as "Unite"), the
+**hearing fixes** list replaces it before translation (see section 2). Glossary example:
 
 ```
 Unyte = Unyte
@@ -399,7 +423,7 @@ the saved file, which come from the video's playback position.
 | *"Deepgram refused the connection"* | Almost always the key. Settings → Speech recognition → **Test**. |
 | *"No Deepgram key"* | The audio plays but nothing is recognised: add the key in the settings. |
 | *"Deepgram received no audio"* | Is the video playing? It may be muted or paused. |
-| A brand name is misspelled (e.g. *Unite* instead of *Unyte*) | Add it to the glossary (`Unyte = Unyte`): recognition gets it as a key term too. |
+| A brand name is misspelled (e.g. *Unite* instead of *Unyte*) | Settings → **Hearing fixes**: `Unite → Unyte` (and `MyUnite → MyUnyte`). It replaces the word before translation, and Deepgram gets the correct form as a key term. |
 | Diagnostics reports `videó: 0` while a video is playing | The player is in a cross-origin iframe. Diagnostics lists the embedded frames (largest first) — press *Allow* next to it, then F5. In this case the picker does not work over the video either: the click stays inside the iframe. |
 | "(not translated)" next to the lines | Check the message in the window's status bar: bad key (403) or exhausted quota (456). The original text is still recorded. |
 | Subtitles are lost mid-session | The player replaced the element. Pick again, or delete the rule: Settings → *Selected subtitle elements*, or the *Delete rule* button on the Diagnostics card. |

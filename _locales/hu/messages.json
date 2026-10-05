@@ -856,5 +856,23 @@
   },
   "opt_download_srt_tip": {
     "message": "Feliratfájl a fordítással, a videó idejével — betölthető lejátszóba vagy videószerkesztőbe."
+  },
+  "opt_corr_title": {
+    "message": "Hallásjavítás"
+  },
+  "opt_corr_hint": {
+    "message": "Ha a felismerés (vagy egy automatikus felirat) rendszeresen <b>félrehall</b> egy szót, itt megadhatod, mire cserélje, <b>mielőtt</b> a mondat fordításra megy. Soronként egy szabály: <code>Unite → Unyte</code>. Elválasztó: <code>→</code>, <code>-&gt;</code>, <code>=</code> vagy tabulátor. Csak egész szóra illeszt: a <code>Unite</code> szabály a <i>United</i>-et nem bántja — ezért a <code>MyUnite → MyUnyte</code> külön sor kell. A helyes alakok hang módban a Deepgramhoz is eljutnak kulcskifejezésként."
+  },
+  "opt_corr_ph": {
+    "message": "Unite → Unyte\nMyUnite → MyUnyte\nsafe and sound protocol → Safe and Sound Protocol"
+  },
+  "opt_corr_count": {
+    "message": "$1 szabály érvényes."
+  },
+  "opt_corr_count_one": {
+    "message": "1 szabály érvényes."
+  },
+  "opt_corr_bad": {
+    "message": "Hibás sorok (nincs bennük elválasztó vagy üres az egyik oldal): $1"
   }
 }

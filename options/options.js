@@ -283,6 +283,26 @@ $('dgkeyTest').addEventListener('click', async () => {
   else result('sttResult', (res && res.error) || LFT.t('stt_err_other'), 'err');
 });
 
+/* ---------------- hallásjavítás ---------------- */
+
+/* Gépelés közben azonnal megmondja, hány szabály érvényes, és melyik sor hibás. */
+function showCorrections() {
+  const r = LFT.corrections.parse($('corrections').value);
+  if (r.bad.length) {
+    result('corrResult', LFT.tn('opt_corr_count', r.rules.length, [String(r.rules.length)]) + ' ' +
+      LFT.t('opt_corr_bad', [r.bad.join(', ')]), 'err');
+  } else if (r.rules.length) {
+    result('corrResult', LFT.tn('opt_corr_count', r.rules.length, [String(r.rules.length)]), 'ok');
+  } else {
+    result('corrResult', '', '');
+  }
+}
+
+$('corrections').addEventListener('input', () => {
+  queueSave({ corrections: $('corrections').value });
+  showCorrections();
+});
+
 /* ---------------- szakszótár ---------------- */
 
 $('glossary').addEventListener('input', () => {
@@ -571,6 +591,8 @@ async function fillForm() {
   $('opVal').textContent = settings.opacity + '%';
   $('bilingual').checked = !!settings.bilingual;
   $('glossary').value = settings.glossary || '';
+  $('corrections').value = settings.corrections || '';
+  showCorrections();
 
   // előbb a gyorsítótárazott (vagy a beépített) lista, hogy azonnal legyen mit választani
   fillLangs((await LFT.store.getLangs()) || LFT.deepl.FALLBACK_TARGETS, settings.targetLang);

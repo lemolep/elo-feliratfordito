@@ -482,7 +482,7 @@ globalThis.LFT = globalThis.LFT || {};
       id: ++seq,
       t: payload.t || Date.now(),
       videoTime: payload.videoTime,
-      src: payload.text,
+      src: fixHearing(payload.text),     // hallásjavítás — mielőtt fordításra megy
       hu: null,
       err: null
     };
@@ -869,9 +869,16 @@ globalThis.LFT = globalThis.LFT || {};
     return Math.max(0, cur.time - back);
   }
 
+  /* A hallásjavító lista (lib/corrections.js) a beállításokból. Mindkét
+     módban érvényes: a YouTube automatikus felirata is félrehall. */
+  function fixHearing(text) {
+    if (!LFT.corrections || !settings || !settings.corrections) return text;
+    return LFT.corrections.fixer(settings.corrections)(text);
+  }
+
   function showInterim(text) {
     if (!el.interim) return;
-    el.interim.textContent = text || '';
+    el.interim.textContent = text ? fixHearing(text) : '';
     el.interim.hidden = !text;
     scrollIfStuck();
   }

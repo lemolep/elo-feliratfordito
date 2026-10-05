@@ -856,5 +856,23 @@
   },
   "opt_download_srt_tip": {
     "message": "A subtitle file with the translation, timed to the video — load it into a player or a video editor."
+  },
+  "opt_corr_title": {
+    "message": "Hearing fixes"
+  },
+  "opt_corr_hint": {
+    "message": "If recognition (or an auto-generated subtitle) keeps <b>mishearing</b> a word, tell it here what to replace it with <b>before</b> the sentence goes to translation. One rule per line: <code>Unite → Unyte</code>. Separator: <code>→</code>, <code>-&gt;</code>, <code>=</code> or a tab. Whole words only: the <code>Unite</code> rule leaves <i>United</i> alone — so <code>MyUnite → MyUnyte</code> needs its own line. In audio mode the correct forms are also sent to Deepgram as key terms."
+  },
+  "opt_corr_ph": {
+    "message": "Unite → Unyte\nMyUnite → MyUnyte\nsafe and sound protocol → Safe and Sound Protocol"
+  },
+  "opt_corr_count": {
+    "message": "$1 rules are valid."
+  },
+  "opt_corr_count_one": {
+    "message": "1 rule is valid."
+  },
+  "opt_corr_bad": {
+    "message": "Invalid lines (no separator, or one side is empty): $1"
   }
 }

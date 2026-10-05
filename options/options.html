@@ -164,6 +164,14 @@
     <p class="hint" data-i18n="opt_gloss_note"></p>
   </section>
 
+  <!-- Hallásjavítás -->
+  <section>
+    <h2 data-i18n="opt_corr_title"></h2>
+    <p class="hint" data-i18n-html="opt_corr_hint"></p>
+    <textarea id="corrections" rows="5" spellcheck="false" data-i18n-ph="opt_corr_ph"></textarea>
+    <div id="corrResult" class="result"></div>
+  </section>
+
   <!-- 4. Célpontok -->
   <section>
     <h2 data-i18n="opt_s4_title"></h2>
@@ -215,6 +223,7 @@
 <script src="../lib/deepl.js"></script>
 <script src="../lib/tts.js"></script>
 <script src="../lib/srt.js"></script>
+<script src="../lib/corrections.js"></script>
 <script src="options.js"></script>
 </body>
 </html>

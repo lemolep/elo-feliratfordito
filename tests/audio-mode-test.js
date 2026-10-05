@@ -9,6 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const src = fs.readFileSync(path.join(__dirname, '..', 'content', 'overlay.js'), 'utf8');
 const sentencesSrc = fs.readFileSync(path.join(__dirname, '..', 'lib', 'sentences.js'), 'utf8');
+const correctionsSrc = fs.readFileSync(path.join(__dirname, '..', 'lib', 'corrections.js'), 'utf8');
 
 function extract(name) {
   let start = src.indexOf('async function ' + name + '(');
@@ -31,7 +32,7 @@ function is(nev, kapott, vart) {
 }
 
 /* video: null (nincs a felső keretben) vagy { time, paused }; vimeo: amit a Vimeo-figyelő ad */
-function world(recordingAtStart, video, vimeo) {
+function world(recordingAtStart, video, vimeo, corrections) {
   const code = `
     let tabAudioOn = false, sttLive = false, stopping = false, recording = ${recordingAtStart};
     const calls = [], segs = [];
@@ -39,7 +40,7 @@ function world(recordingAtStart, video, vimeo) {
     function setVisible() {}
     async function startRec() { calls.push('startRec'); recording = true; }
     function bg(m) { calls.push(m.type + (m.payload ? ':' + m.payload.type : '')); return Promise.resolve({ ok: true }); }
-    const settings = { flushDelay: 1200 };
+    const settings = { flushDelay: 1200, corrections: ${JSON.stringify(corrections || '')} };
     const el = { interim: { textContent: '', hidden: true } };
     function scrollIfStuck() {}
     function onSegment(p) { segs.push(p); }
@@ -47,6 +48,8 @@ function world(recordingAtStart, video, vimeo) {
     const watched = [];
     const LFT = { vimeo: { now: () => (${JSON.stringify(vimeo || null)}), watch: on => watched.push(on) } };
     ${sentencesSrc}
+    ${correctionsSrc}
+    ${extract('fixHearing')}
     let joiner = null;
     ${extract('sttJoiner')}
     ${extract('sttFlush')}
@@ -130,6 +133,15 @@ function world(recordingAtStart, video, vimeo) {
     w.onSttResult({ text: 'and assign programs to remote clients', final: true, at: 1 });
     await w.onTabAudioChanged(false);
     is('kikapcsoláskor a félkész mondat sem vész el', w.segs.map(x => x.text), ['and assign programs to remote clients']);
+  }
+
+  /* ---------- hallásjavítás ---------- */
+  {
+    const w = world(true, null, null, 'Unite → Unyte');
+    w.onSttResult({ text: 'The Unite ILS', final: false });
+    is('a halvány sorban már javítva látszik', w.el.interim.textContent, 'The Unyte ILS');
+    const seg = extract('onSegment');
+    is('a fordításra menő mondatot az onSegment javítja (mindkét módban)', /src: fixHearing\(payload\.text\)/.test(seg), true);
   }
 
   /* ---------- be- és kikapcsolás ---------- */

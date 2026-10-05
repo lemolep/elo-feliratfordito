@@ -1,6 +1,6 @@
 /* Háttérszolgáltatás: DeepL hívások, felvételek tárolása, üzenettovábbítás
    a frame-ek között, content scriptek futásidejű regisztrációja. */
-importScripts('/lib/i18n.js', '/lib/store.js', '/lib/deepl.js', '/lib/tts.js', '/lib/stt.js');
+importScripts('/lib/i18n.js', '/lib/store.js', '/lib/deepl.js', '/lib/tts.js', '/lib/stt.js', '/lib/corrections.js');
 
 const CS_FILES = [
   'lib/i18n.js',
@@ -9,6 +9,7 @@ const CS_FILES = [
   'lib/segmenter.js',
   'lib/sentences.js',
   'lib/srt.js',
+  'lib/corrections.js',
   'content/overlay-css.js',
   'content/capture.js',
   'content/vimeo.js',
@@ -338,12 +339,17 @@ async function tabAudioStop() {
 /* A beszédfelismerés beállításai az offscreen dokumentumnak. A kulcs csak a
    bővítményen belül mozog (service worker → offscreen), a lapra nem jut el.
    Kulcs nélkül null: ilyenkor a hang megy, csak felismerés nincs.
-   A szakszótár angol oldalai kulcskifejezésként mennek a Deepgramnak, hogy a
-   márka- és szakneveket már a felismerés is jól írja le. */
+   A szakszótár angol oldalai és a hallásjavító lista helyes alakjai
+   kulcskifejezésként mennek a Deepgramnak, hogy a márka- és szakneveket már a
+   felismerés is jól írja le. */
 async function sttConfig() {
   const s = await LFT.store.getSettingsWithKeys();
   if (!s.deepgramKey) return null;
-  const terms = parseGlossary(s.glossary).entries.map(e => e.a);
+  const terms = [];
+  const seen = new Set();
+  const add = t => { const k = String(t).toLowerCase(); if (t && !seen.has(k)) { seen.add(k); terms.push(t); } };
+  LFT.corrections.parse(s.corrections).rules.forEach(r => add(r.to));   // ezek elöl: épp ezeket hallja félre
+  parseGlossary(s.glossary).entries.forEach(e => add(e.a));
   return { provider: 'deepgram', key: s.deepgramKey, model: 'nova-3', language: 'en', keyterms: terms };
 }
 

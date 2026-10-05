@@ -76,6 +76,28 @@ Ez a DeepL saját szótárfunkciója, nem utólagos csere: a fordítás **közbe
 Ha a feltöltés bármi okból nem sikerül, a fordítás **szótár nélkül megy tovább** — nem áll
 meg emiatt semmi —, a hibát pedig az Ellenőrzés gomb kiírja.
 
+### Hallásjavítás
+
+A szakszótár a **fordítást** irányítja, de ha a felismerés (vagy egy automatikus felirat)
+eleve **rosszul írta le** a szót, azt a DeepL már nem tudja megjavítani: ő azt fordítja, amit
+kap. Ilyenkor kell a Beállítások → **Hallásjavítás** lista, ami a szót a fordítás **előtt**
+cseréli:
+
+```
+Unite → Unyte
+MyUnite → MyUnyte
+safe and sound protocol → Safe and Sound Protocol
+```
+
+Elválasztónak a `→`, a `->`, az `=` és a tabulátor is jó. Gépelés közben kiírja, hány szabály
+érvényes, és melyik sor hibás.
+
+- **Csak egész szóra illeszt**, kis- és nagybetűtől függetlenül: a `Unite` szabály a
+  *United*-et nem bántja. Ezért az összetett szónak (`MyUnite`) külön sor kell.
+- **Mindkét módban érvényes**: a YouTube automatikus felirata is ugyanígy félrehall.
+- Hang módban a **helyes alakok** a Deepgramhoz is eljutnak kulcskifejezésként, így a
+  felismerés idővel maga is egyre jobban írja őket.
+
 ## 3. Felolvasás (Google Cloud TTS) — nem kötelező
 
 A lefordított sorokat hangosan is felolvastathatod, ahogy megérkeznek.
@@ -213,10 +235,13 @@ rosszul fordulna. Ha 2,5 másodpercig nem jön mondatvég, a szöveg akkor is to
 Háttérzene mellett (ahol nincs csend, amiből a Deepgram a szakasz végét felismerné) 7
 másodperc után maga kéri a lezárást.
 
-### Pontosság: a szakszótár itt is segít
+### Pontosság: a szakszótár és a hallásjavítás itt is segít
 
-A szakszótár angol oldalai **kulcskifejezésként** a Deepgramhoz is eljutnak, így a márka- és
-szakneveket már a felismerés is jól írja le, nem csak a fordítás. Például:
+A szakszótár angol oldalai és a **hallásjavító lista** helyes alakjai **kulcskifejezésként**
+a Deepgramhoz is eljutnak, így a márka- és szakneveket már a felismerés is jól írja le, nem
+csak a fordítás. Ha ennek ellenére félrehall egy szót (a Deepgram a „Unyte"-ot „Unite"-nak
+hallotta), azt a **hallásjavító lista** a fordítás előtt kicseréli (lásd a 2. fejezetet).
+Szakszótár-példa:
 
 ```
 Unyte = Unyte
@@ -407,7 +432,7 @@ videó lejátszási idejéből írjuk.
 | *„A Deepgram nem fogadta el a kapcsolatot"* | Szinte mindig a kulcs. Beállítások → Hangfelismerés → **Teszt**. |
 | *„Nincs Deepgram kulcs"* | A hang szól, de felismerés nincs: add meg a kulcsot a beállításokban. |
 | *„A Deepgram nem kapott hangot"* | Szól a videó? Lehet, hogy le van némítva, vagy áll. |
-| Márkanevet rosszul ír (pl. *Unite* az *Unyte* helyett) | Vedd fel a szakszótárba (`Unyte = Unyte`): a felismerés is megkapja kulcskifejezésként. |
+| Márkanevet rosszul ír (pl. *Unite* az *Unyte* helyett) | Beállítások → **Hallásjavítás**: `Unite → Unyte` (és `MyUnite → MyUnyte`). Ez a fordítás előtt cserél, és a helyes alakot kulcskifejezésként a Deepgram is megkapja. |
 | A Diagnosztika `videó: 0`-t ír, pedig fut a videó | A lejátszó másik domainről betöltött iframe-ben van. A Diagnosztika felsorolja a beágyazott kereteket (a legnagyobbat elöl) — nyomd meg mellette az *Engedélyezem* gombot, majd F5. Ilyenkor a célzó sem működik a videó fölött: a kattintás az iframe-en belül marad, a főoldal nem kapja meg. |
 | „(nincs fordítás)" a sorok mellett | Nézd meg az ablak alsó sávjában a hibaüzenetet: rossz kulcs (403) vagy elfogyott keret (456). Az eredeti szöveg ilyenkor is rögzül. |
 | Elveszik a felirat menet közben | A lejátszó kicserélte az elemet. Célozz újra, vagy töröld a szabályt: Beállítások → *Kijelölt feliratelemek*, illetve a **Diagnosztika** kártyáján a *Szabály törlése* gombbal. |
