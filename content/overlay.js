@@ -937,7 +937,11 @@ globalThis.LFT = globalThis.LFT || {};
       case 'picked': endPicking(); return;
       case 'stt:status':
         sttLive = msg.state === 'open';
-        if (sttLive) setStatus(LFT.t('ov_stt_listening'), 'ok');
+        if (sttLive) {
+          // fogyóban a kredit: a service worker ezt a "Hallgatom…" mellé teszi
+          if (msg.warn) setStatus(LFT.t('ov_stt_listening') + ' · ' + msg.warn, 'warn');
+          else setStatus(LFT.t('ov_stt_listening'), 'ok');
+        }
         else { showInterim(''); if (msg.text) setStatus(msg.text, 'warn'); }
         return;
       case 'stt:result':

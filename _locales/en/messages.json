@@ -907,5 +907,35 @@
   },
   "opt_usage_reset_confirm": {
     "message": "Sure? Click again"
+  },
+  "opt_usage_left": {
+    "message": "Credit left"
+  },
+  "opt_usage_left_hours": {
+    "message": "about $1 hours of audio mode"
+  },
+  "opt_usage_left_unknown": {
+    "message": "Credit left: enter your balance below and it will be calculated from then on."
+  },
+  "opt_balance_ph": {
+    "message": "Balance from the Deepgram console, e.g. 199.87"
+  },
+  "opt_balance_save": {
+    "message": "Set balance"
+  },
+  "opt_balance_hint": {
+    "message": "You can see it in the header of the <a href=\"https://console.deepgram.com\" target=\"_blank\" rel=\"noopener\">Deepgram console</a>: <i>Credit: $…</i>. Enter it, and from then on the extension subtracts what the meter counts. If it ever drifts, just enter it again. Leave it empty to clear it."
+  },
+  "opt_balance_saved": {
+    "message": "Balance set: $1. Usage is subtracted from this from now on."
+  },
+  "opt_balance_cleared": {
+    "message": "Balance cleared."
+  },
+  "opt_balance_bad": {
+    "message": "That does not look like a number — enter it like 199.87"
+  },
+  "ov_low_credit": {
+    "message": "Deepgram credit is running low: ≈ $1 (about $2 hours)"
   }
 }

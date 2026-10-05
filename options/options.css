@@ -117,6 +117,7 @@ h3.sub3 { font-size: 13px; margin: 16px 0 6px; color: #c3cbd6; }
 .usage { font-size: 13px; line-height: 1.7; margin-bottom: 4px; }
 .usage b { color: #fff; font-variant-numeric: tabular-nums; }
 .usage .muted { color: #8b95a3; }
+.usage .low b { color: #d1a13f; }
 a { color: #6ea8ff; }
 .result.ok { color: #6fd8a8; }
 .result.err { color: #ef8b80; }

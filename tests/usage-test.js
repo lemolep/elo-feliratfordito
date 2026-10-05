@@ -38,10 +38,63 @@ const NOV2 = new Date(2026, 10, 2, 9, 0).getTime();
   is('nem módosítja a bemenetet', u0.total, 10);
 }
 is('hónapkulcs a helyi naptár szerint', monthKey(new Date(2026, 0, 31, 23, 59).getTime()), '2026-01');
+
+/* ---------- hátralévő kredit ---------- */
+{
+  const { withBalance, remainingUsd, parseUsd } = g.LFT.store;
+  const P = 0.0077;
+  let u = mergeUsage(null, 600, OCT5);                          // 10 perc még az egyenleg megadása ELŐTT
+  is('egyenleg nélkül nincs hátralévő', remainingUsd(u, P), null);
+  u = withBalance(u, 199.87, OCT5 + 1000);
+  is('a megadott egyenleg', remainingUsd(u, P), 199.87);
+  is('a korábbi mérés nem vonódik le kétszer (benne van a konzol számában)', u.balance.used, 0);
+  is('az egyenleg megadása nem nullázza a mérőt', u.total, 600);
+  u = mergeUsage(u, 3600, OCT5 + 2000);                        // utána 60 perc
+  is('az azóta mért idő levonódik (60 perc ≈ 0,462 $)', Math.round(remainingUsd(u, P) * 1000) / 1000, 199.408);
+  is('… a mérő közben tovább számol', u.total, 4200);
+  is('nem megy nulla alá', remainingUsd(withBalance(null, 0.01, OCT5) && mergeUsage(withBalance(null, 0.01, OCT5), 3600, OCT5), P), 0);
+  is('új egyenleg beírása újrakezdi a levonást', withBalance(u, 150, OCT5).balance, { usd: 150, at: OCT5, used: 0 });
+  is('üres/érvénytelen egyenleg törli', withBalance(u, NaN, OCT5).balance, undefined);
+
+  is('szám: 199,87', parseUsd('199,87'), 199.87);
+  is('szám: $199.87', parseUsd('$199.87'), 199.87);
+  is('szám: 199.87 $', parseUsd('199.87 $'), 199.87);
+  is('szám: 200', parseUsd('200'), 200);
+  is('szám: 1.234,56', parseUsd('1.234,56'), 1234.56);
+  is('szám: 200 USD', parseUsd('200 USD'), 200);
+  is('értelmetlen: NaN', isNaN(parseUsd('kétszáz')), true);
+  is('negatív: NaN', isNaN(parseUsd('-5')), true);
+}
 is('sérült tárolt érték: újrakezdi', mergeUsage('szemét', 5, OCT5).total, 5);
 
 /* ---------- az offscreen jelenti az időt ---------- */
 (async () => {
+  /* ---------- a tárolón át: nullázás, egyenleg ---------- */
+  {
+    const mem = {};
+    const chromeMock = {
+      runtime: { id: 'x' },
+      storage: { local: {
+        get: async k => ({ [k]: mem[k] }),
+        set: async o => { Object.assign(mem, o); },
+        remove: async ks => { [].concat(ks).forEach(k => delete mem[k]); }
+      } }
+    };
+    const g2 = { LFT: {} };
+    new Function('globalThis', 'LFT', 'chrome', fs.readFileSync(ROOT + 'lib/store.js', 'utf8'))(g2, g2.LFT, chromeMock);
+    const st = g2.LFT.store;
+    await st.addUsage(120, OCT5);
+    await st.setBalance(200, OCT5);
+    await st.addUsage(60, OCT5);
+    is('tárolón át: 1 perc levonva', Math.round(st.remainingUsd(await st.getUsage(), 0.0077) * 10000) / 10000, 199.9923);
+    await st.resetUsage();
+    const after = await st.getUsage();
+    is('a mérő nullázása nem törli az egyenleget', [after.total, after.balance.usd, after.balance.used], [0, 200, 60]);
+    await st.setBalance(NaN);
+    await st.resetUsage();
+    is('egyenleg nélkül a nullázás mindent töröl', await st.getUsage(), null);
+  }
+
   let handlers = null;
   const sent = [];
   class FakeCtx {

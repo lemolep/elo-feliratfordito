@@ -277,6 +277,11 @@ csendet is, mert a Deepgram azt is számolja). Ez becslés; a pontos egyenleg a
 [Deepgram konzolon](https://console.deepgram.com) van — a bővítmény kulcsa szándékosan nem
 tudja lekérdezni. A mérő gépenként számol, és nullázható.
 
+**Hátralévő kredit:** írd be egyszer, mennyit mutat a konzol fejléce (*Credit: $…*), és a
+bővítmény onnantól ebből vonja le a mért időt: kiírja, kb. hány dollár és hány óra hang mód
+van még hátra. Ha **10 dollár alá** csökken, a hang mód indításakor a lebegő ablak is szól.
+Ha a becslés idővel eltérne a konzoltól, írd be újra az egyenleget.
+
 ## 6. Használat
 
 1. Menj az oldalra, indítsd el a videót, és **kapcsold be a feliratot (CC)** a lejátszóban

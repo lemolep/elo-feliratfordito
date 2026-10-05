@@ -271,6 +271,11 @@ included, since Deepgram bills for it too). It is an estimate; your exact balanc
 [Deepgram console](https://console.deepgram.com) — the extension's key deliberately cannot read
 it. The meter counts per machine and can be reset.
 
+**Credit left:** enter once what the console header shows (*Credit: $…*), and from then on the
+extension subtracts the measured time from it: it shows roughly how many dollars and hours of
+audio mode are left. If it drops **below $10**, the floating window warns you when audio mode
+starts. If the estimate ever drifts from the console, just enter the balance again.
+
 ## 6. Usage
 
 1. Open the page, start the video and **turn on subtitles (CC)** in the player

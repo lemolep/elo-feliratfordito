@@ -907,5 +907,35 @@
   },
   "opt_usage_reset_confirm": {
     "message": "Biztosan? Kattints újra"
+  },
+  "opt_usage_left": {
+    "message": "Hátralévő kredit"
+  },
+  "opt_usage_left_hours": {
+    "message": "kb. $1 óra hang mód"
+  },
+  "opt_usage_left_unknown": {
+    "message": "Hátralévő kredit: add meg lent az egyenleged, és innentől kiszámolja."
+  },
+  "opt_balance_ph": {
+    "message": "Egyenleg a Deepgram konzolról, pl. 199,87"
+  },
+  "opt_balance_save": {
+    "message": "Egyenleg beállítása"
+  },
+  "opt_balance_hint": {
+    "message": "A <a href=\"https://console.deepgram.com\" target=\"_blank\" rel=\"noopener\">Deepgram konzol</a> fejlécében látod: <i>Credit: $…</i>. Írd be, és a bővítmény innentől ebből vonja le, amit a mérő számol. Ha egyszer eltérne, egyszerűen írd be újra. Üresen hagyva törli."
+  },
+  "opt_balance_saved": {
+    "message": "Egyenleg beállítva: $1. Innentől ebből vonja le a használatot."
+  },
+  "opt_balance_cleared": {
+    "message": "Az egyenleg törölve."
+  },
+  "opt_balance_bad": {
+    "message": "Nem értem a számot — írd be így: 199,87"
+  },
+  "ov_low_credit": {
+    "message": "kevés a Deepgram kredit: ≈ $1 (kb. $2 óra)"
   }
 }

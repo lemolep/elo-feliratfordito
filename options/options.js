@@ -300,32 +300,80 @@ function fmtCost(sec) {
   return new Intl.NumberFormat(LFT.i18n.uiLang(), { style: 'currency', currency: 'USD' }).format(usd);
 }
 
+const LOW_CREDIT_USD = 10;   // ez alatt figyelmeztetünk (a service workerben is ennyi)
+
+function fmtUsd(usd) {
+  return new Intl.NumberFormat(LFT.i18n.uiLang(), { style: 'currency', currency: 'USD' }).format(usd);
+}
+
+/* Hátralévő kredit → hány óra hang mód fér még bele. */
+function fmtHoursLeft(usd) {
+  const h = usd / LFT.stt.PROVIDERS.deepgram.pricePerMin / 60;
+  const loc = LFT.i18n.uiLang();
+  return LFT.t('opt_usage_left_hours', [h < 10 ? h.toLocaleString(loc, { maximumFractionDigits: 1 }) : Math.round(h).toLocaleString(loc)]);
+}
+
 async function renderUsage() {
   const box = $('sttUsage');
   const u = await LFT.store.getUsage();
-  if (!u || !u.total) {
-    box.innerHTML = '<span class="muted"></span>';
-    box.firstChild.textContent = LFT.t('opt_usage_none');
-    $('usageReset').hidden = true;
-    return;
-  }
-  const month = (u.months || {})[LFT.store.monthKey(Date.now())] || 0;
-  const rows = [
-    [LFT.t('opt_usage_total'), fmtMinutes(u.total) + ' ≈ ' + fmtCost(u.total)],
-    [LFT.t('opt_usage_month'), fmtMinutes(month) + ' ≈ ' + fmtCost(month)],
-    [LFT.t('opt_usage_since'), clockOf(u.since).slice(0, 10)]
-  ];
   box.textContent = '';
-  for (const [k, v] of rows) {
+
+  const row = (k, v, cls) => {
     const line = document.createElement('div');
-    const b = document.createElement('b');
+    if (cls) line.className = cls;
     line.textContent = k + ': ';
+    const b = document.createElement('b');
     b.textContent = v;
     line.appendChild(b);
     box.appendChild(line);
+  };
+  const muted = text => {
+    const m = document.createElement('div');
+    m.className = 'muted';
+    m.textContent = text;
+    box.appendChild(m);
+  };
+
+  /* Hátralévő kredit — elöl, mert ez a legfontosabb kérdés. */
+  const rem = LFT.store.remainingUsd(u, LFT.stt.PROVIDERS.deepgram.pricePerMin);
+  if (rem != null) {
+    row(LFT.t('opt_usage_left'), '≈ ' + fmtUsd(rem) + ' — ' + fmtHoursLeft(rem), rem < LOW_CREDIT_USD ? 'low' : '');
+  } else {
+    muted(LFT.t('opt_usage_left_unknown'));
   }
-  $('usageReset').hidden = false;
+
+  if (u && u.total) {
+    const month = (u.months || {})[LFT.store.monthKey(Date.now())] || 0;
+    row(LFT.t('opt_usage_total'), fmtMinutes(u.total) + ' ≈ ' + fmtCost(u.total));
+    row(LFT.t('opt_usage_month'), fmtMinutes(month) + ' ≈ ' + fmtCost(month));
+    row(LFT.t('opt_usage_since'), clockOf(u.since).slice(0, 10));
+  } else {
+    muted(LFT.t('opt_usage_none'));
+  }
+  $('usageReset').hidden = !(u && u.total);
 }
+
+/* Az egyenleget a felhasználó írja be a konzolról; innentől abból vonjuk le
+   a mért időt. Üresen hagyva törli. */
+$('balanceSave').addEventListener('click', async () => {
+  const text = $('balanceInput').value.trim();
+  if (!text) {
+    await LFT.store.setBalance(NaN);
+    result('balanceResult', LFT.t('opt_balance_cleared'), 'info');
+    renderUsage();
+    return;
+  }
+  const usd = LFT.store.parseUsd(text);
+  if (!isFinite(usd)) { result('balanceResult', LFT.t('opt_balance_bad'), 'err'); return; }
+  await LFT.store.setBalance(usd);
+  $('balanceInput').value = '';
+  result('balanceResult', LFT.t('opt_balance_saved', [fmtUsd(usd)]), 'ok');
+  renderUsage();
+});
+
+$('balanceInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); $('balanceSave').click(); }
+});
 
 /* Nullázás két kattintással, felugró ablak nélkül: az első csak megkérdezi. */
 let resetArmed = null;

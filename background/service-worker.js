@@ -420,6 +420,19 @@ async function handle(msg, sender) {
       if (msg.tabId != null) {
         const out = Object.assign({}, msg);
         if (msg.code) out.text = LFT.t(LFT.stt.codeToKey(msg.code));
+        /* Induláskor szólunk, ha fogyóban a kredit — a lebegő ablak ezt a
+           "Hallgatom…" mellé írja. A határ ugyanaz, mint a beállításokban. */
+        if (msg.state === 'open') {
+          const price = LFT.stt.PROVIDERS.deepgram.pricePerMin;
+          const rem = LFT.store.remainingUsd(await LFT.store.getUsage(), price);
+          if (rem != null && rem < 10) {
+            const loc = LFT.i18n.uiLang();
+            out.warn = LFT.t('ov_low_credit', [
+              new Intl.NumberFormat(loc, { style: 'currency', currency: 'USD' }).format(rem),
+              (rem / price / 60).toLocaleString(loc, { maximumFractionDigits: 1 })
+            ]);
+          }
+        }
         chrome.tabs.sendMessage(msg.tabId, out, { frameId: 0 }).catch(() => {});
       }
       return { ok: true };
